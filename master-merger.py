@@ -5,7 +5,7 @@ Tool to merge STR calls across multiple tools
 Work in progress
 
 # Test
-./master-merger.py --vcfs advntr.chr21.sorted.vcf.gz,gangstr.chr21.sorted.vcf.gz
+./master-merger.py --vcfs hipstr.chr21.sorted.vcf.gz,advntr.chr21.sorted.vcf.gz,gangstr.chr21.sorted.vcf.gz
 """
 
 import argparse
@@ -15,26 +15,31 @@ import trtools.utils.mergeutils as mergeutils
 import trtools.utils.common as common
 import networkx
 
-def MergeCalls(current_records, vcftypes, is_overlap_min):
+def MergeCalls(current_records, vcftypes, is_overlap_min, chrom, start_pos, end_pos):
     if sum(is_overlap_min) <= 1:
         return None # TODO. boring for debugging. just a single genotyper    
 
     print("############")
+    print("%s:%s-%s"%(chrom, start_pos, end_pos))
     allele_list = []
     sample_calls = {}
     # Print out info
-    for i in range(len(current_records)):
-        if is_overlap_min[i]:
+    for i in range(len(current_records)):        
+        if is_overlap_min[i] and current_records[i] is not None:
             hm = trh.HarmonizeRecord(vcftypes[i], current_records[i])
             ref = hm.ref_allele
-            allele_list.append((ref, "*", vcftypes[i]))
+            repunit = hm.motif
+            allele_list.append((ref, "*", vcftypes[i], "GT:0", repunit))
+            altnum = 1
             for alt in hm.alt_alleles:
-                allele_list.append((alt, len(alt)-len(ref), vcftypes[i]))
+                allele_list.append((alt, len(alt)-len(ref), vcftypes[i], "GT:%s"%altnum, repunit))
+                altnum += 1
             for sample in current_records[i]:
-                if sample is None: continue
-                if not sample.called: continue
                 if sample.sample not in sample_calls: sample_calls[sample.sample] = []
-                sample_calls[sample.sample].append((hm.GetStringGenotype(sample), vcftypes[i]))
+                if sample is None or not sample.called: 
+                    sample_calls[sample.sample].append(([None, None], vcftypes[i]))
+                    continue
+                sample_calls[sample.sample].append((sample["GT"], vcftypes[i]))
     if len(allele_list) == sum(is_overlap_min): return None # TODO boring for debugging. all ref
 
     for a in allele_list:
@@ -42,9 +47,7 @@ def MergeCalls(current_records, vcftypes, is_overlap_min):
     for s in sample_calls:
         print(s)
         for call in sample_calls[s]:
-            print("%s: %s\t%s"%(call[1], len(call[0][0]), len(call[0][1])))
-
-    # TODO
+            print("%s: %s"%(call[1], call[0]))
 
 def GetOverlapMinRecords(current_records, vcftypes, is_min):
     # Get range of records
@@ -61,7 +64,9 @@ def GetOverlapMinRecords(current_records, vcftypes, is_min):
     # Set is_overlap_min for anything overlapping
     is_overlap_min = []
     for i in range(len(current_records)):
-        if current_records[i] is None: continue
+        if current_records[i] is None:
+            is_overlap_min.append(False)
+            continue
         if current_records[i].CHROM != chrom:
             is_overlap_min.append(False)
             continue
@@ -71,7 +76,7 @@ def GetOverlapMinRecords(current_records, vcftypes, is_min):
             is_overlap_min.append(True)
         else: is_overlap_min.append(False)
 
-    return is_overlap_min
+    return is_overlap_min, chrom, start_pos, end_pos
 
 def main():
     parser = argparse.ArgumentParser(__doc__)
@@ -112,10 +117,10 @@ def main():
         is_min = mergeutils.GetMinRecords(current_records, chroms)
 
         # Determine overlap with min record, candidates for merging
-        is_overlap_min = GetOverlapMinRecords(current_records, vcftypes, is_min)
+        is_overlap_min, chrom, start_pos, end_pos = GetOverlapMinRecords(current_records, vcftypes, is_min)
 
         # TODO merge
-        was_merged = MergeCalls(current_records, vcftypes, is_overlap_min)
+        was_merged = MergeCalls(current_records, vcftypes, is_overlap_min, chrom, start_pos, end_pos)
 
         # TODO will need to update is_min if we merged something
 
