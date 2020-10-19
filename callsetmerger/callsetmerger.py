@@ -85,7 +85,7 @@ class Readers:
 
         return is_overlap_min
 
-    def MergeCalls(self):
+    def GetMergableCalls(self):
         if sum(self.is_overlap_min) <= 1:
             return None # TODO. boring for debugging. just a single genotyper
 
@@ -118,6 +118,7 @@ class Readers:
             print(s)
             for call in sample_calls[s]:
                 print("%s: %s"%(call[1], call[0]))
+        return allele_list, sample_calls
 
     def GoToNext(self):
         self.current_records = mergeutils.GetNextRecords([w.vcfreader for w in self.vcfwrappers], self.current_records, self.GetIsMinPosList())
@@ -130,6 +131,14 @@ class Readers:
             self.GetCurrentRange()
         self.is_overlap_min = self.GetOverlapMinRecords()
 
+class MergeObject:
+    def __init__(self, allele_list, sample_calls):
+        self.allele_list = allele_list
+        self.sample_calls = sample_calls
+
+    def merge(self):
+        pass
+        
 def main():
     parser = argparse.ArgumentParser(__doc__)
     parser.add_argument("--vcfs", help="Comma-separated list of VCFs to merge. Must be sorted/indexed", type=str, required=True)
@@ -143,8 +152,11 @@ def main():
 
     # Walk through sorted readers
     while not readers.done:
-        # TODO merge
-        was_merged = readers.MergeCalls()
+        # Get mergable calls
+        allele_list, sample_calls = readers.GetMergableCalls()
+
+        # Merge calls
+        mo = MergeObject(allele_list, sample_calls)
 
         # TODO will need to update is_min_pos_list if we merged something
 
@@ -153,3 +165,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
