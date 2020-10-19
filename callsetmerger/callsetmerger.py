@@ -36,7 +36,7 @@ class Readers:
         self.is_min_pos_list = mergeutils.GetMinRecords(self.current_records, self.chroms)
         self.cur_range_chrom, self.cur_range_start_pos, self.cur_range_end_pos =\
             self.GetCurrentRange()
-        
+        self.is_overlap_min = self.GetOverlapMinRecords()
 
     def AreChromsValid(self):
         for r, wrapper in zip(self.current_records, self.vcfwrappers):
@@ -67,7 +67,6 @@ class Readers:
 
 
     def GetOverlapMinRecords(self):
-        # TODO move to increment?
         # Set is_overlap_min for anything overlapping
         is_overlap_min = []
         for i in range(len(self.current_records)):
@@ -86,8 +85,8 @@ class Readers:
 
         return is_overlap_min
 
-    def MergeCalls(self, is_overlap_min):
-        if sum(is_overlap_min) <= 1:
+    def MergeCalls(self):
+        if sum(self.is_overlap_min) <= 1:
             return None # TODO. boring for debugging. just a single genotyper
 
         print("############")
@@ -96,7 +95,7 @@ class Readers:
         sample_calls = {}
         # Print out info
         for i in range(len(self.current_records)):        
-            if is_overlap_min[i] and self.current_records[i] is not None:
+            if self.is_overlap_min[i] and self.current_records[i] is not None:
                 hm = trh.HarmonizeRecord(self.vcfwrappers[i].vcftype, self.current_records[i])
                 ref = hm.ref_allele
                 repunit = hm.motif
@@ -111,7 +110,7 @@ class Readers:
                         sample_calls[sample.sample].append(([None, None], self.vcfwrappers[i].vcftype))
                         continue
                     sample_calls[sample.sample].append((sample["GT"], self.vcfwrappers[i].vcftype))
-        if len(allele_list) == sum(is_overlap_min): return None # TODO boring for debugging. all ref
+        if len(allele_list) == sum(self.is_overlap_min): return None # TODO boring for debugging. all ref
 
         for a in allele_list:
             print(a)
@@ -129,6 +128,7 @@ class Readers:
         self.is_min_pos_list = mergeutils.GetMinRecords(self.current_records, self.chroms)
         self.cur_range_chrom, self.cur_range_start_pos, self.cur_range_end_pos =\
             self.GetCurrentRange()
+        self.is_overlap_min = self.GetOverlapMinRecords()
 
 def main():
     parser = argparse.ArgumentParser(__doc__)
@@ -143,12 +143,8 @@ def main():
 
     # Walk through sorted readers
     while not readers.done:
-
-        # Determine overlap with min record, candidates for merging
-        is_overlap_min = readers.GetOverlapMinRecords()
-
         # TODO merge
-        was_merged = readers.MergeCalls(is_overlap_min)
+        was_merged = readers.MergeCalls()
 
         # TODO will need to update is_min_pos_list if we merged something
 
