@@ -28,7 +28,7 @@ def main():
         # Get mergeable calls
         res = readers.getMergableCalls()
         if res is not None:
-            allele_list, sample_calls = res
+            rc_list = res
         else:
             # Move on
             readers.goToNext()
@@ -41,7 +41,7 @@ def main():
 
         # Move on
         readers.goToNext()
-        input('Press any key to move on to next record.\n')
+        # input('Press any key to move on to next record.\n')
 
 
 if __name__ == "__main__":
