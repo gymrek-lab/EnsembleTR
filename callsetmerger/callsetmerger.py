@@ -12,7 +12,7 @@ import trtools.utils.common as common
 import trtools.utils.mergeutils as mergeutils
 import trtools.utils.tr_harmonizer as trh
 import vcf
-
+from callsetmerger.recordcluster import RecordObj, RecordCluster
 
 
 class VCFWrapper:
@@ -37,7 +37,8 @@ class Readers:
         self.done = all([item.vcfrecord is None for item in self.current_tr_records])
         if not self.areChromsValid():
             raise ValueError('Invalid CHROM detected in record.')
-        self.is_min_pos_list = mergeutils.GetMinRecords([item.vcfrecord for item in self.current_tr_records], self.chroms)
+        self.is_min_pos_list = mergeutils.GetMinRecords([item.vcfrecord for item in self.current_tr_records],
+                                                        self.chroms)
         self.cur_range_chrom, self.cur_range_start_pos, self.cur_range_end_pos = \
             self.getCurrentRange()
         self.is_overlap_min = self.getOverlapMinRecords()
@@ -96,39 +97,25 @@ class Readers:
         if sum(self.is_overlap_min) <= 1:
             return None  # TODO. boring for debugging. just a single genotyper
 
-        print("############")
-        print("%s:%s-%s" % (self.cur_range_chrom, self.cur_range_start_pos, self.cur_range_end_pos))
-        allele_list = []
-        sample_calls = {}
+        # print("############")
+        # print("%s:%s-%s" % (self.cur_range_chrom, self.cur_range_start_pos, self.cur_range_end_pos))
+        record_cluster_list = []
+        # TODO remove (moving to another class)
+        # allele_list = []
+        # sample_calls = {}
+
         # Print out info
         for i in range(len(self.current_tr_records)):
             if self.is_overlap_min[i] and self.current_tr_records[i] is not None:
-                hm = trh.HarmonizeRecord(self.vcfwrappers[i].vcftype, self.current_tr_records[i].vcfrecord)
-                ref = hm.ref_allele
-                repunit = hm.motif
-                allele_list.append((ref, "*", self.vcfwrappers[i].vcftype, "GT:0", repunit))
-                altnum = 1
-                for alt in hm.alt_alleles:
-                    allele_list.append(
-                        (alt, len(alt) - len(ref), self.vcfwrappers[i].vcftype, "GT:%s" % altnum, repunit))
-                    altnum += 1
-                for sample in self.current_tr_records[i].vcfrecord:
-                    if sample.sample not in sample_calls:
-                        sample_calls[sample.sample] = []
-                    if sample is None or not sample.called:
-                        sample_calls[sample.sample].append(([None, None], self.vcfwrappers[i].vcftype))
-                        continue
-                    sample_calls[sample.sample].append((sample["GT"], self.vcfwrappers[i].vcftype))
-        if len(allele_list) == sum(self.is_overlap_min):
-            return None  # TODO boring for debugging. all ref
-
-        for a in allele_list:
-            print(a)
-        for s in sample_calls:
-            print(s)
-            for call in sample_calls[s]:
-                print("%s: %s" % (call[1], call[0]))
-        return allele_list, sample_calls
+                curr_ro = RecordObj(self.vcfwrappers[i].vcftype, self.current_tr_records[i].vcfrecord)
+                added = False
+                for rc in record_cluster_list:
+                    if rc.canonical_motif == curr_ro.canonical_motif:
+                        rc.AppendRecordObject(curr_ro)
+                        added = True
+                if not added:
+                    record_cluster_list.append(RecordCluster([curr_ro]))
+        return record_cluster_list
 
     def getCurrentRecords(self):
         ret = []
