@@ -10,6 +10,10 @@ python callsetmerger.py --vcfs hipstr.chr21.sorted.vcf.gz,advntr.chr21.sorted.vc
 
 import argparse
 from callsetmerger.callsetmerger import Readers
+from callsetmerger.recordcluster import ClusterGraph
+import networkx as nx
+import numpy as np
+import matplotlib.pyplot as plt
 
 
 def main():
@@ -26,13 +30,25 @@ def main():
     # Walk through sorted readers
     while not readers.done:
         # Get mergeable calls
-        res = readers.getMergableCalls()
-        if res is not None:
-            rc_list = res
-        else:
+        rc_list = readers.getMergableCalls()
+        if rc_list is None:
             # Move on
             readers.goToNext()
             continue
+
+        for rc in rc_list:
+            allele_list = rc.GetAlleleList()
+            cg = ClusterGraph(allele_list)
+            nx.layout
+            pos = nx.spring_layout(cg.graph, k=2 / np.sqrt(len(cg.graph.nodes)))
+            nx.draw(cg.graph, pos, node_color=cg.colors)
+            # for p in pos:  # push text to right
+            #     pos[p][0] += 0.2
+            nx.draw_networkx_labels(cg.graph, pos, labels=cg.labels)
+            # nx.draw_networkx(cg.graph, node_color=cg.colors, labels=cg.labels, seed=100)
+
+            plt.show()
+            pass
 
         # Merge calls
         # mo = MergeObject(allele_list, sample_calls)
@@ -41,7 +57,7 @@ def main():
 
         # Move on
         readers.goToNext()
-        # input('Press any key to move on to next record.\n')
+        input('Press any key to move on to next record.\n')
 
 
 if __name__ == "__main__":
