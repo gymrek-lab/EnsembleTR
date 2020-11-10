@@ -9,12 +9,41 @@ Work in progress
 import trtools.utils.tr_harmonizer as trh
 from trtools.utils.utils import GetCanonicalMotif
 
+from enum import Enum
+import networkx as nx
+
+
+class AlleleType(Enum):
+    Reference = 0
+    Alternate = 1
+
+
+ColorDict = {trh.VcfTypes.advntr: "tab:blue",
+             trh.VcfTypes.eh: "tab:orange",
+             trh.VcfTypes.hipstr: "tab:red",
+             trh.VcfTypes.gangstr: "tab:green",
+             trh.VcfTypes.popstr: "tab:yellow"}
+
+
+class Allele:
+    def __init__(self, vcf_type, atype, allele_sequence, diff_from_ref, genotype_idx):
+        if atype not in [AlleleType.Reference, AlleleType.Alternate]:
+            raise ValueError('Unknown allele type: ' + atype)
+        self.allele_type = atype
+        self.allele_sequence = allele_sequence
+        self.allele_size = diff_from_ref
+        self.genotype_idx = genotype_idx
+        self.vcf_type = vcf_type
+
+    def GetLabel(self):
+        return self.vcf_type.name + str(self.allele_size)
+
 
 class RecordObj:
-    def __init__(self, tool, rec):
+    def __init__(self, vcf_type, rec):
         self.record = rec
-        self.tool = tool
-        self.hm_record = trh.HarmonizeRecord(tool, rec)
+        self.vcf_type = vcf_type
+        self.hm_record = trh.HarmonizeRecord(vcf_type, rec)
         self.ref = self.hm_record.ref_allele
         self.motif = self.hm_record.motif
         self.canonical_motif = GetCanonicalMotif(self.motif)
@@ -35,3 +64,35 @@ class RecordCluster:
         if self.canonical_motif != ro.canonical_motif:
             raise ValueError('Canonical motif of appended record object mush match record cluster.')
         self.record_objs.append(ro)
+
+    def GetAlleleList(self):
+        alist = []
+        for ro in self.record_objs:
+            ref = ro.hm_record.ref_allele
+            alist.append(Allele(ro.vcf_type, AlleleType.Reference, ref, 0, 0))
+            altnum = 1
+            for alt in ro.hm_record.alt_alleles:
+                alist.append(Allele(ro.vcf_type, AlleleType.Alternate, alt, len(alt) - len(ref), altnum))
+                altnum += 1
+        return alist
+
+
+class ClusterGraph:
+    def __init__(self, allele_list):
+        self.allele_list = allele_list
+        self.graph = nx.Graph()
+        self.labels = {}
+        for al in allele_list:
+            self.graph.add_node(al)
+            self.labels[al] = al.GetLabel()
+        self.colors = []
+        for node in self.graph.nodes():
+            self.colors.append(ColorDict[node.vcf_type])
+        for nd1 in self.graph.nodes():
+            for nd2 in self.graph.nodes():
+                if nd1 == nd2:
+                    continue
+                if nd1.allele_size == nd2.allele_size \
+                        and not self.graph.has_edge(nd1, nd2) \
+                        and nd1.vcf_type != nd2.vcf_type:
+                    self.graph.add_edge(nd1, nd2)
