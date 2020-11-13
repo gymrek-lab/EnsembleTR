@@ -37,7 +37,7 @@ class Readers:
         self.done = all([item.vcfrecord is None for item in self.current_tr_records])
         if not self.areChromsValid():
             raise ValueError('Invalid CHROM detected in record.')
-        self.is_min_pos_list = mergeutils.GetMinRecords([item.vcfrecord for item in self.current_tr_records],
+        self.is_min_pos_list = mergeutils.GetMinRecords(self.getCurrentRecordVCFRecs(),
                                                         self.chroms)
         self.cur_range_chrom, self.cur_range_start_pos, self.cur_range_end_pos = \
             self.getCurrentRange()
@@ -45,7 +45,7 @@ class Readers:
 
     def areChromsValid(self):
         for r, wrapper in zip(self.current_tr_records, self.vcfwrappers):
-            if r.vcfrecord is None:
+            if r is None or r.vcfrecord is None:
                 continue
             if r.vcfrecord.CHROM not in self.chroms:
                 common.WARNING((
@@ -57,7 +57,16 @@ class Readers:
         return True
 
     def getIsMinPosList(self):
-        return mergeutils.GetMinRecords([item.vcfrecord for item in self.current_tr_records], self.chroms)
+        return mergeutils.GetMinRecords(self.getCurrentRecordVCFRecs(), self.chroms)
+
+    def getCurrentRecordVCFRecs(self):
+        ret = []
+        for item in self.current_tr_records:
+            if item is None or item.vcfrecord is None:
+                ret.append(None)
+            else:
+                ret.append(item.vcfrecord)
+        return ret
 
     def getCurrentRange(self):
         start_pos = None
@@ -94,8 +103,8 @@ class Readers:
         return is_overlap_min
 
     def getMergableCalls(self):
-        if sum(self.is_overlap_min) <= 1:
-            return None  # TODO. boring for debugging. just a single genotyper
+        # if sum(self.is_overlap_min) <= 1:
+        #     return None  # TODO. boring for debugging. just a single genotyper
 
         # print("############")
         # print("%s:%s-%s" % (self.cur_range_chrom, self.cur_range_start_pos, self.cur_range_end_pos))
@@ -120,7 +129,10 @@ class Readers:
     def getCurrentRecords(self):
         ret = []
         for rec in self.current_tr_records:
-            ret.append(rec.vcfrecord)
+            if rec is not None:
+                ret.append(rec.vcfrecord)
+            else:
+                ret.append(None)
         return ret
 
     def goToNext(self):
@@ -135,17 +147,20 @@ class Readers:
                 except StopIteration:
                     new_records.append(None)
             else:
-                new_records.append(
-                    trh.HarmonizeRecord(self.vcfwrappers[idx].vcftype,
-                                        prev_records[idx].vcfrecord)
-                )
+                if prev_records[idx] is None:
+                    new_records.append(None)
+                else:
+                    new_records.append(
+                        trh.HarmonizeRecord(self.vcfwrappers[idx].vcftype,
+                                            prev_records[idx].vcfrecord)
+                    )
         self.current_tr_records = new_records
         self.updateObject()
 
     def updateObject(self):
         if not self.areChromsValid():
             raise ValueError('Invalid CHROM detected in record.')
-        self.done = all([item.vcfrecord is None for item in self.current_tr_records])
+        self.done = all([item is None or item.vcfrecord is None for item in self.current_tr_records])
         self.is_min_pos_list = mergeutils.GetMinRecords(self.getCurrentRecords(), self.chroms)
         self.cur_range_chrom, self.cur_range_start_pos, self.cur_range_end_pos = \
             self.getCurrentRange()

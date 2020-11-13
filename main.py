@@ -35,6 +35,11 @@ def main():
             # Move on
             readers.goToNext()
             continue
+        # has_eh = False
+        # has_adv = False
+        # for rc in rc_list:
+        #     for ro in rc.record_objs:
+        #         pass
 
         for rc in rc_list:
             allele_list = rc.GetAlleleList()
