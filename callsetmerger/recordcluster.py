@@ -5,6 +5,7 @@ RecordCluster object includes mergeable records. Mergeable records are defined a
 Work in progress
 
 """
+from typing import List
 
 import trtools.utils.tr_harmonizer as trh
 from trtools.utils.utils import GetCanonicalMotif
@@ -22,7 +23,14 @@ ColorDict = {trh.VcfTypes.advntr: "tab:blue",
              trh.VcfTypes.eh: "tab:orange",
              trh.VcfTypes.hipstr: "tab:red",
              trh.VcfTypes.gangstr: "tab:green",
-             trh.VcfTypes.popstr: "tab:yellow"}
+             # trh.VcfTypes.popstr: "tab:yellow",
+             }
+convert_type_to_idx = {trh.VcfTypes.advntr: 0,
+                       trh.VcfTypes.eh: 1,
+                       trh.VcfTypes.hipstr: 2,
+                       trh.VcfTypes.gangstr: 3,
+                       # trh.VcfTypes.popstr: 4,
+                       }
 
 
 class Allele:
@@ -53,7 +61,9 @@ class RecordCluster:
     def __init__(self, recobjs):
         self.motif = recobjs[0].motif
         self.canonical_motif = GetCanonicalMotif(self.motif)
+        self.vcf_types = [False] * len(convert_type_to_idx.keys())
         for rec in recobjs:
+            self.vcf_types[convert_type_to_idx[rec.vcf_type]] = True
             if rec.canonical_motif != self.canonical_motif:
                 raise ValueError('RecordObjs in a cluster must share canonical motif.\n' +
                                  'Cannot add RO with ' + rec.canonical_motif + ' canonical motif to cluster' +
@@ -64,6 +74,10 @@ class RecordCluster:
         if self.canonical_motif != ro.canonical_motif:
             raise ValueError('Canonical motif of appended record object mush match record cluster.')
         self.record_objs.append(ro)
+        self.vcf_types[convert_type_to_idx[ro.vcf_type]] = True
+
+    def GetVcfTypesTuple(self):
+        return tuple(self.vcf_types)
 
     def GetAlleleList(self):
         alist = []
