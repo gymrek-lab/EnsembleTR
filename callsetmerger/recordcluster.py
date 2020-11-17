@@ -9,9 +9,10 @@ from typing import List
 
 import trtools.utils.tr_harmonizer as trh
 from trtools.utils.utils import GetCanonicalMotif
-
+from collections import Counter
 from enum import Enum
 import networkx as nx
+import numpy as np
 
 
 class AlleleType(Enum):
@@ -103,9 +104,11 @@ class ClusterGraph:
         self.allele_list = allele_list
         self.graph = nx.Graph()
         self.labels = {}
+        self.vcf_types = [False] * len(convert_type_to_idx.keys())
         for al in allele_list:
             self.graph.add_node(al)
             self.labels[al] = al.GetLabel()
+            self.vcf_types[convert_type_to_idx[al.vcf_type]] = True
         self.colors = []
         for node in self.graph.nodes():
             self.colors.append(ColorDict[node.vcf_type])
@@ -117,3 +120,40 @@ class ClusterGraph:
                         and not self.graph.has_edge(nd1, nd2) \
                         and nd1.vcf_type != nd2.vcf_type:
                     self.graph.add_edge(nd1, nd2)
+
+    def GetSortedConnectedComponents(self):
+        connected_comps = nx.algorithms.components.connected_components(self.graph)
+        return sorted(connected_comps, key=len, reverse=True)
+
+    def GetSingularityScore(self):
+        # 1 means all components at least 1-to-1 (could be 2-to-1)
+        # Lower than 1 means there are singular nodes
+        num_callers_in_graph = sum(self.vcf_types)
+        list_unique_caller_nodes_in_conn_comp = []
+        for component in self.GetSortedConnectedComponents():
+            num_unique_callers_in_component = 0
+            callers_seen = []
+            for allele in component:
+                if allele.vcf_type not in callers_seen:
+                    callers_seen.append(allele.vcf_type)
+                    num_unique_callers_in_component += 1
+            list_unique_caller_nodes_in_conn_comp.append(num_unique_callers_in_component)
+        return np.mean(list_unique_caller_nodes_in_conn_comp) / float(num_callers_in_graph)
+
+    def GetConfusionScore(self):
+        # Measure of 1-to-1 ness
+        # average over all connected components:
+        # For each connected component: number of nodes / number of unique caller nodes
+        list_comp_confusion_score = []
+        for component in self.GetSortedConnectedComponents():
+            num_nodes = 0
+            num_unique_callers_in_component = 0
+            callers_seen = []
+            for allele in component:
+                num_nodes += 1
+                if allele.vcf_type not in callers_seen:
+                    callers_seen.append(allele.vcf_type)
+                    num_unique_callers_in_component += 1
+            list_comp_confusion_score.append(float(num_nodes) / float(num_unique_callers_in_component))
+        return np.mean(list_comp_confusion_score)
+
