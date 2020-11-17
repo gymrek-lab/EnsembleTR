@@ -48,7 +48,10 @@ class Allele:
         self.vcf_type = vcf_type
 
     def GetLabel(self):
-        return self.vcf_type.name + str(self.allele_size)
+        if self.allele_type == AlleleType.Reference:
+            return self.vcf_type.name + '_*'
+        else:
+            return self.vcf_type.name + '_' + str(self.allele_size)
 
 
 class RecordObj:
