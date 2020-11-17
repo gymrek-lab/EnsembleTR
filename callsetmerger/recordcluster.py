@@ -33,6 +33,10 @@ convert_type_to_idx = {trh.VcfTypes.advntr: 0,
                        }
 
 
+def GetVcfTypesKey():
+    return convert_type_to_idx.keys()
+
+
 class Allele:
     def __init__(self, vcf_type, atype, allele_sequence, diff_from_ref, genotype_idx):
         if atype not in [AlleleType.Reference, AlleleType.Alternate]:
