@@ -41,7 +41,7 @@ class Readers:
                                                         self.chroms)
         self.cur_range_chrom, self.cur_range_start_pos, self.cur_range_end_pos = \
             self.getCurrentRange()
-        self.is_overlap_min = self.getOverlapMinRecords()
+        self.is_overlap_min = self.getOverlapMinRecords
 
     def areChromsValid(self):
         for r, wrapper in zip(self.current_tr_records, self.vcfwrappers):
@@ -82,10 +82,13 @@ class Readers:
                     end_pos = end
         return chrom, start_pos, end_pos
 
+    @property
     def getOverlapMinRecords(self):
         # Set is_overlap_min for anything overlapping
         is_overlap_min = []
         for i in range(len(self.current_tr_records)):
+
+            # a = self.current_tr_records[i].vcfrecord
             if self.current_tr_records[i] is None:
                 is_overlap_min.append(False)
                 continue
@@ -93,13 +96,19 @@ class Readers:
                 is_overlap_min.append(False)
                 continue
             start_pos = self.current_tr_records[i].vcfrecord.POS
-            end = start_pos + len(trh.HarmonizeRecord(self.vcfwrappers[i].vcftype,
-                                                      self.current_tr_records[i].vcfrecord).ref_allele)
-            if end <= self.cur_range_end_pos:
+            # end = start_pos + len(trh.HarmonizeRecord(self.vcfwrappers[i].vcftype,
+            #                                           self.current_tr_records[i].vcfrecord).ref_allele)
+            # if end <= self.cur_range_end_pos:
+            #     is_overlap_min.append(True)
+            # else:
+            #     is_overlap_min.append(False)
+
+            end = start_pos + len(self.current_tr_records[i].vcfrecord.REF)
+            if (self.cur_range_start_pos <= start_pos <= self.cur_range_end_pos) or \
+                    (self.cur_range_start_pos <= end <= self.cur_range_end_pos):
                 is_overlap_min.append(True)
             else:
                 is_overlap_min.append(False)
-
         return is_overlap_min
 
     def getMergableCalls(self):
@@ -164,7 +173,7 @@ class Readers:
         self.is_min_pos_list = mergeutils.GetMinRecords(self.getCurrentRecords(), self.chroms)
         self.cur_range_chrom, self.cur_range_start_pos, self.cur_range_end_pos = \
             self.getCurrentRange()
-        self.is_overlap_min = self.getOverlapMinRecords()
+        self.is_overlap_min = self.getOverlapMinRecords
 
 
 class MergeObject:
