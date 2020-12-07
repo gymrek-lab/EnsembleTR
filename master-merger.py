@@ -43,7 +43,7 @@ def MergeCalls(current_records, vcftypes, is_overlap_min, chrom, start_pos, end_
     if len(allele_list) == sum(is_overlap_min): return None # TODO boring for debugging. all ref
 
     for a in allele_list:
-        print(a)
+        print("%s:%s\t%s (%s) repunit=%s"%(str(a[2]).split(".")[1],a[3], a[0], a[1], a[4]))
     for s in sample_calls:
         print(s)
         for call in sample_calls[s]:
