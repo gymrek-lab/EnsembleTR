@@ -10,6 +10,36 @@ import pandas as pd
 import sys
 import vcf
 
+def PruneSNPs(hapdata):
+    """
+    Return new data frame but remove pruned SNPs
+
+    Idea: build graph where nodes=SNPs, edges connect SNPs with pairwise LD r2 > some threshold
+         Then, only keep one SNP from each connected component
+
+    Also look into: https://en.wikipedia.org/wiki/Four-gamete_test
+         Four-gamete test detect recombination between pair of SNPs
+         We might want to build up haplotypes starting at the STR and moving outwards
+         Stop extending haplotypes if too many recombination events have occurred
+
+    """
+    return hapdata # TODO implement
+    
+
+def BuildTree(hapdata, outprefix):
+    """
+    Build phylogenetic tree of haplotypes. 
+    Keep track of STR alleles/haplotypes at each leaf
+    Output the tree to a file
+
+    Notes:
+      * See https://biopython.org/wiki/Phylo for working with trees in python
+      * Can maybe use RaxML to build trees? Or Phylo might have its own tree building methods
+      * Output tree in standard format like newick/phylip
+      * See https://www.nature.com/articles/nature16549 Figure 2 for how we could visualize SNP/STR haplotypes
+    """
+    pass # TODO implement
+
 def main():
     parser = argparse.ArgumentParser(__doc__)
     parser.add_argument("--vcf", help="Path to SNP-STR VCF. Must be phased, gzipped, sorted, and indexed", type=str, required=True)
@@ -89,14 +119,16 @@ def main():
                     snp_haps[hap_ind+1].append("NA")
                 hap_ind += 2
             else:
+                gts = sample.gt_alleles
                 alleles = sample.gt_bases.split("|")
                 assert(len(alleles)==2)
+                assert(len(gts)==2)
                 if is_str:
                     str_alleles[hap_ind] = alleles[0]
                     str_alleles[hap_ind+1] = alleles[1]
                 else:
-                    snp_haps[hap_ind].append(alleles[0])
-                    snp_haps[hap_ind+1].append(alleles[1])
+                    snp_haps[hap_ind].append(gts[0])
+                    snp_haps[hap_ind+1].append(gts[1])
                 hap_ind += 2
     if not found_str:
         sys.stderr.write("Could not find target str at %s\n"%args.target)
@@ -108,6 +140,14 @@ def main():
         })
     for i in range(len(snp_haps[0])):
         hapdata[snp_labels[i]] = [hap[i] for hap in snp_haps]
+
+    # Prune SNPs
+    hapdata_pruned = PruneSNPs(hapdata)
+
+    # Build tree
+    BuildTree(hapdata_pruned, args.out)
+
+    # Output haplotypes
     hapdata.sort_values("str").to_csv(sys.stdout, sep="\t", index=False)
 
 
