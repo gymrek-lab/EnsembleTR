@@ -5,21 +5,33 @@ Tool to merge STR calls across multiple tools
 Work in progress
 
 # Usage
-python3 main.py --vcfs hipstr.chr21.sorted.vcf.gz,advntr.chr21.sorted.vcf.gz,gangstr.chr21.sorted.vcf.gz
+python3 main.py --vcfs hipstr.chr21.sorted.vcf.gz,advntr.chr21.sorted.vcf.gz,gangstr.chr21.sorted.vcf.gz --sampinfo sample_pops.tab --verbose
 """
 
 import argparse
 from callsetmerger.callsetmerger import Readers
 from callsetmerger.recordcluster import ClusterGraph
+from callsetmerger.reliability_metrics import ReliabilityMetrics
 import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
 
+def LoadPopInfo(sampinfofile):
+    if sampinfofile is None: return None
+    popinfo = {}
+    with open(sampinfofile, "r") as f:
+        for line in f:
+            sample, pop = line.strip().split()
+            if pop not in popinfo: popinfo[pop] = []
+            popinfo[pop].append(sample)
+    return popinfo
+
 def main():
     parser = argparse.ArgumentParser(__doc__)
     parser.add_argument("--vcfs", help="Comma-separated list of VCFs to merge. Must be sorted/indexed", type=str,
                         required=True)
+    parser.add_argument("--sampinfo", help="Tab-separated file with columns: sample, population", type=str, required=False)
     parser.add_argument("--debug", help="Print helpful debug info like allele graphs", action="store_true")
     parser.add_argument("--verbose", help="Print helpful progress messages", action="store_true")
     args = parser.parse_args()
@@ -27,7 +39,10 @@ def main():
     readers = Readers(args.vcfs.split(","))
 
     # Check samples same in each VCF
-    # TODO
+    # TODO - can do within readers
+    
+    # Load metadata about samples
+    popinfo = LoadPopInfo(args.sampinfo) # population->sample list
 
     # Walk through sorted readers
     while not readers.done:
@@ -51,6 +66,11 @@ def main():
                 
             allele_list = rc.GetAlleleList()
             cg = ClusterGraph(allele_list)
+            rel_metrics = [ReliabilityMetrics(rcobj, faminfo=None, popinfo=popinfo) for rcobj in rc.record_objs] # TODO add family information, sample information
+
+            if args.verbose:
+                for rm in rel_metrics:
+                    sys.stderr.write("  " + str(rm).strip() + "\n")
 
             ######## Print debug info #########
             if args.debug:

@@ -1,13 +1,3 @@
-#!/usr/bin/env python3
-
-"""
-Tool to merge STR calls across multiple tools
-Work in progress
-
-# Usage
-"""
-import argparse
-
 import trtools.utils.common as common
 import trtools.utils.mergeutils as mergeutils
 import trtools.utils.tr_harmonizer as trh

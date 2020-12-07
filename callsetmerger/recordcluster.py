@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 """
 RecordCluster object includes mergeable records. Mergeable records are defined as records that overlap and share a motif
 Work in progress
