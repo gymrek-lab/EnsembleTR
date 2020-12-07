@@ -64,6 +64,9 @@ class RecordObj:
         self.motif = self.hm_record.motif
         self.canonical_motif = GetCanonicalMotif(self.motif)
 
+    def __str__(self):
+        return "%s %s:%s motif=%s"%(self.vcf_type, self.record.CHROM, \
+                                    self.record.POS, self.canonical_motif)
 
 class RecordCluster:
     def __init__(self, recobjs):
