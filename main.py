@@ -44,7 +44,7 @@ def main():
         for rc in rc_list:
             allele_list = rc.GetAlleleList()
             cg = ClusterGraph(allele_list)
-            nx.layout
+            nx.layout()
             pos = nx.spring_layout(cg.graph, k=2 / np.sqrt(len(cg.graph.nodes)))
             nx.draw(cg.graph, pos, node_color=cg.colors)
             # for p in pos:  # push text to right
