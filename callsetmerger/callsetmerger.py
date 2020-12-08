@@ -12,7 +12,7 @@ import trtools.utils.common as common
 import trtools.utils.mergeutils as mergeutils
 import trtools.utils.tr_harmonizer as trh
 import vcf
-from callsetmerger.recordcluster import RecordObj, RecordCluster
+from callsetmerger.recordcluster import RecordObj, RecordCluster, OverlappingRegion
 
 
 class VCFWrapper:
@@ -133,7 +133,8 @@ class Readers:
                         added = True
                 if not added:
                     record_cluster_list.append(RecordCluster([curr_ro]))
-        return record_cluster_list
+        ov_region = OverlappingRegion(record_cluster_list)
+        return ov_region
 
     def getCurrentRecords(self):
         ret = []
