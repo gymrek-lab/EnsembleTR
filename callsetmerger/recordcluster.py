@@ -99,6 +99,19 @@ class RecordCluster:
         return alist
 
 
+# OverlappingRegion includes 1 or more record clusters.
+# These RCs can have different motifs.
+class OverlappingRegion:
+    def __init__(self, rcs):
+        self.RecordClusters = rcs
+
+    def GetCanonicalMotifs(self):
+        ret = []
+        for rc in self.RecordClusters:
+            ret.append(rc.canonical_motif)
+        return ret
+
+
 class ClusterGraph:
     def __init__(self, allele_list):
         self.allele_list = allele_list
@@ -156,4 +169,3 @@ class ClusterGraph:
                     num_unique_callers_in_component += 1
             list_comp_confusion_score.append(float(num_nodes) / float(num_unique_callers_in_component))
         return np.mean(list_comp_confusion_score)
-

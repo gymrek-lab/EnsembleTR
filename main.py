@@ -30,16 +30,12 @@ def main():
     # Walk through sorted readers
     while not readers.done:
         # Get mergeable calls
-        rc_list = readers.getMergableCalls()
+        ov_region = readers.getMergableCalls()
+        rc_list = ov_region.RecordClusters
         if rc_list is None:
             # Move on
             readers.goToNext()
             continue
-        # has_eh = False
-        # has_adv = False
-        # for rc in rc_list:
-        #     for ro in rc.record_objs:
-        #         pass
 
         for rc in rc_list:
             allele_list = rc.GetAlleleList()
