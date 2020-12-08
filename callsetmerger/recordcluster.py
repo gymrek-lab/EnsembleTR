@@ -113,7 +113,8 @@ class OverlappingRegion:
 
 
 class ClusterGraph:
-    def __init__(self, allele_list):
+    def __init__(self, record_cluster):
+        allele_list = record_cluster.GetAlleleList()
         self.allele_list = allele_list
         self.graph = nx.Graph()
         self.labels = {}

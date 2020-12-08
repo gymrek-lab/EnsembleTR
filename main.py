@@ -38,8 +38,7 @@ def main():
             continue
 
         for rc in rc_list:
-            allele_list = rc.GetAlleleList()
-            cg = ClusterGraph(allele_list)
+            cg = ClusterGraph(rc)
             nx.layout
             pos = nx.spring_layout(cg.graph, k=2 / np.sqrt(len(cg.graph.nodes)))
             nx.draw(cg.graph, pos, node_color=cg.colors)
