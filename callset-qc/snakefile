@@ -1,0 +1,84 @@
+OUTDIR="/storage/mgymrek/1000Genomes/qc" # TODO make an input. can be same as VCFDIR but didn't want to mess up Nima's directories
+
+
+wildcard_constraints:
+    pop="[^.]*"
+
+############################################
+# Set up VCF paths
+# TODO can expand this to have if/then to determine path for other tools
+def getvcf(superpop, pop):
+    VCFDIR="/gymreklab-tscc/mousavi/results/1000genomes/outs"
+    return "%s/%s/%s/merged/%s_filtered.vcf.gz"%(VCFDIR,superpop,pop,pop)
+
+def makevcfdict():
+    fdict = {}
+    for superpop in ["AFR", "AMR", "EAS", "EUR", "SAS"]:
+        if superpop == "AFR":
+            pops = ["ACB", "ASW", "ESN", "GWD", "LWK", "MSL", "YRI"]
+        if superpop == "AMR":
+            pops = ["CLM", "MXL", "PEL", "PUR"]
+        if superpop == "EAS":
+            pops = ["CDX", "CHB", "CHS", "JPT", "KHV"]
+        if superpop == "EUR":
+            pops = ["CEU", "FIN", "GBR", "IBS", "TSI"]
+        if superpop == "SAS":
+            pops = ["BEB", "GIH", "ITU", "PJL", "STU"]
+        for pop in pops: fdict[pop] = getvcf(superpop, pop)
+    return fdict
+
+FILENAMES = makevcfdict()
+###########################
+
+POPS = [   "ACB", "ASW", "ESN", "GWD", "LWK", "MSL", "YRI", \ 
+           "CLM", "MXL", "PEL", "PUR", \
+           "CDX", "CHB", "CHS", "JPT", "KHV", \
+           "CEU", "FIN", "GBR", "IBS", "TSI", \
+           "BEB", "GIH", "ITU", "PJL", "STU"]
+rule all:
+    input:
+        "%s/qcreport.html"%OUTDIR
+
+# TODO add other outputs of qcstr
+rule qcstr:
+    input:
+        lambda wildcards: FILENAMES[wildcards.pop]
+    output:
+        "%s/{pop}/{pop}-sample-callnum.pdf"%OUTDIR,
+	"%s/{pop}/{pop}-chrom-callnum.pdf"%OUTDIR,
+	"%s/{pop}/{pop}-diffref-histogram.pdf"%OUTDIR,
+	"%s/{pop}/{pop}-diffref-bias.pdf"%OUTDIR,
+	"%s/{pop}/{pop}-quality.pdf"%OUTDIR
+    shell:
+        "qcSTR --vcf {input} --out %s/{wildcards.pop}/{wildcards.pop}"%OUTDIR
+
+rule pca:
+    input:
+        [FILENAMES[pop] for pop in POPS]
+    output:
+        "%s/poppca.pdf"%(OUTDIR)
+    shell:
+        "echo {input} > {output}"
+
+rule mend:
+    input:
+        lambda wildcards: FILENAMES[wildcards.pop]
+    output:
+        "%s/{pop}/{pop}.mend.txt"%(OUTDIR)
+    shell:
+        "echo {input} > {output}"
+
+# TODO add outputs of all other stats
+rule summarize:
+    input:
+        "%s/poppca.pdf"%(OUTDIR),
+        [("%s/{pop}/{pop}.mend.txt"%(OUTDIR)).format(pop=pop) for pop in POPS],
+        [("%s/{pop}/{pop}-sample-callnum.pdf"%(OUTDIR)).format(pop=pop) for pop in POPS],
+        [("%s/{pop}/{pop}-chrom-callnum.pdf"%(OUTDIR)).format(pop=pop) for pop in POPS],
+        [("%s/{pop}/{pop}-diffref-histogram.pdf"%(OUTDIR)).format(pop=pop) for pop in POPS],
+        [("%s/{pop}/{pop}-diffref-bias.pdf"%(OUTDIR)).format(pop=pop) for pop in POPS],
+        [("%s/{pop}/{pop}-quality.pdf"%(OUTDIR)).format(pop=pop) for pop in POPS]
+    output:
+        "%s/qcreport.html"%(OUTDIR)
+    shell:
+        "echo '<html><body></body>TODO</html>' > {output}"
