@@ -69,7 +69,7 @@ rule capillary:
     output:
         "%s/capillary.txt"%OUTDIR
     shell:
-        "./run_cap.sh {input} %s > {output}"%OUTDIR
+        "./run_cap.sh \"{input}\" %s > {output}"%OUTDIR
 
 # TODO add outputs of all other stats
 rule summarize:
