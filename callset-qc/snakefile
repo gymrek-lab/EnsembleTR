@@ -51,15 +51,6 @@ rule qcstr:
     shell:
         "qcSTR --vcf {input} --out %s/{wildcards.pop}/{wildcards.pop}"%OUTDIR
 
-# TODO
-rule pca:
-    input:
-        [FILENAMES[pop] for pop in POPS]
-    output:
-        "%s/poppca.pdf"%(OUTDIR)
-    shell:
-        "echo {input} > {output}"
-
 rule mend:
     input:
         lambda wildcards: FILENAMES[wildcards.pop]
@@ -69,18 +60,20 @@ rule mend:
         "./run_str_mend.py {input} %s > {output}"%FAMFILE
 
 # TODO
+# This rule will load capillary data from the google sheet,
+# Convert to HipSTR-style VCF,
+# and run compareSTR
 rule capillary:
     input:
         [FILENAMES[pop] for pop in POPS]
     output:
         "%s/capillary.txt"%OUTDIR
     shell:
-        "echo {input} > {output}"
+        "./run_cap.sh {input} %s > {output}"%OUTDIR
 
 # TODO add outputs of all other stats
 rule summarize:
     input:
-        "%s/poppca.pdf"%(OUTDIR),
         "%s/capillary.txt"%(OUTDIR),
         [("%s/{pop}/{pop}.mend.txt"%(OUTDIR)).format(pop=pop) for pop in POPS],
         [("%s/{pop}/{pop}-sample-callnum.pdf"%(OUTDIR)).format(pop=pop) for pop in POPS],

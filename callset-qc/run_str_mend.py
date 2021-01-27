@@ -102,6 +102,9 @@ for v in vcf:
             else:
                 num_trios_inconsistent += 1
                 bad_trios.append(";".join(trio_list[i])+"/"+trio_metrics["GTs"])
-    outitems = [v.CHROM, v.POS, v.INFO["RU"], total_trios, num_trios_consistent, num_trios_inf_consistent, num_trios_inconsistent, num_trios_consistent/float(total_trios), "|".join(bad_trios)] # Add trio metrics
+    if total_trios == 0:
+        rate= "NA"
+    else: rate = num_trios_consistent/float(total_trios)
+    outitems = [v.CHROM, v.POS, v.INFO["RU"], total_trios, num_trios_consistent, num_trios_inf_consistent, num_trios_inconsistent, rate, "|".join(bad_trios)] # Add trio metrics
     sys.stdout.write("\t".join([str(item) for item in outitems])+"\n")
 
