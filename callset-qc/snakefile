@@ -1,5 +1,5 @@
 OUTDIR="/storage/mgymrek/1000Genomes/qc" # TODO make an input. can be same as VCFDIR but didn't want to mess up Nima's directories
-
+FAMFILE="1000G.ped"
 
 wildcard_constraints:
     pop="[^.]*"
@@ -39,7 +39,6 @@ rule all:
     input:
         "%s/qcreport.html"%OUTDIR
 
-# TODO add other outputs of qcstr
 rule qcstr:
     input:
         lambda wildcards: FILENAMES[wildcards.pop]
@@ -52,6 +51,7 @@ rule qcstr:
     shell:
         "qcSTR --vcf {input} --out %s/{wildcards.pop}/{wildcards.pop}"%OUTDIR
 
+# TODO
 rule pca:
     input:
         [FILENAMES[pop] for pop in POPS]
@@ -66,12 +66,22 @@ rule mend:
     output:
         "%s/{pop}/{pop}.mend.txt"%(OUTDIR)
     shell:
+        "./run_str_mend.py {input} %s > {output}"%FAMFILE
+
+# TODO
+rule capillary:
+    input:
+        [FILENAMES[pop] for pop in POPS]
+    output:
+        "%s/capillary.txt"%OUTDIR
+    shell:
         "echo {input} > {output}"
 
 # TODO add outputs of all other stats
 rule summarize:
     input:
         "%s/poppca.pdf"%(OUTDIR),
+        "%s/capillary.txt"%(OUTDIR),
         [("%s/{pop}/{pop}.mend.txt"%(OUTDIR)).format(pop=pop) for pop in POPS],
         [("%s/{pop}/{pop}-sample-callnum.pdf"%(OUTDIR)).format(pop=pop) for pop in POPS],
         [("%s/{pop}/{pop}-chrom-callnum.pdf"%(OUTDIR)).format(pop=pop) for pop in POPS],
