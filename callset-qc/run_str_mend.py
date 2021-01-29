@@ -45,6 +45,7 @@ with open(FAMFILE, "r") as f:
                                   vcfsamples.index(sample)])
 
 sys.stderr.write("### Found %s trios in the fam file overlapping the VCF\n"%len(trio_list))
+if len(trio_list) == 0: sys.exit(0)
 
 def IsHomRef(gt):
     return gt[0]==0 and gt[1]==0
@@ -82,6 +83,7 @@ def GetTrioMetrics(gt_father, gt_mother, gt_child):
 
 # Go through each variant
 for v in vcf:
+    if v.FILTER is not None: continue
     # reset vals
     num_trios_consistent = 0
     num_trios_inconsistent = 0

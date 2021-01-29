@@ -15,6 +15,7 @@ cat ${OUTDIR}/tmp/capillary.tab | awk '{print $1 "\t" $2-10 "\t" $2+10}' | sort 
 
 # Second, make a smaller VCF file with only the target
 # samples and loci needed
+# only keep loci that are passing
 for vcf in $(echo $VCFLIST | sed 's/,/ /g')
 do 
     vcfname=$(basename $vcf .vcf.gz)
@@ -26,7 +27,9 @@ do
     if [[ $numsamp -gt 0 ]]
     then
 	intersectBed -header -a $vcf -b ${OUTDIR}/tmp/capillary_regions.bed | \
-	    vcf-subset -c ${OUTDIR}/tmp/${vcfname}.samples.keep > ${OUTDIR}/tmp/${vcfname}.vcf
+	    vcf-subset -c ${OUTDIR}/tmp/${vcfname}.samples.keep | \
+	    awk '(($1~/^#/) || ($7=="PASS"))' | \
+	    > ${OUTDIR}/tmp/${vcfname}.vcf
 	bgzip -f ${OUTDIR}/tmp/${vcfname}.vcf
 	tabix -p vcf -f ${OUTDIR}/tmp/${vcfname}.vcf.gz
     fi
@@ -37,6 +40,9 @@ mergevcfs=$(ls ${OUTDIR}/tmp/*.vcf.gz | awk '{print $0","}' | tr -d '\n' | sed '
 mergeSTR --vcfs $mergevcfs --out ${OUTDIR}/tmp/merged
 bgzip -f ${OUTDIR}/tmp/merged.vcf
 tabix -p vcf -f ${OUTDIR}/tmp/merged.vcf.gz
+
+# Pull out REPCN for cap calls for comparison later
+bcftools query -f "[%CHROM\t%POS\t%RU\t%SAMPLE\t%REPCN\n]" ${OUTDIR}/tmp/merged.vcf.gz > ${OUTDIR}/tmp/wgscalls.tab
 
 # Third, convert capillary data to a VCF file in
 # HipSTR-like format that can be read by compareSTR
@@ -52,5 +58,3 @@ compareSTR \
     --vcf2 ${OUTDIR}/tmp/capillary.sorted.reheader.vcf.gz \
     --vcftype2 gangstr \
     --out ${OUTDIR}/comparestr
-
-echo "working on it"
