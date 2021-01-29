@@ -39,6 +39,26 @@ rule all:
     input:
         "%s/qcreport.html"%OUTDIR
 
+rule basic_stats:
+    input:
+        lambda wildcards: FILENAMES[wildcards.pop]
+    output:
+        "%s/{pop}/{pop}.stats.txt"%(OUTDIR)
+    shell:
+        "zcat {input} | grep -v \"^\#\" | wc -l > {output} && zcat {input} | grep -v \"^\#\" | awk '($7==\"PASS\")' | wc -l >> {output}"
+
+# TODO add to statstr:
+# num common alleles
+# option to only include passing things
+rule allele_info:
+    input:
+        lambda wildcards: FILENAMES[wildcards.pop]
+    output:
+        "%s/{pop}/{pop}.statstr.tab"%(OUTDIR)
+    shell:
+        "statSTR --vcf {input} --het --afreq --out stdout --use-length | ./get_numalleles.py > {output}"
+
+# TODO uncomment after more mem efficient
 rule qcstr:
     input:
         lambda wildcards: FILENAMES[wildcards.pop]
@@ -49,7 +69,8 @@ rule qcstr:
 	"%s/{pop}/{pop}-diffref-bias.pdf"%OUTDIR,
 	"%s/{pop}/{pop}-quality.pdf"%OUTDIR
     shell:
-        "qcSTR --vcf {input} --out %s/{wildcards.pop}/{wildcards.pop}"%OUTDIR
+        "touch {output[0]} && touch {output[1]} && touch {output[2]} && touch {output[3]} && touch {output[4]}"
+        #"qcSTR --vcf {input} --out %s/{wildcards.pop}/{wildcards.pop}"%OUTDIR
 
 rule mend:
     input:
@@ -59,10 +80,7 @@ rule mend:
     shell:
         "./run_str_mend.py {input} %s > {output}"%FAMFILE
 
-# TODO
-# This rule will load capillary data from the google sheet,
-# Convert to HipSTR-style VCF,
-# and run compareSTR
+# Convert capillary calls to gangstr format and compare
 rule capillary:
     input:
         [FILENAMES[pop] for pop in POPS]
@@ -71,11 +89,22 @@ rule capillary:
     shell:
         "./run_cap.sh \"{input}\" %s > {output}"%OUTDIR
 
+# Summarize mendelian inheritance for plotting
+rule summarize_mend:
+    input:
+        [("%s/{pop}/{pop}.mend.txt"%(OUTDIR)).format(pop=pop) for pop in POPS],
+    output:
+        "%s/mend.txt"%OUTDIR
+    shell:
+        "./summarize_mend.sh \"{input}\" > {output}"
+
 # TODO add outputs of all other stats
 rule summarize:
     input:
         "%s/capillary.txt"%(OUTDIR),
-        [("%s/{pop}/{pop}.mend.txt"%(OUTDIR)).format(pop=pop) for pop in POPS],
+        "%s/mend.txt"%(OUTDIR),
+        [("%s/{pop}/{pop}.stats.txt"%(OUTDIR)).format(pop=pop) for pop in POPS],
+        [("%s/{pop}/{pop}.statstr.tab"%(OUTDIR)).format(pop=pop) for pop in POPS],
         [("%s/{pop}/{pop}-sample-callnum.pdf"%(OUTDIR)).format(pop=pop) for pop in POPS],
         [("%s/{pop}/{pop}-chrom-callnum.pdf"%(OUTDIR)).format(pop=pop) for pop in POPS],
         [("%s/{pop}/{pop}-diffref-histogram.pdf"%(OUTDIR)).format(pop=pop) for pop in POPS],

@@ -3,3 +3,11 @@
 *.vcf.gz.tbi
 venv/
 .idea
+*~
+*.tab
+*.pdf
+nohup.out
+*.pyc
+tmp
+*.json
+.snakemake
