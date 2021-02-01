@@ -7,14 +7,14 @@ OUTDIR=$3
 mkdir -p $OUTDIR/tmp
 
 # List of regions from compiled afreqs
-cat $PUBFILE | awk '{print $1 "\t" $2-10 "\t" $2+10}' > ${OUTDIR}/tmp/freq_regions.bed
+cat $PUBFILE | grep -v chrom | awk '{print $1 "\t" $2-10 "\t" $2+10}' > ${OUTDIR}/tmp/freq_regions.bed
 
 # Make smaller VCFs with target loci
 for statfile in $(echo $STATLIST | sed 's/,/ /g')
 do 
     statname=$(basename $statfile .statstr.tab)
     cat $statfile | grep -v chrom | \
-	intersectBed -header -a $statfile -b ${OUTDIR}/tmp/freq_regions.bed -sorted | \
+	intersectBed -header -a $statfile -b ${OUTDIR}/tmp/freq_regions.bed | \
 	awk -v "pop=$statname" '{print pop "\t" $0}' > ${OUTDIR}/tmp/$statname.freqs.bed
 done
 
