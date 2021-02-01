@@ -58,6 +58,15 @@ rule allele_info:
     shell:
         "statSTR --vcf {input} --het --afreq --out stdout --use-length | ./get_numalleles.py > {output}"
 
+# Summarize allele info for plotting
+rule summarize_alleles:
+    input:
+        "%s/{pop}/{pop}.statstr.tab"%(OUTDIR)
+    output:
+        "%s/{pop}/{pop}.alleles.txt"%OUTDIR
+    shell:
+        "cat {input} | grep -v numalleles | datamash --sort -g 6 count 6 | sort -k 1,1n > {output}"
+
 # TODO uncomment after more mem efficient
 rule qcstr:
     input:
@@ -72,6 +81,7 @@ rule qcstr:
         "touch {output[0]} && touch {output[1]} && touch {output[2]} && touch {output[3]} && touch {output[4]}"
         #"qcSTR --vcf {input} --out %s/{wildcards.pop}/{wildcards.pop}"%OUTDIR
 
+# Get per-locus mendelian inheritance
 rule mend:
     input:
         lambda wildcards: FILENAMES[wildcards.pop]
@@ -80,31 +90,47 @@ rule mend:
     shell:
         "./run_str_mend.py {input} %s > {output}"%FAMFILE
 
-# Convert capillary calls to gangstr format and compare
-rule capillary:
-    input:
-        [FILENAMES[pop] for pop in POPS]
-    output:
-        "%s/capillary.txt"%OUTDIR
-    shell:
-        "./run_cap.sh \"{input}\" %s > {output}"%OUTDIR
-
 # Summarize mendelian inheritance for plotting
 rule summarize_mend:
     input:
-        [("%s/{pop}/{pop}.mend.txt"%(OUTDIR)).format(pop=pop) for pop in POPS],
+        [("%s/{pop}/{pop}.mend.txt"%(OUTDIR)).format(pop=pop) for pop in POPS]
     output:
         "%s/mend.txt"%OUTDIR
     shell:
         "./summarize_mend.sh \"{input}\" > {output}"
 
-# TODO add outputs of all other stats
+# Convert capillary calls to gangstr format and compare
+rule capillary:
+    input:
+        [FILENAMES[pop] for pop in POPS]
+    output:
+        "%s/comparestr-bubble-periodALL.pdf"%OUTDIR,
+        "%s/comparestr-callcompare.tab"%OUTDIR,
+        "%s/comparestr-locuscompare.tab"%OUTDIR,
+        "%s/comparestr-locuscompare.pdf"%OUTDIR,
+        "%s/comparestr-overall.tab"%OUTDIR,
+        "%s/comparestr-samplecompare.tab"%OUTDIR,
+        "%s/comparestr-samplecompare.pdf"%OUTDIR
+    shell:
+        "./run_cap.sh \"{input}\" %s"%OUTDIR
+
+# TODO make figures and compile into html
+# TODO in jupyter notebook: write input paths to a config file. set path to config file as an environment variable read by the notebook
+# TODO - MI figure
+# TODO - num calls figure
+# TODO - num alleles by pop boxplot
 rule summarize:
     input:
-        "%s/capillary.txt"%(OUTDIR),
         "%s/mend.txt"%(OUTDIR),
+        "%s/comparestr-bubble-periodALL.pdf"%OUTDIR,
+        "%s/comparestr-callcompare.tab"%OUTDIR,
+        "%s/comparestr-locuscompare.tab"%OUTDIR,
+        "%s/comparestr-locuscompare.pdf"%OUTDIR,
+        "%s/comparestr-overall.tab"%OUTDIR,
+        "%s/comparestr-samplecompare.tab"%OUTDIR,
+        "%s/comparestr-samplecompare.pdf"%OUTDIR,
         [("%s/{pop}/{pop}.stats.txt"%(OUTDIR)).format(pop=pop) for pop in POPS],
-        [("%s/{pop}/{pop}.statstr.tab"%(OUTDIR)).format(pop=pop) for pop in POPS],
+        [("%s/{pop}/{pop}.alleles.txt"%(OUTDIR)).format(pop=pop) for pop in POPS],
         [("%s/{pop}/{pop}-sample-callnum.pdf"%(OUTDIR)).format(pop=pop) for pop in POPS],
         [("%s/{pop}/{pop}-chrom-callnum.pdf"%(OUTDIR)).format(pop=pop) for pop in POPS],
         [("%s/{pop}/{pop}-diffref-histogram.pdf"%(OUTDIR)).format(pop=pop) for pop in POPS],
@@ -113,4 +139,4 @@ rule summarize:
     output:
         "%s/qcreport.html"%(OUTDIR)
     shell:
-        "echo '<html><body></body>TODO</html>' > {output}"
+        "export 1KGOUTDIR=%s && echo '<html><body></body>TODO</html>' > {output}"%OUTDIR
