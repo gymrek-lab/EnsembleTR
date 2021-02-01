@@ -116,9 +116,6 @@ rule capillary:
 
 # TODO make figures and compile into html
 # TODO in jupyter notebook: write input paths to a config file. set path to config file as an environment variable read by the notebook
-# TODO - MI figure
-# TODO - num calls figure
-# TODO - num alleles by pop boxplot
 rule summarize:
     input:
         "%s/mend.txt"%(OUTDIR),
@@ -139,4 +136,4 @@ rule summarize:
     output:
         "%s/qcreport.html"%(OUTDIR)
     shell:
-        "export 1KGOUTDIR=%s && echo '<html><body></body>TODO</html>' > {output}"%OUTDIR
+        "export KGOUTDIR=%s && echo '<html><body></body>TODO</html>' > {output}"%OUTDIR
