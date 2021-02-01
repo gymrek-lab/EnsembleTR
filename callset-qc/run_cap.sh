@@ -28,7 +28,7 @@ do
     then
 	intersectBed -header -a $vcf -b ${OUTDIR}/tmp/capillary_regions.bed | \
 	    vcf-subset -c ${OUTDIR}/tmp/${vcfname}.samples.keep | \
-	    awk '(($1~/^#/) || ($7=="PASS"))' | \
+	    awk '(($1~/^#/) || ($7=="PASS"))' \
 	    > ${OUTDIR}/tmp/${vcfname}.vcf
 	bgzip -f ${OUTDIR}/tmp/${vcfname}.vcf
 	tabix -p vcf -f ${OUTDIR}/tmp/${vcfname}.vcf.gz
@@ -36,7 +36,8 @@ do
 done
 
 # Merge to a single VCF
-mergevcfs=$(ls ${OUTDIR}/tmp/*.vcf.gz | awk '{print $0","}' | tr -d '\n' | sed 's/,$//')
+mergevcfs=$(ls ${OUTDIR}/tmp/*_filtered.vcf.gz | awk '{print $0","}' | tr -d '\n' | sed 's/,$//')
+echo "merging $mergevcfs"
 mergeSTR --vcfs $mergevcfs --out ${OUTDIR}/tmp/merged
 bgzip -f ${OUTDIR}/tmp/merged.vcf
 tabix -p vcf -f ${OUTDIR}/tmp/merged.vcf.gz
