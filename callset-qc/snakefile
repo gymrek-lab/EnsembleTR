@@ -114,11 +114,22 @@ rule capillary:
     shell:
         "./run_cap.sh \"{input}\" %s"%OUTDIR
 
+rule gen_afreqs:
+    input:
+        [("%s/{pop}/{pop}.statstr.tab"%(OUTDIR)).format(pop=pop) for pop in POPS]
+    output:
+        "%s/known_afreqs.txt"%OUTDIR,
+        "%s/called_afreqs.txt"%OUTDIR
+    shell:
+        "./generate_afreqs.sh > {output[0]} && ./compile_afreqs.sh \"{input}\" {output[0]} %s > {output[1]}"%OUTDIR
+
 # TODO make figures and compile into html
 # TODO in jupyter notebook: write input paths to a config file. set path to config file as an environment variable read by the notebook
 rule summarize:
     input:
         "%s/mend.txt"%(OUTDIR),
+        "%s/called_afreqs.txt"%OUTDIR,
+	"%s/known_afreqs.txt"%OUTDIR,
         "%s/comparestr-bubble-periodALL.pdf"%OUTDIR,
         "%s/comparestr-callcompare.tab"%OUTDIR,
         "%s/comparestr-locuscompare.tab"%OUTDIR,
