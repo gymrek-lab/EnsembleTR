@@ -3,3 +3,5 @@
 *.vcf.gz.tbi
 venv/
 .idea
+*__pycache__*
+.vscode/
