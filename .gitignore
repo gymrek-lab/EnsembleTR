@@ -5,3 +5,4 @@ venv/
 .idea
 *__pycache__*
 .vscode/
+notebooks/.ipynb_checkpoints/
