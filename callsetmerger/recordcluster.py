@@ -67,6 +67,9 @@ class RecordObj:
     def GetSamples(self):
         return self.record.samples
 
+    def GetVcfRegion(self):
+        return str(self.record.CHROM) + ':' + str(self.record.POS)
+
 
 class RecordCluster:
     def __init__(self, recobjs):
@@ -100,6 +103,13 @@ class RecordCluster:
                 alist.append(Allele(ro.vcf_type, AlleleType.Alternate, alt, len(alt) - len(ref), altnum))
                 altnum += 1
         return alist
+
+    def GetVcfRegions(self):
+        ret_list = []
+        for ro in self.record_objs:
+            ret_list.append(ro.GetVcfRegion())
+
+        return ret_list
 
 
 # OverlappingRegion includes 1 or more record clusters.
