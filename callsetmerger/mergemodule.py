@@ -33,7 +33,7 @@ class MergeRecordCluster:
         # Combine into a VCF line
     def GetVCFLine(self):
         line = ''
-        for sample in samples:
+        # for sample in samples:
             # Get call for sample
             # if len(self.graph.vcf_types) == 1:
             #     # Only one callser
@@ -46,7 +46,6 @@ class MergeRecordCluster:
             #     else:
             #         # More complex graph with confusion
             #         pass
-
         return line
 
 
