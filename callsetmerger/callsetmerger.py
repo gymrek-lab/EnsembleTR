@@ -25,11 +25,13 @@ class VCFWrapper:
 class Readers:
     def __init__(self, vcfpaths):
         self.vcfwrappers = []
+        self.samples = set()
         # Load all VCFs, make sure we can infer type
         for invcf in vcfpaths:
             vcffile = cyvcf2.VCF(invcf)
             hm = trh.TRRecordHarmonizer(vcffile)
             self.vcfwrappers.append(VCFWrapper(vcffile, hm.vcftype))
+            self.samples.update(vcffile.samples)
         # Get chroms
         self.chroms = utils.GetContigs(self.vcfwrappers[0].vcfreader)
         self.current_tr_records = [trh.HarmonizeRecord(wrapper.vcftype, next(wrapper.vcfreader))

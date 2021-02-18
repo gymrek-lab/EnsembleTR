@@ -13,8 +13,9 @@ from callsetmerger.callsetmerger import Readers
 from callsetmerger.recordcluster import ClusterGraph
 import networkx as nx
 import numpy as np
+import matplotlib
+matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
-
 
 def main():
     parser = argparse.ArgumentParser(__doc__)
@@ -38,16 +39,16 @@ def main():
             continue
 
         for rc in rc_list:
-            cg = ClusterGraph(rc)
-            nx.layout
-            pos = nx.spring_layout(cg.graph, k=2 / np.sqrt(len(cg.graph.nodes)))
-            nx.draw(cg.graph, pos, node_color=cg.colors)
-            # for p in pos:  # push text to right
-            #     pos[p][0] += 0.2
-            nx.draw_networkx_labels(cg.graph, pos, labels=cg.labels)
-            # nx.draw_networkx(cg.graph, node_color=cg.colors, labels=cg.labels, seed=100)
+            num_vcfs = len([i for i in rc.vcf_types if i == True])
+            if num_vcfs == 2:
+                cg = ClusterGraph(rc)
+                # nx.layout()
+                pos = nx.spring_layout(cg.graph, k=2 / np.sqrt(len(cg.graph.nodes)))
+                nx.draw(cg.graph, pos, node_color=cg.colors)
+                nx.draw_networkx_labels(cg.graph, pos, labels=cg.labels)
 
-            plt.show()
+                plt.show()
+                input('Press any key to move on to next record.\n')
             pass
 
         # Merge calls
@@ -57,7 +58,6 @@ def main():
 
         # Move on
         readers.goToNext()
-        input('Press any key to move on to next record.\n')
 
 
 if __name__ == "__main__":

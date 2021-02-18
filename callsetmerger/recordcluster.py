@@ -83,6 +83,7 @@ class RecordCluster:
                                  'Cannot add RO with ' + rec.canonical_motif + ' canonical motif to cluster' +
                                  'with ' + self.canonical_motif + 'canonical motif.')
         self.record_objs = recobjs
+        
 
     def AppendRecordObject(self, ro):
         if self.canonical_motif != ro.canonical_motif:
