@@ -9,16 +9,17 @@ Work in progress
 import argparse
 
 import trtools.utils.common as common
+import trtools.utils.utils as utils
 import trtools.utils.mergeutils as mergeutils
 import trtools.utils.tr_harmonizer as trh
-import vcf
+import cyvcf2
 from callsetmerger.recordcluster import RecordObj, RecordCluster, OverlappingRegion
 
 
 class VCFWrapper:
     def __init__(self, reader, vcftype):
-        self.vcftype = vcftype
         self.vcfreader = reader
+        self.vcftype = vcftype
 
 
 class Readers:
@@ -26,12 +27,11 @@ class Readers:
         self.vcfwrappers = []
         # Load all VCFs, make sure we can infer type
         for invcf in vcfpaths:
-            vcffile = vcf.Reader(open(invcf, "rb"))
+            vcffile = cyvcf2.VCF(invcf)
             hm = trh.TRRecordHarmonizer(vcffile)
             self.vcfwrappers.append(VCFWrapper(vcffile, hm.vcftype))
         # Get chroms
-        contigs = self.vcfwrappers[0].vcfreader.contigs
-        self.chroms = list(contigs)
+        self.chroms = utils.GetContigs(self.vcfwrappers[0].vcfreader)
         self.current_tr_records = [trh.HarmonizeRecord(wrapper.vcftype, next(wrapper.vcfreader))
                                    for wrapper in self.vcfwrappers]
         self.done = all([item.vcfrecord is None for item in self.current_tr_records])
@@ -41,7 +41,7 @@ class Readers:
                                                         self.chroms)
         self.cur_range_chrom, self.cur_range_start_pos, self.cur_range_end_pos = \
             self.getCurrentRange()
-        self.is_overlap_min = self.getOverlapMinRecords
+        self.is_overlap_min = self.getOverlapMinRecords()
 
     def areChromsValid(self):
         for r, wrapper in zip(self.current_tr_records, self.vcfwrappers):
@@ -82,7 +82,6 @@ class Readers:
                     end_pos = end
         return chrom, start_pos, end_pos
 
-    @property
     def getOverlapMinRecords(self):
         # Set is_overlap_min for anything overlapping
         is_overlap_min = []
@@ -95,6 +94,7 @@ class Readers:
             if self.current_tr_records[i].vcfrecord.CHROM != self.cur_range_chrom:
                 is_overlap_min.append(False)
                 continue
+            # TODO Discuss
             start_pos = self.current_tr_records[i].vcfrecord.POS
             # end = start_pos + len(trh.HarmonizeRecord(self.vcfwrappers[i].vcftype,
             #                                           self.current_tr_records[i].vcfrecord).ref_allele)
@@ -174,7 +174,7 @@ class Readers:
         self.is_min_pos_list = mergeutils.GetMinRecords(self.getCurrentRecords(), self.chroms)
         self.cur_range_chrom, self.cur_range_start_pos, self.cur_range_end_pos = \
             self.getCurrentRange()
-        self.is_overlap_min = self.getOverlapMinRecords
+        self.is_overlap_min = self.getOverlapMinRecords()
 
 
 class MergeObject:
