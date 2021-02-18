@@ -9,16 +9,17 @@ Work in progress
 import argparse
 
 import trtools.utils.common as common
+import trtools.utils.utils as utils
 import trtools.utils.mergeutils as mergeutils
 import trtools.utils.tr_harmonizer as trh
-import vcf
+import cyvcf2
 from callsetmerger.recordcluster import RecordObj, RecordCluster, OverlappingRegion
 
 
 class VCFWrapper:
     def __init__(self, reader, vcftype):
-        self.vcftype = vcftype
         self.vcfreader = reader
+        self.vcftype = vcftype
 
 
 class Readers:
@@ -26,12 +27,11 @@ class Readers:
         self.vcfwrappers = []
         # Load all VCFs, make sure we can infer type
         for invcf in vcfpaths:
-            vcffile = vcf.Reader(open(invcf, "rb"))
+            vcffile = cyvcf2.VCF(invcf)
             hm = trh.TRRecordHarmonizer(vcffile)
             self.vcfwrappers.append(VCFWrapper(vcffile, hm.vcftype))
         # Get chroms
-        contigs = self.vcfwrappers[0].vcfreader.contigs
-        self.chroms = list(contigs)
+        self.chroms = utils.GetContigs(self.vcfwrappers[0].vcfreader)
         self.current_tr_records = [trh.HarmonizeRecord(wrapper.vcftype, next(wrapper.vcfreader))
                                    for wrapper in self.vcfwrappers]
         self.done = all([item.vcfrecord is None for item in self.current_tr_records])
