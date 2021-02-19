@@ -127,7 +127,7 @@ class Readers:
         # Print out info
         for i in range(len(self.current_tr_records)):
             if self.is_overlap_min[i] and self.current_tr_records[i] is not None:
-                curr_ro = RecordObj(self.vcfwrappers[i].vcftype, self.current_tr_records[i].vcfrecord)
+                curr_ro = RecordObj(self.vcfwrappers[i].vcftype, self.vcfwrappers[i].vcfreader, self.current_tr_records[i].vcfrecord)
                 added = False
                 for rc in record_cluster_list:
                     if rc.canonical_motif == curr_ro.canonical_motif:
