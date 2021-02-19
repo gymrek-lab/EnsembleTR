@@ -56,8 +56,10 @@ class Allele:
 
 
 class RecordObj:
-    def __init__(self, vcf_type, rec):
-        self.record = rec
+    def __init__(self, vcf_type, VCF, rec):
+        self.cyvcf2_record = rec
+        self.VCF = VCF
+        self.samples = VCF.samples
         self.vcf_type = vcf_type
         self.hm_record = trh.HarmonizeRecord(vcf_type, rec)
         self.ref = self.hm_record.ref_allele
@@ -65,10 +67,14 @@ class RecordObj:
         self.canonical_motif = GetCanonicalMotif(self.motif)
 
     def GetSamples(self):
-        return self.record.samples
+        return self.cyvcf2_record.samples
 
     def GetVcfRegion(self):
-        return str(self.record.CHROM) + ':' + str(self.record.POS)
+        return str(self.cyvcf2_record.CHROM) + ':' + str(self.cyvcf2_record.POS)
+    
+    def GetROSampleCall(self, sample):
+        samp_idx = self.samples.index(sample)
+        return self.cyvcf2_record.genotypes[samp_idx]
 
 
 class RecordCluster:
@@ -76,6 +82,7 @@ class RecordCluster:
         self.motif = recobjs[0].motif
         self.canonical_motif = GetCanonicalMotif(self.motif)
         self.vcf_types = [False] * len(convert_type_to_idx.keys())
+        self.samples = recobjs[0].samples
         for rec in recobjs:
             self.vcf_types[convert_type_to_idx[rec.vcf_type]] = True
             if rec.canonical_motif != self.canonical_motif:
@@ -112,6 +119,13 @@ class RecordCluster:
 
         return ret_list
 
+    def GetSampleCall(self, sample):
+        ret_dict = {}
+        for rec in self.record_objs:
+            if rec.vcf_type in ret_dict:
+                raise ValueError("Multiple records with same VCF type: " + str(rec.vcf_type))
+            ret_dict[rec.vcf_type] = rec.GetROSampleCall(sample)
+        return ret_dict
 
 # OverlappingRegion includes 1 or more record clusters.
 # These RCs can have different motifs.
@@ -148,6 +162,33 @@ class ClusterGraph:
                         and not self.graph.has_edge(nd1, nd2) \
                         and nd1.vcf_type != nd2.vcf_type:
                     self.graph.add_edge(nd1, nd2)
+
+    def ResolveGenotypes(self, samp_gt):
+        # TODO remove nocalls from samp_gt
+        if len(samp_gt.keys()) == 1:
+            # Only 1 method, return whatever we have
+            pass
+        # Assign nodes to alleles
+        node_dict = {}
+        for method in samp_gt:
+            nd0 = self.graph.GetNodeObject(method, samp_gt[method][0])
+            nd1 = self.graph.GetNodeObject(method, samp_gt[method][1])
+            node_dict[method] = [nd0, nd1]
+
+        # Check if 1-to-1-to-1
+        # TODO
+        #
+
+        # AS FIRST ITERATION
+        return node_dict[list(samp_gt.keys())[0]]
+
+        # IN NEXT ITERATION, GENERATE NEW ALLELE OBJECT THAT HAS INFO ON WHO CONTRIBUTED
+
+    def GetNodeObject(self, vcf_type, genotype_idx):
+        for allele in self.graph.nodes:
+            if allele.vcf_type == vcf_type and genotype_idx == genotype_idx:
+                return allele
+        return None
 
     def GetSortedConnectedComponents(self):
         connected_comps = nx.algorithms.components.connected_components(self.graph)

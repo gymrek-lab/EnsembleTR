@@ -8,29 +8,35 @@ Work in progress
 from callsetmerger.recordcluster import ClusterGraph
 
 
-class MergeOverlappingRegion:
-    def __init__(self, overlapping_region):
-        self.ov_region = overlapping_region
-        self.rc_merge_objects = []
-        for rc in overlapping_region.RecordClusters:
-            self.rc_merge_objects.append(MergeRecordCluster(rc))
-
-    def GetVCFLines(self):
-        ret = []
-        for rc_merge_obj in self.rc_merge_objects:
-            line = rc_merge_obj.GetVCFLine()
-            if line is not None:
-                ret.append(line)
-        return ret
 
 
-class MergeRecordCluster:
-    def __init__(self, rc):
+# class MergeOverlappingRegion:
+#     def __init__(self, overlapping_region):
+#         self.ov_region = overlapping_region
+#         self.rc_merge_objects = []
+#         for rc in overlapping_region.RecordClusters:
+#             self.rc_merge_objects.append(RecordClusterMerger(rc))
+
+#     def GetVCFLines(self):
+#         ret = []
+#         for rc_merge_obj in self.rc_merge_objects:
+#             line = rc_merge_obj.GetVCFLine()
+#             if line is not None:
+#                 ret.append(line)
+#         return ret
+
+
+
+class RecordClusterMerger:
+    def __init__(self, rc, samples):
         self.record_cluster = rc
         self.graph = ClusterGraph(rc)
-        self.sample_objects = ...
-        # -> alleles + info about how many callers, agree disagree, etc
-        # Combine into a VCF line
+        self.samples = samples
+        for sample in self.samples:
+            samp_gt = self.record_cluster.GetSampleCall(sample)
+            resolved_gt = self.graph.ResolveGenotypes(samp_gt)
+            print(sample, resolved_gt)
+
     def GetVCFLine(self):
         line = ''
         # for sample in samples:
