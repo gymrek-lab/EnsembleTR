@@ -173,21 +173,21 @@ class ClusterGraph:
         #             callers_seen.append(allele.vcf_type)
         #             num_unique_callers_in_component += 1
         #     list_unique_caller_nodes_in_conn_comp.append(num_unique_callers_in_component)
-    def ResolveGenotypes(self, samp_gt):
-        # TODO remove nocalls from samp_gt
-        if len(samp_gt.keys()) == 1:
+    def ResolveCalls(self, samp_call):
+        # TODO remove nocalls from samp_call
+        if len(samp_call.keys()) == 1:
             # Only 1 method, return whatever we have
             pass
         # Assign nodes to alleles
         node_dict = {}
-        for method in samp_gt:
+        for method in samp_call:
             # check for no calls
-            if samp_gt[method][0] == -1:
+            if samp_call[method][0] == -1:
                 nd0 = None
                 nd1 = None
             else:
-                nd0 = self.GetNodeObject(method, samp_gt[method][0])
-                nd1 = self.GetNodeObject(method, samp_gt[method][1])
+                nd0 = self.GetNodeObject(method, samp_call[method][0])
+                nd1 = self.GetNodeObject(method, samp_call[method][1])
             node_dict[method] = [nd0, nd1]
 
         # Check if 1-to-1-to-1
@@ -195,7 +195,7 @@ class ClusterGraph:
         #
         node_dict
         # AS FIRST ITERATION
-        return node_dict[list(samp_gt.keys())[0]]
+        return node_dict[list(samp_call.keys())[0]]
 
         # IN NEXT ITERATION, GENERATE NEW ALLELE OBJECT THAT HAS INFO ON WHO CONTRIBUTED TO MERGED CALL
 
