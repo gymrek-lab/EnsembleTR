@@ -162,7 +162,17 @@ class ClusterGraph:
                         and not self.graph.has_edge(nd1, nd2) \
                         and nd1.vcf_type != nd2.vcf_type:
                     self.graph.add_edge(nd1, nd2)
-
+        # Identify representative nodes:
+        # These are the nodes that are used as representatives for their connected comp
+        # for component in self.GetSortedConnectedComponents():
+        #     num_unique_callers_in_component = 0
+        #     # If we see
+        #     callers_seen = []
+        #     for allele in component:
+        #         if allele.vcf_type not in callers_seen:
+        #             callers_seen.append(allele.vcf_type)
+        #             num_unique_callers_in_component += 1
+        #     list_unique_caller_nodes_in_conn_comp.append(num_unique_callers_in_component)
     def ResolveGenotypes(self, samp_gt):
         # TODO remove nocalls from samp_gt
         if len(samp_gt.keys()) == 1:
@@ -171,22 +181,27 @@ class ClusterGraph:
         # Assign nodes to alleles
         node_dict = {}
         for method in samp_gt:
-            nd0 = self.graph.GetNodeObject(method, samp_gt[method][0])
-            nd1 = self.graph.GetNodeObject(method, samp_gt[method][1])
+            # check for no calls
+            if samp_gt[method][0] == -1:
+                nd0 = None
+                nd1 = None
+            else:
+                nd0 = self.GetNodeObject(method, samp_gt[method][0])
+                nd1 = self.GetNodeObject(method, samp_gt[method][1])
             node_dict[method] = [nd0, nd1]
 
         # Check if 1-to-1-to-1
         # TODO
         #
-
+        node_dict
         # AS FIRST ITERATION
         return node_dict[list(samp_gt.keys())[0]]
 
-        # IN NEXT ITERATION, GENERATE NEW ALLELE OBJECT THAT HAS INFO ON WHO CONTRIBUTED
+        # IN NEXT ITERATION, GENERATE NEW ALLELE OBJECT THAT HAS INFO ON WHO CONTRIBUTED TO MERGED CALL
 
     def GetNodeObject(self, vcf_type, genotype_idx):
         for allele in self.graph.nodes:
-            if allele.vcf_type == vcf_type and genotype_idx == genotype_idx:
+            if allele.vcf_type == vcf_type and allele.genotype_idx == genotype_idx:
                 return allele
         return None
 

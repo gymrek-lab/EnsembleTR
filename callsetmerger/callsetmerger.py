@@ -13,6 +13,7 @@ import trtools.utils.utils as utils
 import trtools.utils.mergeutils as mergeutils
 import trtools.utils.tr_harmonizer as trh
 import cyvcf2
+import vcf
 from callsetmerger.recordcluster import RecordObj, RecordCluster, OverlappingRegion
 
 
@@ -21,6 +22,15 @@ class VCFWrapper:
         self.vcfreader = reader
         self.vcftype = vcftype
 
+
+def GetWriter(out_path, template_path):
+    # Create a VCF writer with appropriate header
+    # template_VCF = cyvcf2.VCF(template_path)
+    # template_VCF.add_to_header("##command=MERGIE BOI v123.13.2 yada yada") # TODO make appropriate command
+    # return cyvcf2.Writer(out_path, template_VCF)
+    template_VCF = vcf.Reader(filename=template_path)
+    return vcf.Writer(open(out_path,'w'), template_VCF)
+        
 
 class Readers:
     def __init__(self, vcfpaths):
