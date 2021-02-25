@@ -64,7 +64,6 @@ def main():
                 
                 # Merge calls
                 mo = RecordClusterMerger(rc, readers.samples)
-                res_genots = mo.ResolveAllGenotypes()
                 rec = mo.GetPyVCFRecord()
                 print(rec)
                 print("Writing:")

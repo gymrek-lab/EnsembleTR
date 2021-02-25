@@ -27,14 +27,14 @@ import traceback
 
 
 
-def GetGTForAlleles(resolved_gt):
-    # resolved_gt is a list of two alleles
-    if resolved_gt[0] == None and resolved_gt[1] == None:
+def GetGTForAlleles(resolved_call):
+    # resolved_call is a list of two alleles
+    if resolved_call[0] == None and resolved_call[1] == None:
         return '.'
-    if resolved_gt[0] == None or resolved_gt[1] == None:
+    if resolved_call[0] == None or resolved_call[1] == None:
         raise ValueError('Only one genotype set to None!')
     GTs = []
-    for al in resolved_gt:
+    for al in resolved_call:
         GTs.append(str(al.genotype_idx))
     return '/'.join(GTs)
 
@@ -45,13 +45,13 @@ class RecordClusterMerger:
         self.samples = samples
         self.record_template = rc.record_objs[0].cyvcf2_record
         
-    def ResolveAllGenotypes(self):
-        res_genots = {}
+    def ResolveAllSampleCalls(self):
+        res_calls = {}
         for sample in self.samples:
-            samp_gt = self.record_cluster.GetSampleCall(sample)
-            resolved_gt = self.graph.ResolveGenotypes(samp_gt)
-            res_genots[sample] = resolved_gt
-        return res_genots
+            samp_call = self.record_cluster.GetSampleCall(sample)   # Get calls for this sample
+            resolved_call = self.graph.ResolveCalls(samp_call)      # Resolve call for this sample (pick which caller(s) call we use)
+            res_calls[sample] = resolved_call
+        return res_calls
 
     
 
@@ -70,11 +70,11 @@ class RecordClusterMerger:
         FORMAT = ['GT','SRC']
         samp_fmt = make_calldata_tuple(FORMAT)
 
-        res_genots = self.ResolveAllGenotypes()
-        print(res_genots)
+        res_calls = self.ResolveAllSampleCalls()
+        print(res_calls)
         SAMPLES=[]
         for sample in self.record_cluster.samples:
-            SAMPLES.append(_Call(self, sample, samp_fmt(GT=GetGTForAlleles(res_genots[sample]),SRC='hipstr')))
+            SAMPLES.append(_Call(self, sample, samp_fmt(GT=GetGTForAlleles(res_calls[sample]),SRC='hipstr')))
         return _Record(self.record_template.CHROM, 
             self.record_template.POS, 
             self.record_template.ID,
