@@ -3,6 +3,15 @@
 *.vcf.gz.tbi
 venv/
 .idea
+*~
+*.tab
+*.pdf
+nohup.out
+*.pyc
+tmp
+*.json
+.snakemake
 *__pycache__*
 .vscode/
 notebooks/.ipynb_checkpoints/
+

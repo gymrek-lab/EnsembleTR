@@ -1,5 +1,5 @@
 OUTDIR="/storage/mgymrek/1000Genomes/qc" # TODO make an input. can be same as VCFDIR but didn't want to mess up Nima's directories
-
+FAMFILE="1000G.ped"
 
 wildcard_constraints:
     pop="[^.]*"
@@ -39,7 +39,35 @@ rule all:
     input:
         "%s/qcreport.html"%OUTDIR
 
-# TODO add other outputs of qcstr
+rule basic_stats:
+    input:
+        lambda wildcards: FILENAMES[wildcards.pop]
+    output:
+        "%s/{pop}/{pop}.stats.txt"%(OUTDIR)
+    shell:
+        "zcat {input} | grep -v \"^\#\" | wc -l > {output} && zcat {input} | grep -v \"^\#\" | awk '($7==\"PASS\")' | wc -l >> {output}"
+
+# TODO add to statstr:
+# num common alleles
+# option to only include passing things
+rule allele_info:
+    input:
+        lambda wildcards: FILENAMES[wildcards.pop]
+    output:
+        "%s/{pop}/{pop}.statstr.tab"%(OUTDIR)
+    shell:
+        "statSTR --vcf {input} --het --afreq --out stdout --use-length | ./get_numalleles.py > {output}"
+
+# Summarize allele info for plotting
+rule summarize_alleles:
+    input:
+        "%s/{pop}/{pop}.statstr.tab"%(OUTDIR)
+    output:
+        "%s/{pop}/{pop}.alleles.txt"%OUTDIR
+    shell:
+        "cat {input} | grep -v numalleles | datamash --sort -g 6 count 6 | sort -k 1,1n > {output}"
+
+# TODO uncomment after more mem efficient
 rule qcstr:
     input:
         lambda wildcards: FILENAMES[wildcards.pop]
@@ -50,29 +78,67 @@ rule qcstr:
 	"%s/{pop}/{pop}-diffref-bias.pdf"%OUTDIR,
 	"%s/{pop}/{pop}-quality.pdf"%OUTDIR
     shell:
-        "qcSTR --vcf {input} --out %s/{wildcards.pop}/{wildcards.pop}"%OUTDIR
+        "touch {output[0]} && touch {output[1]} && touch {output[2]} && touch {output[3]} && touch {output[4]}"
+        #"qcSTR --vcf {input} --out %s/{wildcards.pop}/{wildcards.pop}"%OUTDIR
 
-rule pca:
-    input:
-        [FILENAMES[pop] for pop in POPS]
-    output:
-        "%s/poppca.pdf"%(OUTDIR)
-    shell:
-        "echo {input} > {output}"
-
+# Get per-locus mendelian inheritance
 rule mend:
     input:
         lambda wildcards: FILENAMES[wildcards.pop]
     output:
         "%s/{pop}/{pop}.mend.txt"%(OUTDIR)
     shell:
-        "echo {input} > {output}"
+        "./run_str_mend.py {input} %s > {output}"%FAMFILE
 
-# TODO add outputs of all other stats
+# Summarize mendelian inheritance for plotting
+rule summarize_mend:
+    input:
+        [("%s/{pop}/{pop}.mend.txt"%(OUTDIR)).format(pop=pop) for pop in POPS]
+    output:
+        "%s/mend.txt"%OUTDIR
+    shell:
+        "./summarize_mend.sh \"{input}\" > {output}"
+
+# Convert capillary calls to gangstr format and compare
+rule capillary:
+    input:
+        [FILENAMES[pop] for pop in POPS]
+    output:
+        "%s/comparestr-bubble-periodALL.pdf"%OUTDIR,
+        "%s/comparestr-callcompare.tab"%OUTDIR,
+        "%s/comparestr-locuscompare.tab"%OUTDIR,
+        "%s/comparestr-locuscompare.pdf"%OUTDIR,
+        "%s/comparestr-overall.tab"%OUTDIR,
+        "%s/comparestr-samplecompare.tab"%OUTDIR,
+        "%s/comparestr-samplecompare.pdf"%OUTDIR
+    shell:
+        "./run_cap.sh \"{input}\" %s"%OUTDIR
+
+rule gen_afreqs:
+    input:
+        [("%s/{pop}/{pop}.statstr.tab"%(OUTDIR)).format(pop=pop) for pop in POPS]
+    output:
+        "%s/known_afreqs.txt"%OUTDIR,
+        "%s/called_afreqs.txt"%OUTDIR
+    shell:
+        "./generate_afreqs.sh > {output[0]} && ./compile_afreqs.sh \"{input}\" {output[0]} %s > {output[1]}"%OUTDIR
+
+# TODO make figures and compile into html
+# TODO in jupyter notebook: write input paths to a config file. set path to config file as an environment variable read by the notebook
 rule summarize:
     input:
-        "%s/poppca.pdf"%(OUTDIR),
-        [("%s/{pop}/{pop}.mend.txt"%(OUTDIR)).format(pop=pop) for pop in POPS],
+        "%s/mend.txt"%(OUTDIR),
+        "%s/called_afreqs.txt"%OUTDIR,
+	"%s/known_afreqs.txt"%OUTDIR,
+        "%s/comparestr-bubble-periodALL.pdf"%OUTDIR,
+        "%s/comparestr-callcompare.tab"%OUTDIR,
+        "%s/comparestr-locuscompare.tab"%OUTDIR,
+        "%s/comparestr-locuscompare.pdf"%OUTDIR,
+        "%s/comparestr-overall.tab"%OUTDIR,
+        "%s/comparestr-samplecompare.tab"%OUTDIR,
+        "%s/comparestr-samplecompare.pdf"%OUTDIR,
+        [("%s/{pop}/{pop}.stats.txt"%(OUTDIR)).format(pop=pop) for pop in POPS],
+        [("%s/{pop}/{pop}.alleles.txt"%(OUTDIR)).format(pop=pop) for pop in POPS],
         [("%s/{pop}/{pop}-sample-callnum.pdf"%(OUTDIR)).format(pop=pop) for pop in POPS],
         [("%s/{pop}/{pop}-chrom-callnum.pdf"%(OUTDIR)).format(pop=pop) for pop in POPS],
         [("%s/{pop}/{pop}-diffref-histogram.pdf"%(OUTDIR)).format(pop=pop) for pop in POPS],
@@ -81,4 +147,4 @@ rule summarize:
     output:
         "%s/qcreport.html"%(OUTDIR)
     shell:
-        "echo '<html><body></body>TODO</html>' > {output}"
+        "export KGOUTDIR=%s && echo '<html><body></body>TODO</html>' > {output}"%OUTDIR
