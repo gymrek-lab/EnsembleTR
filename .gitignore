@@ -11,3 +11,7 @@ nohup.out
 tmp
 *.json
 .snakemake
+*__pycache__*
+.vscode/
+notebooks/.ipynb_checkpoints/
+

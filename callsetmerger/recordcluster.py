@@ -64,6 +64,12 @@ class RecordObj:
         self.motif = self.hm_record.motif
         self.canonical_motif = GetCanonicalMotif(self.motif)
 
+    def GetSamples(self):
+        return self.record.samples
+
+    def GetVcfRegion(self):
+        return str(self.record.CHROM) + ':' + str(self.record.POS)
+
 
 class RecordCluster:
     def __init__(self, recobjs):
@@ -97,6 +103,13 @@ class RecordCluster:
                 alist.append(Allele(ro.vcf_type, AlleleType.Alternate, alt, len(alt) - len(ref), altnum))
                 altnum += 1
         return alist
+
+    def GetVcfRegions(self):
+        ret_list = []
+        for ro in self.record_objs:
+            ret_list.append(ro.GetVcfRegion())
+
+        return ret_list
 
 
 # OverlappingRegion includes 1 or more record clusters.
@@ -170,3 +183,8 @@ class ClusterGraph:
                     num_unique_callers_in_component += 1
             list_comp_confusion_score.append(float(num_nodes) / float(num_unique_callers_in_component))
         return np.mean(list_comp_confusion_score)
+
+    # Could be independent (take graph as input)
+    # TODO a function to assign ref and alt alleles for a given sample
+    # Boundaries? if there is discrepancy
+    # -> Pos filed to be consistent
