@@ -162,6 +162,7 @@ class ClusterGraph:
                         and not self.graph.has_edge(nd1, nd2) \
                         and nd1.vcf_type != nd2.vcf_type:
                     self.graph.add_edge(nd1, nd2)
+        self.sorted_connected_comps = sorted(nx.algorithms.components.connected_components(self.graph), key=len, reverse=True)
         # Identify representative nodes:
         # These are the nodes that are used as representatives for their connected comp
         # for component in self.GetSortedConnectedComponents():
@@ -173,31 +174,6 @@ class ClusterGraph:
         #             callers_seen.append(allele.vcf_type)
         #             num_unique_callers_in_component += 1
         #     list_unique_caller_nodes_in_conn_comp.append(num_unique_callers_in_component)
-    def ResolveCalls(self, samp_call):
-        # TODO remove nocalls from samp_call
-        if len(samp_call.keys()) == 1:
-            # Only 1 method, return whatever we have
-            pass
-        # Assign nodes to alleles
-        node_dict = {}
-        for method in samp_call:
-            # check for no calls
-            if samp_call[method][0] == -1:
-                nd0 = None
-                nd1 = None
-            else:
-                nd0 = self.GetNodeObject(method, samp_call[method][0])
-                nd1 = self.GetNodeObject(method, samp_call[method][1])
-            node_dict[method] = [nd0, nd1]
-
-        # Check if 1-to-1-to-1
-        # TODO
-        #
-        node_dict
-        # AS FIRST ITERATION
-        return node_dict[list(samp_call.keys())[0]]
-
-        # IN NEXT ITERATION, GENERATE NEW ALLELE OBJECT THAT HAS INFO ON WHO CONTRIBUTED TO MERGED CALL
 
     def GetNodeObject(self, vcf_type, genotype_idx):
         for allele in self.graph.nodes:
@@ -205,9 +181,16 @@ class ClusterGraph:
                 return allele
         return None
 
+    def GetConnectedCompForNode(self, node):
+        if node is None:
+            return None
+        for component in self.GetSortedConnectedComponents():
+            if node in component:
+                return component
+        return None
+
     def GetSortedConnectedComponents(self):
-        connected_comps = nx.algorithms.components.connected_components(self.graph)
-        return sorted(connected_comps, key=len, reverse=True)
+        return self.sorted_connected_comps
 
     def GetSingularityScore(self):
         # 1 means all components at least 1-to-1 (could be 2-to-1)
@@ -245,3 +228,81 @@ class ClusterGraph:
     # TODO a function to assign ref and alt alleles for a given sample
     # Boundaries? if there is discrepancy
     # -> Pos filed to be consistent
+
+
+def add_cc_support(cc_support, cc):
+    if cc is not None:
+        if cc not in cc_support.keys():
+            cc_support[cc] = 1
+        else:
+            cc_support[cc] += 1
+    return cc_support
+
+
+class RecordResolver:
+    def __init__(self, rc):
+        self.record_cluster = rc
+        self.rc_graph = ClusterGraph(rc)
+
+    def GetConnectedCompForSingleCall(self, samp_call):
+        r"""
+
+        Parameters
+        ----------
+        samp_call: dict(vcftype:allele)
+                allele: [al1, al2, BOOL] or [-1, BOOL] for no calls
+
+        Returns
+        -------
+        list of connected components corresponding to resolved call
+        """
+        # Assign connected components to alleles
+        conn_comp_dict = {}
+        cc_support = {}
+        num_valid_methods = 0
+        for method in samp_call:
+            # check for no calls
+            if samp_call[method][0] == -1:
+                cc0 = None
+                cc1 = None
+            else:
+                cc0 = self.rc_graph.GetConnectedCompForNode(self.rc_graph.GetNodeObject(method, samp_call[method][0]))
+                cc_support = add_cc_support(cc_support, cc0)
+                cc1 = self.rc_graph.GetConnectedCompForNode(self.rc_graph.GetNodeObject(method, samp_call[method][1]))
+                cc_support = add_cc_support(cc_support, cc1)
+                num_valid_methods += 1
+            conn_comp_dict[method] = [cc0, cc1]
+
+        sorted_cc_support = dict(sorted(cc_support.items(), key=lambda item: item[1]))
+        ret_ccs = []
+        for cc in sorted_cc_support:
+            # If all alleles in all methods point to one cc
+            if sorted_cc_support[cc] <= num_valid_methods * 2 and sorted_cc_support[cc] > (num_valid_methods - 1) * 2:
+                return [cc, cc]
+            if len(ret_ccs) < 2:
+                ret_ccs.append(cc)
+            else:
+                # We have already added 2 top supported ccs, but we still have another cc
+                print("WARNING: extra cc", cc)
+
+        return ret_ccs
+
+
+    def ResolveSequenceForSingleCall(self, conn_comp_list, samp_call):
+        node_dict = {}
+        for method in samp_call:
+            if samp_call[method][0] == -1:
+                nd0 = None
+                nd1 = None
+            else:
+                nd0 = self.rc_graph.GetNodeObject(method, samp_call[method][0])
+                nd1 = self.rc_graph.GetNodeObject(method, samp_call[method][1])
+            node_dict[method] = [nd0, nd1]
+        
+        # First iteration, just return the first allele in cc that has samp_call
+
+        # for cc in self.rc_graph.
+        # Check if 1-to-1-to-1
+        # TODO
+        #
+
