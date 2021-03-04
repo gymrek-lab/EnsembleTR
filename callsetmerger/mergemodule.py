@@ -5,7 +5,7 @@ Merge Module includes code and classes for merging record clusters.
 Work in progress
 
 """
-from callsetmerger.recordcluster import ClusterGraph
+from callsetmerger.recordcluster import ClusterGraph, RecordResolver
 from vcf.model import _Record,_Substitution,_Call, make_calldata_tuple
 import traceback
 
@@ -41,7 +41,7 @@ def GetGTForAlleles(resolved_call):
 class RecordClusterMerger:
     def __init__(self, rc, samples):
         self.record_cluster = rc
-        self.graph = ClusterGraph(rc)
+        self.record_resolver = RecordResolver(rc)
         self.samples = samples
         self.record_template = rc.record_objs[0].cyvcf2_record
         
@@ -49,8 +49,8 @@ class RecordClusterMerger:
         res_calls = {}
         for sample in self.samples:
             samp_call = self.record_cluster.GetSampleCall(sample)   # Get calls for this sample
-            resolved_call = self.graph.ResolveCalls(samp_call)      # Resolve call for this sample (pick which caller(s) call we use)
-            res_calls[sample] = resolved_call
+            resolved_connected_comps = self.record_resolver.GetConnectedCompForSingleCall(samp_call)      # Resolve call for this sample (pick which caller(s) call we use)
+            res_calls[sample] = self.record_resolver.ResolveSequenceForSingleCall(resolved_connected_comps, samp_call)
         return res_calls
 
     
