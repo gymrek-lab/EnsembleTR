@@ -27,6 +27,7 @@ import traceback
 
 
 
+
 def GetGTForAlleles(resolved_call):
     # resolved_call is a list of two alleles
     if resolved_call[0] == None and resolved_call[1] == None:
@@ -38,6 +39,19 @@ def GetGTForAlleles(resolved_call):
         GTs.append(str(al.genotype_idx))
     return '/'.join(GTs)
 
+class OutputAlleleGenerator:
+    def __init__(self, res_pas):
+        self.samples = res_pas.keys()
+        self.res_pas = res_pas
+        self.ref_seq = ""
+        self.alt_seqs = []
+
+        for sample in self.samples:
+            # check ref
+            pass
+
+
+
 class RecordClusterMerger:
     def __init__(self, rc, samples):
         self.record_cluster = rc
@@ -46,12 +60,12 @@ class RecordClusterMerger:
         self.record_template = rc.record_objs[0].cyvcf2_record
         
     def ResolveAllSampleCalls(self):
-        res_calls = {}
+        res_pas = {}
         for sample in self.samples:
             samp_call = self.record_cluster.GetSampleCall(sample)   # Get calls for this sample
             resolved_connected_comps = self.record_resolver.GetConnectedCompForSingleCall(samp_call)      # Resolve call for this sample (pick which caller(s) call we use)
-            res_calls[sample] = self.record_resolver.ResolveSequenceForSingleCall(resolved_connected_comps, samp_call)
-        return res_calls
+            res_pas[sample] = self.record_resolver.ResolveSequenceForSingleCall(resolved_connected_comps, samp_call)
+        return res_pas
 
     
 
@@ -70,8 +84,9 @@ class RecordClusterMerger:
         FORMAT = ['GT','SRC']
         samp_fmt = make_calldata_tuple(FORMAT)
 
-        res_calls = self.ResolveAllSampleCalls()
-        print(res_calls)
+        # Create list of pre-alleles
+        res_pas = self.ResolveAllSampleCalls()
+        print(res_pas)
         SAMPLES=[]
         for sample in self.record_cluster.samples:
             SAMPLES.append(_Call(self, sample, samp_fmt(GT=GetGTForAlleles(res_calls[sample]),SRC='hipstr')))
