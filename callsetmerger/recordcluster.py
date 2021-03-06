@@ -37,13 +37,24 @@ convert_type_to_idx = {trh.VcfTypes.advntr: 0,
 def GetVcfTypesKey():
     return convert_type_to_idx.keys()
 
-
+class PreAllele:
+    def __init__(self, ref_seq, seq, caller):
+        self.ref_seq = ref_seq
+        self.seq = seq
+        self.support = [caller]
+    
+    def add_support(self, callers):
+        for caller in callers:
+            if caller not in self.support:
+                self.support.append(caller)
+    
 class Allele:
-    def __init__(self, vcf_type, atype, allele_sequence, diff_from_ref, genotype_idx):
+    def __init__(self, vcf_type, atype, allele_sequence, reference_sequence, diff_from_ref, genotype_idx):
         if atype not in [AlleleType.Reference, AlleleType.Alternate]:
             raise ValueError('Unknown allele type: ' + atype)
         self.allele_type = atype
         self.allele_sequence = allele_sequence
+        self.reference_sequence = reference_sequence
         self.allele_size = diff_from_ref
         self.genotype_idx = genotype_idx
         self.vcf_type = vcf_type
@@ -105,10 +116,10 @@ class RecordCluster:
         alist = []
         for ro in self.record_objs:
             ref = ro.hm_record.ref_allele
-            alist.append(Allele(ro.vcf_type, AlleleType.Reference, ref, 0, 0))
+            alist.append(Allele(ro.vcf_type, AlleleType.Reference, ref, ref, 0, 0))
             altnum = 1
             for alt in ro.hm_record.alt_alleles:
-                alist.append(Allele(ro.vcf_type, AlleleType.Alternate, alt, len(alt) - len(ref), altnum))
+                alist.append(Allele(ro.vcf_type, AlleleType.Alternate, alt, ref, len(alt) - len(ref), altnum))
                 altnum += 1
         return alist
 
@@ -163,6 +174,7 @@ class ClusterGraph:
                         and nd1.vcf_type != nd2.vcf_type:
                     self.graph.add_edge(nd1, nd2)
         self.sorted_connected_comps = sorted(nx.algorithms.components.connected_components(self.graph), key=len, reverse=True)
+        self.subgraphs = [self.graph.subgraph(c).copy() for c in self.sorted_connected_comps]
         # Identify representative nodes:
         # These are the nodes that are used as representatives for their connected comp
         # for component in self.GetSortedConnectedComponents():
@@ -189,8 +201,20 @@ class ClusterGraph:
                 return component
         return None
 
+    def GetSubgraphForNode(self, node):
+        if node is None:
+            return None
+        for subg in self.subgraphs:
+            if subg in self.GetConnectedComponentSubgraphs():
+                if node in subg.nodes():
+                    return subg
+        return None
+
     def GetSortedConnectedComponents(self):
         return self.sorted_connected_comps
+
+    def GetConnectedComponentSubgraphs(self):
+        return self.subgraphs
 
     def GetSingularityScore(self):
         # 1 means all components at least 1-to-1 (could be 2-to-1)
@@ -230,14 +254,29 @@ class ClusterGraph:
     # -> Pos filed to be consistent
 
 
-def add_cc_support(cc_support, cc):
-    if cc is not None:
-        if cc not in cc_support.keys():
-            cc_support[cc] = 1
+def add_ccsg_support(sg_support, sg):
+    if sg is not None:
+        if sg not in sg_support.keys():
+            sg_support[sg] = 1
         else:
-            cc_support[cc] += 1
-    return cc_support
+            sg_support[sg] += 1
+    return sg_support
 
+def get_seq_to_pa_idx_dict(pa_list):
+    seq_to_pa = {}
+    for idx, pa in enumerate(pa_list):
+        seq_to_pa[pa.seq] = idx
+    return seq_to_pa
+        
+
+def add_preallele_support(pa_list, pa):
+    if pa is not None:
+        seq_to_pa_idx = get_seq_to_pa_idx_dict(pa_list)
+        if pa.seq not in seq_to_pa_idx.keys():
+            pa_list.append(pa)
+        else:
+            pa_list[seq_to_pa_idx[pa.seq]].add_support(pa.support)
+    return pa_list
 
 class RecordResolver:
     def __init__(self, rc):
@@ -254,42 +293,43 @@ class RecordResolver:
 
         Returns
         -------
-        list of connected components corresponding to resolved call
+        list of connected component subgraphs corresponding to resolved call
         """
-        # Assign connected components to alleles
-        conn_comp_dict = {}
-        cc_support = {}
+        # Assign connected component subgraphs to alleles
+        conn_comp_sg_dict = {}
+        ccsg_support = {}
         num_valid_methods = 0
         for method in samp_call:
             # check for no calls
             if samp_call[method][0] == -1:
-                cc0 = None
-                cc1 = None
+                ccsg0 = None
+                ccsg1 = None
             else:
-                cc0 = self.rc_graph.GetConnectedCompForNode(self.rc_graph.GetNodeObject(method, samp_call[method][0]))
-                cc_support = add_cc_support(cc_support, cc0)
-                cc1 = self.rc_graph.GetConnectedCompForNode(self.rc_graph.GetNodeObject(method, samp_call[method][1]))
-                cc_support = add_cc_support(cc_support, cc1)
+                ccsg0 = self.rc_graph.GetSubgraphForNode(self.rc_graph.GetNodeObject(method, samp_call[method][0]))
+                ccsg_support = add_ccsg_support(ccsg_support, ccsg0)
+                ccsg1 = self.rc_graph.GetSubgraphForNode(self.rc_graph.GetNodeObject(method, samp_call[method][1]))
+                ccsg_support = add_ccsg_support(ccsg_support, ccsg1)
                 num_valid_methods += 1
-            conn_comp_dict[method] = [cc0, cc1]
+            conn_comp_sg_dict[method] = [ccsg0, ccsg1]
 
-        sorted_cc_support = dict(sorted(cc_support.items(), key=lambda item: item[1]))
-        ret_ccs = []
-        for cc in sorted_cc_support:
+        sorted_ccsg_support = dict(sorted(ccsg_support.items(), key=lambda item: item[1]))
+        ret_sgs = []
+        for sg in sorted_ccsg_support:
             # If all alleles in all methods point to one cc
-            if sorted_cc_support[cc] <= num_valid_methods * 2 and sorted_cc_support[cc] > (num_valid_methods - 1) * 2:
-                return [cc, cc]
-            if len(ret_ccs) < 2:
-                ret_ccs.append(cc)
+            if sorted_ccsg_support[sg] <= num_valid_methods * 2 and sorted_ccsg_support[sg] > (num_valid_methods - 1) * 2:
+                return [sg, sg]
+            if len(ret_sgs) < 2:
+                ret_sgs.append(sg)
             else:
                 # We have already added 2 top supported ccs, but we still have another cc
-                print("WARNING: extra cc", cc)
+                print("WARNING: extra cc", sg)
 
-        return ret_ccs
+        return ret_sgs
 
 
-    def ResolveSequenceForSingleCall(self, conn_comp_list, samp_call):
+    def ResolveSequenceForSingleCall(self, ccsg_list, samp_call):
         node_dict = {}
+        pre_allele_list = []
         for method in samp_call:
             if samp_call[method][0] == -1:
                 nd0 = None
@@ -297,9 +337,19 @@ class RecordResolver:
             else:
                 nd0 = self.rc_graph.GetNodeObject(method, samp_call[method][0])
                 nd1 = self.rc_graph.GetNodeObject(method, samp_call[method][1])
+                if nd0 in ccsg_list[0].nodes() or nd0 in ccsg_list[1].nodes:
+                    add_preallele_support(pre_allele_list, PreAllele(nd0.reference_sequence, nd0.allele_sequence, nd0.vcf_type))
+                if nd1 in ccsg_list[0].nodes() or nd1 in ccsg_list[1].nodes:
+                    add_preallele_support(pre_allele_list, PreAllele(nd1.reference_sequence, nd1.allele_sequence, nd1.vcf_type))
             node_dict[method] = [nd0, nd1]
         
-        # First iteration, just return the first allele in cc that has samp_call
+        # First iteration, just return the first two pre alleles
+        if len(pre_allele_list) >= 2:
+            return pre_allele_list[0:1]
+        elif len(pre_allele_list) == 1:
+            return [pre_allele_list[0], pre_allele_list[0]]
+        else:
+            raise ValueError("Too few pre_alleles")
 
         # for cc in self.rc_graph.
         # Check if 1-to-1-to-1
