@@ -13,6 +13,7 @@ import pandas as pd
 
 try:
     freqfile = sys.argv[1]
+    header = sys.argv[2].split(',')
 except:
     sys.stderr.write(__doc__)
     sys.exit(1)
@@ -35,7 +36,7 @@ for pop in ["BEB", "GIH", "ITU", "PJL", "STU"]: popinfo[pop] = "SAS"
 
 def GetCounts(x):
     n = ssize[x["pop"]]*2
-    freqs = x["freqs"]
+    freqs = x["afreq"]
     counts = []
     for allele in freqs.split(","):
         al, fq = allele.split(":")
@@ -56,7 +57,9 @@ def AggCounts(countlist):
     return ",".join(freqs)
 
 # Load data
-data = pd.read_csv(freqfile, sep="\t", names=["pop","chrom","start","end","freqs","het","numalleles"])
+# changed old names=["pop","chrom","start","end","freqs","het","numalleles"]
+# with a more versatile header that updates based on content of stats file
+data = pd.read_csv(freqfile, sep="\t", names=["pop"] + header)
 data["superpop"] = data["pop"].apply(lambda x: popinfo[x])
 data["counts"] = data.apply(GetCounts, 1)
 

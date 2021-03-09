@@ -20,6 +20,9 @@ done
 
 cat ${OUTDIR}/tmp/*.freqs.bed | grep -v "chrom" > ${OUTDIR}/tmp/allfreqs.txt
 
-./combine_freqs.py ${OUTDIR}/tmp/allfreqs.txt 
+# Get one header
+HEADER=$(cat ${OUTDIR}/AFR/ACB/ACB.statstr.tab | head -n 1 | sed 's/\t/,/g')
+
+./combine_freqs.py ${OUTDIR}/tmp/allfreqs.txt $HEADER
 
 exit 0

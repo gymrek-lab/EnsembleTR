@@ -1,4 +1,4 @@
-OUTDIR="/storage/mgymrek/1000Genomes/qc" # TODO make an input. can be same as VCFDIR but didn't want to mess up Nima's directories
+OUTDIR="/storage/nmmsv/x_playground/callset_qc_outs" # TODO make an input. can be same as VCFDIR but didn't want to mess up Nima's directories
 FAMFILE="1000G.ped"
 
 wildcard_constraints:
@@ -30,7 +30,7 @@ def makevcfdict():
 FILENAMES = makevcfdict()
 ###########################
 
-POPS = [   "ACB", "ASW", "ESN", "GWD", "LWK", "MSL", "YRI", \ 
+POPS = [   "ACB", "ASW", "ESN", "GWD", "LWK", "MSL", "YRI", \
            "CLM", "MXL", "PEL", "PUR", \
            "CDX", "CHB", "CHS", "JPT", "KHV", \
            "CEU", "FIN", "GBR", "IBS", "TSI", \
