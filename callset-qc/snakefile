@@ -1,4 +1,4 @@
-OUTDIR="/home/nicholema/callset_qc" # TODO make an input. can be same as VCFDIR but didn't want to mess up Nima's directories
+OUTDIR="/home/nicholema/callset-qc" # TODO make an input. can be same as VCFDIR but didn't want to mess up Nima's directories
 FAMFILE="1000G.ped"
 
 wildcard_constraints:
