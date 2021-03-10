@@ -47,6 +47,11 @@ class PreAllele:
         for caller in callers:
             if caller not in self.support:
                 self.support.append(caller)
+
+    def __str__(self):
+        return "Ref: " + self.ref_seq + "\nSeq: " + self.seq + "\nSupp: " + str(self.support)
+    def __repr__(self):
+        return "Ref: " + self.ref_seq + "\nSeq: " + self.seq + "\nSupp: " + str(self.support)
     
 class Allele:
     def __init__(self, vcf_type, atype, allele_sequence, reference_sequence, diff_from_ref, genotype_idx):
@@ -345,11 +350,13 @@ class RecordResolver:
         
         # First iteration, just return the first two pre alleles
         if len(pre_allele_list) >= 2:
-            return pre_allele_list[0:1]
+            return pre_allele_list[0:2]
         elif len(pre_allele_list) == 1:
             return [pre_allele_list[0], pre_allele_list[0]]
         else:
-            raise ValueError("Too few pre_alleles")
+            # raise ValueError("Too few pre_alleles")
+            print('Warning: too few pre alleles: ', pre_allele_list)
+            return pre_allele_list
 
         # for cc in self.rc_graph.
         # Check if 1-to-1-to-1

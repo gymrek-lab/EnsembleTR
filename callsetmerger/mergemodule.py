@@ -39,16 +39,40 @@ def GetGTForAlleles(resolved_call):
         GTs.append(str(al.genotype_idx))
     return '/'.join(GTs)
 
-class OutputAlleleGenerator:
-    def __init__(self, res_pas):
-        self.samples = res_pas.keys()
-        self.res_pas = res_pas
-        self.ref_seq = ""
-        self.alt_seqs = []
 
-        for sample in self.samples:
-            # check ref
-            pass
+class OutVCFRecord:
+    def __init__(self, res_pas):
+        self.pre_alleles = res_pas
+        self.ref = ""
+        self.alts = []
+        self.sample_to_GT = {}
+        self.sample_to_SRC = {}
+        # Add INFO fields as well
+
+        for sample in self.pre_alleles:
+            GT_list = []
+            SRC_list = []
+            for pa in self.pre_alleles[sample]:
+                if self.ref == "":
+                    self.ref = pa.ref_seq
+                # TODO make the reference less arbitrary
+                # Currently assert breaks
+                # assert self.ref == pa.ref_seq
+
+                if pa.seq != self.ref:
+                    # we have alt allele
+                    if pa.seq not in self.alts:
+                        self.alts.append(pa.seq)
+                    GT_list.append(str(self.alts.index(pa.seq) + 1))
+                else:
+                    # ref allele
+                    GT_list.append('0')
+                for caller in pa.support:
+                    if caller.name not in SRC_list:
+                        SRC_list.append(caller.name)
+            self.sample_to_GT[sample] = '/'.join(GT_list)
+            self.sample_to_SRC[sample] = ','.join(SRC_list)
+
 
 
 
@@ -87,9 +111,12 @@ class RecordClusterMerger:
         # Create list of pre-alleles
         res_pas = self.ResolveAllSampleCalls()
         print(res_pas)
+        out_rec = OutVCFRecord(res_pas)
         SAMPLES=[]
         for sample in self.record_cluster.samples:
-            SAMPLES.append(_Call(self, sample, samp_fmt(GT=GetGTForAlleles(res_calls[sample]),SRC='hipstr')))
+            SAMPLES.append(_Call(self, sample, samp_fmt(GT=out_rec.sample_to_GT[sample],SRC=out_rec.sample_to_SRC[sample])))
+        # Get ref
+        # Get alts
         return _Record(self.record_template.CHROM, 
             self.record_template.POS, 
             self.record_template.ID,
