@@ -1,5 +1,5 @@
 
-OUT_DIR=/storage/nmmsv/x_playground/callset_qc_outs/afreq_step
+OUT_DIR=/storage/nicholema/callset_qc_outs/afreq_step
 SAMPLES=/gymreklab-tscc/mousavi/analysis/1000genomes/samples/all_samples.txt
 
 GANGSTR_OUTS=/gymreklab-tscc/mousavi/results/1000genomes/outs/
