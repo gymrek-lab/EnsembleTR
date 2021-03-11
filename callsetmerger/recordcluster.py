@@ -333,6 +333,7 @@ class RecordResolver:
 
 
     def ResolveSequenceForSingleCall(self, ccsg_list, samp_call):
+        # Next update: for each cc, get one pre allele
         node_dict = {}
         pre_allele_list = []
         for method in samp_call:
