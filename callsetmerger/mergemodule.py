@@ -98,9 +98,6 @@ class RecordClusterMerger:
         return self.record_template
 
     def GetPyVCFRecord(self):
-        ALTS = []
-        for alt_allele in self.record_template.ALT:
-            ALTS.append(_Substitution(alt_allele))
         INFO = {}
         for info in self.record_template.INFO:
             INFO[info[0]] = self.record_template.INFO.get(info[0])
@@ -115,12 +112,14 @@ class RecordClusterMerger:
         SAMPLES=[]
         for sample in self.record_cluster.samples:
             SAMPLES.append(_Call(self, sample, samp_fmt(GT=out_rec.sample_to_GT[sample],SRC=out_rec.sample_to_SRC[sample])))
-        # Get ref
-        # Get alts
+        
+        ALTS = []
+        for alt_allele in out_rec.alts:
+            ALTS.append(_Substitution(alt_allele))
         return _Record(self.record_template.CHROM, 
             self.record_template.POS, 
             self.record_template.ID,
-            self.record_template.REF,
+            out_rec.ref,
             ALTS,
             self.record_template.QUAL,
             self.record_template.FILTER,
@@ -129,5 +128,31 @@ class RecordClusterMerger:
             dict([(x,i) for (i,x) in enumerate(self.record_cluster.samples)]),
             SAMPLES)
 
+    def GetRawVCFRecord(self):
+        INFO = 'TESTINFO1=100;TESTINFO2=20' # TODO convert from dict
+        FORMAT = ['GT','SRC']
+
+        # Create list of pre-alleles
+        res_pas = self.ResolveAllSampleCalls()
+        print(res_pas)
+        out_rec = OutVCFRecord(res_pas)
+        SAMPLE_DATA=[]
+        for sample in self.record_cluster.samples:
+            SAMPLE_DATA.append(':'.join([out_rec.sample_to_GT[sample],out_rec.sample_to_SRC[sample]]))
+        
+        ALTS = []
+        for alt_allele in out_rec.alts:
+            ALTS.append(_Substitution(alt_allele))
+        # TODO remove record template and get information from pre allele
+        return '\t'.join([str(self.record_template.CHROM), 
+            str(self.record_template.POS), 
+            '.',
+            out_rec.ref,
+            ','.join(out_rec.alts),
+            '.',
+            '.',
+            INFO,
+            ':'.join(FORMAT),
+            '\t'.join(SAMPLE_DATA)]) + '\n'
 
 # For each sample, we have 1 object that we pass the graph to -> call for that sample

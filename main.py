@@ -38,7 +38,7 @@ def main():
 
 
     # Create VCF writer for output
-    outvcf = GetWriter(out_path, template_path)
+    outvcf = GetWriter(out_path, readers.samples)
     i = 0
     # Walk through sorted readers
     while not readers.done:
@@ -60,15 +60,16 @@ def main():
                 nx.draw(cg.graph, pos, node_color=cg.colors)
                 nx.draw_networkx_labels(cg.graph, pos, labels=cg.labels)
 
-                plt.show()
+                # plt.show()
                 
                 # Merge calls
                 mo = RecordClusterMerger(rc, readers.samples)
-                rec = mo.GetPyVCFRecord()
+                # rec = mo.GetPyVCFRecord()
+                rec = mo.GetRawVCFRecord()
                 print(rec)
                 print("Writing:")
                 try:
-                    outvcf.write_record(rec)
+                    outvcf.write(rec)
                 except:
                     traceback.print_exc()
                 
