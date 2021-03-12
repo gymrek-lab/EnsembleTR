@@ -162,7 +162,7 @@ freqSAS=""
 
 chrom="chr11"
 pos=2171088
-motif="AATG"
+motif="TCAT"
 thresh=-1
 freqEUR=$(cat CODIS_afreq.csv |grep TH01 | grep EUR | sed 's/, /|/g' | cut -d',' -f5 | sed 's/|/,/g' | sed 's/"/ /g' | sed 's/ //g')
 freqAFR=$(cat CODIS_afreq.csv |grep TH01 | grep AFR | sed 's/, /|/g' | cut -d',' -f5 | sed 's/|/,/g' | sed 's/"/ /g' | sed 's/ //g')
