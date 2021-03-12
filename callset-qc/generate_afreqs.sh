@@ -152,6 +152,83 @@ freqAMR=$(cat CODIS_afreq.csv |grep D8S1179 | grep AMR | sed 's/, /|/g' | cut -d
 freqSAS=$(cat CODIS_afreq.csv |grep D8S1179 | grep SAS | sed 's/, /|/g' | cut -d',' -f5 | sed 's/|/,/g' | sed 's/"/ /g' | sed 's/ //g')
 echo $chrom";"$pos";"$motif";"$thresh";"$freqEUR";"$freqAFR";"$freqEAS";"$freqAMR";"$freqSAS | sed 's/;/\t/g'
 
+####### D13S317 ###########
+
+freqEUR=""
+freqAFR=""
+freqEAS=""
+freqAMR=""
+freqSAS=""
+
+chrom="chr13"
+pos=82148025
+motif="GATA"
+thresh=-1
+freqEUR=$(cat CODIS_afreq.csv |grep D13S317 | grep EUR | sed 's/, /|/g' | cut -d',' -f5 | sed 's/|/,/g' | sed 's/"/ /g' | sed 's/ //g')
+freqAFR=$(cat CODIS_afreq.csv |grep D13S317 | grep AFR | sed 's/, /|/g' | cut -d',' -f5 | sed 's/|/,/g' | sed 's/"/ /g' | sed 's/ //g')
+freqEAS=$(cat CODIS_afreq.csv |grep D13S317 | grep EAS | sed 's/, /|/g' | cut -d',' -f5 | sed 's/|/,/g' | sed 's/"/ /g' | sed 's/ //g')
+freqAMR=$(cat CODIS_afreq.csv |grep D13S317 | grep AMR | sed 's/, /|/g' | cut -d',' -f5 | sed 's/|/,/g' | sed 's/"/ /g' | sed 's/ //g')
+freqSAS=$(cat CODIS_afreq.csv |grep D13S317 | grep SAS | sed 's/, /|/g' | cut -d',' -f5 | sed 's/|/,/g' | sed 's/"/ /g' | sed 's/ //g')
+echo $chrom";"$pos";"$motif";"$thresh";"$freqEUR";"$freqAFR";"$freqEAS";"$freqAMR";"$freqSAS | sed 's/;/\t/g'
+
+####### PentaE ###########
+
+freqEUR=""
+freqAFR=""
+freqEAS=""
+freqAMR=""
+freqSAS=""
+
+chrom="chr15"
+pos=96831015
+motif="AAAGA"
+thresh=-1
+freqEUR=$(cat CODIS_afreq.csv |grep PentaE | grep EUR | sed 's/, /|/g' | cut -d',' -f5 | sed 's/|/,/g' | sed 's/"/ /g' | sed 's/ //g')
+freqAFR=$(cat CODIS_afreq.csv |grep PentaE | grep AFR | sed 's/, /|/g' | cut -d',' -f5 | sed 's/|/,/g' | sed 's/"/ /g' | sed 's/ //g')
+freqEAS=$(cat CODIS_afreq.csv |grep PentaE | grep EAS | sed 's/, /|/g' | cut -d',' -f5 | sed 's/|/,/g' | sed 's/"/ /g' | sed 's/ //g')
+freqAMR=$(cat CODIS_afreq.csv |grep PentaE | grep AMR | sed 's/, /|/g' | cut -d',' -f5 | sed 's/|/,/g' | sed 's/"/ /g' | sed 's/ //g')
+freqSAS=$(cat CODIS_afreq.csv |grep PentaE | grep SAS | sed 's/, /|/g' | cut -d',' -f5 | sed 's/|/,/g' | sed 's/"/ /g' | sed 's/ //g')
+echo $chrom";"$pos";"$motif";"$thresh";"$freqEUR";"$freqAFR";"$freqEAS";"$freqAMR";"$freqSAS | sed 's/;/\t/g'
+
+
+####### D16S539 ###########
+
+freqEUR=""
+freqAFR=""
+freqEAS=""
+freqAMR=""
+freqSAS=""
+
+chrom="chr16"
+pos=86352702
+motif="GATA"
+thresh=-1
+freqEUR=$(cat CODIS_afreq.csv |grep D16S539 | grep EUR | sed 's/, /|/g' | cut -d',' -f5 | sed 's/|/,/g' | sed 's/"/ /g' | sed 's/ //g')
+freqAFR=$(cat CODIS_afreq.csv |grep D16S539 | grep AFR | sed 's/, /|/g' | cut -d',' -f5 | sed 's/|/,/g' | sed 's/"/ /g' | sed 's/ //g')
+freqEAS=$(cat CODIS_afreq.csv |grep D16S539 | grep EAS | sed 's/, /|/g' | cut -d',' -f5 | sed 's/|/,/g' | sed 's/"/ /g' | sed 's/ //g')
+freqAMR=$(cat CODIS_afreq.csv |grep D16S539 | grep AMR | sed 's/, /|/g' | cut -d',' -f5 | sed 's/|/,/g' | sed 's/"/ /g' | sed 's/ //g')
+freqSAS=$(cat CODIS_afreq.csv |grep D16S539 | grep SAS | sed 's/, /|/g' | cut -d',' -f5 | sed 's/|/,/g' | sed 's/"/ /g' | sed 's/ //g')
+echo $chrom";"$pos";"$motif";"$thresh";"$freqEUR";"$freqAFR";"$freqEAS";"$freqAMR";"$freqSAS | sed 's/;/\t/g'
+
+####### D18S51 ###########
+
+freqEUR=""
+freqAFR=""
+freqEAS=""
+freqAMR=""
+freqSAS=""
+
+chrom="chr18"
+pos=63281667
+motif="GAAA"
+thresh=-1
+freqEUR=$(cat CODIS_afreq.csv |grep D18S51 | grep EUR | sed 's/, /|/g' | cut -d',' -f5 | sed 's/|/,/g' | sed 's/"/ /g'| sed 's/ //g')
+freqAFR=$(cat CODIS_afreq.csv |grep D18S51 | grep AFR | sed 's/, /|/g' | cut -d',' -f5 | sed 's/|/,/g' | sed 's/"/ /g'| sed 's/ //g')
+freqEAS=$(cat CODIS_afreq.csv |grep D18S51 | grep EAS | sed 's/, /|/g' | cut -d',' -f5 | sed 's/|/,/g' | sed 's/"/ /g'| sed 's/ //g')
+freqAMR=$(cat CODIS_afreq.csv |grep D18S51 | grep AMR | sed 's/, /|/g' | cut -d',' -f5 | sed 's/|/,/g' | sed 's/"/ /g'| sed 's/ //g')
+freqSAS=$(cat CODIS_afreq.csv |grep D18S51 | grep SAS | sed 's/, /|/g' | cut -d',' -f5 | sed 's/|/,/g' | sed 's/"/ /g'| sed 's/ //g')
+echo $chrom";"$pos";"$motif";"$thresh";"$freqEUR";"$freqAFR";"$freqEAS";"$freqAMR";"$freqSAS | sed 's/;/\t/g'
+
 ####### TH01 ###########
 
 freqEUR=""
@@ -164,11 +241,11 @@ chrom="chr11"
 pos=2171088
 motif="TCAT"
 thresh=-1
-freqEUR=$(cat CODIS_afreq.csv |grep TH01 | grep EUR | sed 's/, /|/g' | cut -d',' -f5 | sed 's/|/,/g' | sed 's/"/ /g' | sed 's/ //g')
-freqAFR=$(cat CODIS_afreq.csv |grep TH01 | grep AFR | sed 's/, /|/g' | cut -d',' -f5 | sed 's/|/,/g' | sed 's/"/ /g' | sed 's/ //g')
-freqEAS=$(cat CODIS_afreq.csv |grep TH01 | grep EAS | sed 's/, /|/g' | cut -d',' -f5 | sed 's/|/,/g' | sed 's/"/ /g' | sed 's/ //g')
-freqAMR=$(cat CODIS_afreq.csv |grep TH01 | grep AMR | sed 's/, /|/g' | cut -d',' -f5 | sed 's/|/,/g' | sed 's/"/ /g' | sed 's/ //g')
-freqSAS=$(cat CODIS_afreq.csv |grep TH01 | grep SAS | sed 's/, /|/g' | cut -d',' -f5 | sed 's/|/,/g' | sed 's/"/ /g' | sed 's/ //g')
+freqEUR=$(cat CODIS_afreq.csv |grep TH01 | grep EUR | sed 's/, /|/g' | cut -d',' -f5 | sed 's/|/,/g' | sed 's/"/ /g'| sed 's/ //g')
+freqAFR=$(cat CODIS_afreq.csv |grep TH01 | grep AFR | sed 's/, /|/g' | cut -d',' -f5 | sed 's/|/,/g' | sed 's/"/ /g'| sed 's/ //g')
+freqEAS=$(cat CODIS_afreq.csv |grep TH01 | grep EAS | sed 's/, /|/g' | cut -d',' -f5 | sed 's/|/,/g' | sed 's/"/ /g'| sed 's/ //g')
+freqAMR=$(cat CODIS_afreq.csv |grep TH01 | grep AMR | sed 's/, /|/g' | cut -d',' -f5 | sed 's/|/,/g' | sed 's/"/ /g'| sed 's/ //g')
+freqSAS=$(cat CODIS_afreq.csv |grep TH01 | grep SAS | sed 's/, /|/g' | cut -d',' -f5 | sed 's/|/,/g' | sed 's/"/ /g'| sed 's/ //g')
 echo $chrom";"$pos";"$motif";"$thresh";"$freqEUR";"$freqAFR";"$freqEAS";"$freqAMR";"$freqSAS | sed 's/;/\t/g'
 
 
