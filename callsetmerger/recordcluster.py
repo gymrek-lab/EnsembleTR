@@ -38,10 +38,10 @@ def GetVcfTypesKey():
     return convert_type_to_idx.keys()
 
 class PreAllele:
-    def __init__(self, ref_seq, seq, caller):
+    def __init__(self, ref_seq, seq, callers):
         self.ref_seq = ref_seq
         self.seq = seq
-        self.support = [caller]
+        self.support = callers
     
     def add_support(self, callers):
         for caller in callers:
@@ -321,6 +321,8 @@ class RecordResolver:
         ret_sgs = []
         for sg in sorted_ccsg_support:
             # If all alleles in all methods point to one cc
+            # TODO for Hom require support to be perfect (2x num_valide) if not, report not certain
+            # TODO for Het do the same for support two ccs each with num_valid
             if sorted_ccsg_support[sg] <= num_valid_methods * 2 and sorted_ccsg_support[sg] > (num_valid_methods - 1) * 2:
                 return [sg, sg]
             if len(ret_sgs) < 2:
@@ -333,23 +335,51 @@ class RecordResolver:
 
 
     def ResolveSequenceForSingleCall(self, ccsg_list, samp_call):
-        # Next update: for each cc, get one pre allele
-        node_dict = {}
+        # Next update: Melissa's idea
+        # Pre resolve possible sequences for each CC. Only check if samp_call contains the caller and genot_idx of the resolved seq
+        # Add support based on overlap between samp_call and methods in cc
         pre_allele_list = []
-        for method in samp_call:
-            if samp_call[method][0] == -1:
-                nd0 = None
-                nd1 = None
+        for ccsg in ccsg_list:
+            # If number of nodes == number of callers: 1-1-1
+            uniq_callers = []
+            caller_to_nodes = {}
+            for node in ccsg.nodes():
+                if node.vcf_type not in caller_to_nodes:
+                    caller_to_nodes[node.vcf_type] = [node]
+                else:
+                    caller_to_nodes[node.vcf_type].append(node)
+                
+                if node.vcf_type not in uniq_callers:
+                    uniq_callers.append(node.vcf_type)
+            if len(uniq_callers) == len(ccsg.nodes):
+                tmp_node = list(ccsg.nodes())[0]
+                pre_allele_list.append(PreAllele(tmp_node.reference_sequence, tmp_node.allele_sequence, uniq_callers))
             else:
-                nd0 = self.rc_graph.GetNodeObject(method, samp_call[method][0])
-                nd1 = self.rc_graph.GetNodeObject(method, samp_call[method][1])
-                if nd0 in ccsg_list[0].nodes() or nd0 in ccsg_list[1].nodes:
-                    add_preallele_support(pre_allele_list, PreAllele(nd0.reference_sequence, nd0.allele_sequence, nd0.vcf_type))
-                if nd1 in ccsg_list[0].nodes() or nd1 in ccsg_list[1].nodes:
-                    add_preallele_support(pre_allele_list, PreAllele(nd1.reference_sequence, nd1.allele_sequence, nd1.vcf_type))
-            node_dict[method] = [nd0, nd1]
-        
-        # First iteration, just return the first two pre alleles
+                # if hipstr exists:
+                if trh.VcfTypes.hipstr in uniq_callers:
+                    # only one hipstr node
+                    if len(caller_to_nodes[trh.VcfTypes.hipstr]) == 1:
+                        tmp_node = caller_to_nodes[trh.VcfTypes.hipstr][0]
+                        pa = PreAllele(tmp_node.reference_sequence, tmp_node.allele_sequence, [trh.VcfTypes.hipstr])
+                        for node in ccsg:
+                            if node != tmp_node and node.allele_sequence == tmp_node.allele_sequence:
+                                pa.add_support([node.vcf_type])
+                        
+                    else:
+                        # More than one hipstr node: decide which one matches the samp_call
+                        tmp_node = None
+                        for allele in ccsg:
+                            if allele.vcf_type == trh.VcfTypes.hipstr and allele.genotype_idx in samp_call[trh.VcfTypes.hipstr]:
+                                tmp_node = allele
+                        if tmp_node is None:
+                            raise ValueError("Could not find HipSTR allele matching samp_call in this ccsg!")
+                        pa = PreAllele(tmp_node.reference_sequence, tmp_node.allele_sequence, [trh.VcfTypes.hipstr])
+                        for node in ccsg:
+                            if node != tmp_node and node.allele_sequence == tmp_node.allele_sequence:
+                                pa.add_support([node.vcf_type])
+                else:
+                    raise ValueError("HipSTR doesn't exist and we have a discrepancy!")
+
         if len(pre_allele_list) >= 2:
             return pre_allele_list[0:2]
         elif len(pre_allele_list) == 1:
@@ -358,6 +388,30 @@ class RecordResolver:
             # raise ValueError("Too few pre_alleles")
             print('Warning: too few pre alleles: ', pre_allele_list)
             return pre_allele_list
+             
+        # node_dict = {}
+        # for method in samp_call:
+        #     if samp_call[method][0] == -1:
+        #         nd0 = None
+        #         nd1 = None
+        #     else:
+        #         nd0 = self.rc_graph.GetNodeObject(method, samp_call[method][0])
+        #         nd1 = self.rc_graph.GetNodeObject(method, samp_call[method][1])
+        #         if nd0 in ccsg_list[0].nodes() or nd0 in ccsg_list[1].nodes:
+        #             add_preallele_support(pre_allele_list, PreAllele(nd0.reference_sequence, nd0.allele_sequence, [nd0.vcf_type]))
+        #         if nd1 in ccsg_list[0].nodes() or nd1 in ccsg_list[1].nodes:
+        #             add_preallele_support(pre_allele_list, PreAllele(nd1.reference_sequence, nd1.allele_sequence, [nd1.vcf_type]))
+        #     node_dict[method] = [nd0, nd1]
+        
+        # # First iteration, just return the first two pre alleles
+        # if len(pre_allele_list) >= 2:
+        #     return pre_allele_list[0:2]
+        # elif len(pre_allele_list) == 1:
+        #     return [pre_allele_list[0], pre_allele_list[0]]
+        # else:
+        #     # raise ValueError("Too few pre_alleles")
+        #     print('Warning: too few pre alleles: ', pre_allele_list)
+        #     return pre_allele_list
 
         # for cc in self.rc_graph.
         # Check if 1-to-1-to-1
