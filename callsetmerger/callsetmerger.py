@@ -53,7 +53,7 @@ class Readers:
             if len(self.samples) == 0:
                 self.samples = vcffile.samples
             else:
-                if len(self.samples) != len(vcffile.samples) or set(self.samples) != set(vcffile.samples):
+                if len(self.samples) != len(vcffile.samples) or sorted(self.samples) != sorted(vcffile.samples):
                     raise ValueError('Different samples across VCF files', self.samples,'\t', vcffile.samples)
         # Get chroms
         self.chroms = utils.GetContigs(self.vcfwrappers[0].vcfreader)
