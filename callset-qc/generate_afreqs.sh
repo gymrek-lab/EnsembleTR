@@ -181,7 +181,7 @@ freqSAS=""
 
 chrom="chr15"
 pos=96831015
-motif="AAAGA"
+motif="TCTTT"
 thresh=-1
 freqEUR=$(cat CODIS_afreq.csv |grep PentaE | grep EUR | sed 's/, /|/g' | cut -d',' -f5 | sed 's/|/,/g' | sed 's/"/ /g' | sed 's/ //g')
 freqAFR=$(cat CODIS_afreq.csv |grep PentaE | grep AFR | sed 's/, /|/g' | cut -d',' -f5 | sed 's/|/,/g' | sed 's/"/ /g' | sed 's/ //g')
@@ -220,7 +220,7 @@ freqSAS=""
 
 chrom="chr18"
 pos=63281667
-motif="GAAA"
+motif="AGAA"
 thresh=-1
 freqEUR=$(cat CODIS_afreq.csv |grep D18S51 | grep EUR | sed 's/, /|/g' | cut -d',' -f5 | sed 's/|/,/g' | sed 's/"/ /g'| sed 's/ //g')
 freqAFR=$(cat CODIS_afreq.csv |grep D18S51 | grep AFR | sed 's/, /|/g' | cut -d',' -f5 | sed 's/|/,/g' | sed 's/"/ /g'| sed 's/ //g')
@@ -239,7 +239,7 @@ freqSAS=""
 
 chrom="chr11"
 pos=2171088
-motif="TCAT"
+motif=""
 thresh=-1
 freqEUR=$(cat CODIS_afreq.csv |grep TH01 | grep EUR | sed 's/, /|/g' | cut -d',' -f5 | sed 's/|/,/g' | sed 's/"/ /g'| sed 's/ //g')
 freqAFR=$(cat CODIS_afreq.csv |grep TH01 | grep AFR | sed 's/, /|/g' | cut -d',' -f5 | sed 's/|/,/g' | sed 's/"/ /g'| sed 's/ //g')
@@ -248,6 +248,24 @@ freqAMR=$(cat CODIS_afreq.csv |grep TH01 | grep AMR | sed 's/, /|/g' | cut -d','
 freqSAS=$(cat CODIS_afreq.csv |grep TH01 | grep SAS | sed 's/, /|/g' | cut -d',' -f5 | sed 's/|/,/g' | sed 's/"/ /g'| sed 's/ //g')
 echo $chrom";"$pos";"$motif";"$thresh";"$freqEUR";"$freqAFR";"$freqEAS";"$freqAMR";"$freqSAS | sed 's/;/\t/g'
 
+####### PentaD ###########
+
+freqEUR=""
+freqAFR=""
+freqEAS=""
+freqAMR=""
+freqSAS=""
+
+chrom="chr21"
+pos=43636205
+motif=""
+thresh=-1
+freqEUR=$(cat CODIS_afreq.csv |grep PentaD | grep EUR | sed 's/, /|/g' | cut -d',' -f5 | sed 's/|/,/g' | sed 's/"/ /g'| sed 's/ //g')
+freqAFR=$(cat CODIS_afreq.csv |grep PentaD | grep AFR | sed 's/, /|/g' | cut -d',' -f5 | sed 's/|/,/g' | sed 's/"/ /g'| sed 's/ //g')
+freqEAS=$(cat CODIS_afreq.csv |grep PentaD | grep EAS | sed 's/, /|/g' | cut -d',' -f5 | sed 's/|/,/g' | sed 's/"/ /g'| sed 's/ //g')
+freqAMR=$(cat CODIS_afreq.csv |grep PentaD | grep AMR | sed 's/, /|/g' | cut -d',' -f5 | sed 's/|/,/g' | sed 's/"/ /g'| sed 's/ //g')
+freqSAS=$(cat CODIS_afreq.csv |grep PentaD | grep SAS | sed 's/, /|/g' | cut -d',' -f5 | sed 's/|/,/g' | sed 's/"/ /g'| sed 's/ //g')
+echo $chrom";"$pos";"$motif";"$thresh";"$freqEUR";"$freqAFR";"$freqEAS";"$freqAMR";"$freqSAS | sed 's/;/\t/g'
 
 exit 0
 
