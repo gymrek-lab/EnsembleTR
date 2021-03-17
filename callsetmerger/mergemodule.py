@@ -74,7 +74,11 @@ class OutVCFRecord:
             self.sample_to_SRC[sample] = ','.join(SRC_list)
 
 
-
+def get_info_string(data):
+    out_recs = []
+    for key in data:
+        out_recs.append(str(key) + '=' + str(data[key]))
+    return ';'.join(out_recs)
 
 class RecordClusterMerger:
     def __init__(self, rc, samples):
@@ -87,9 +91,9 @@ class RecordClusterMerger:
         res_pas = {}
         for sample in self.samples:
             samp_call = self.record_cluster.GetSampleCall(sample)   # Get calls for this sample
-            resolved_connected_comps = self.record_resolver.GetConnectedCompForSingleCall(samp_call)      # Resolve call for this sample (pick which caller(s) call we use)
+            resolved_connected_comps, certain_cc = self.record_resolver.GetConnectedCompForSingleCall(samp_call)      # Resolve call for this sample (pick which caller(s) call we use)
             res_pas[sample] = self.record_resolver.ResolveSequenceForSingleCall(resolved_connected_comps, samp_call)
-        return res_pas
+        return res_pas, certain_cc
 
     
 
@@ -97,50 +101,51 @@ class RecordClusterMerger:
         # TODO update template with info for resolved genotypes
         return self.record_template
 
-    def GetPyVCFRecord(self):
-        INFO = {}
-        for info in self.record_template.INFO:
-            INFO[info[0]] = self.record_template.INFO.get(info[0])
-        # FORMAT = self.record_template.FORMAT
-        FORMAT = ['GT','SRC']
-        samp_fmt = make_calldata_tuple(FORMAT)
+    # def GetPyVCFRecord(self):
+    #     INFO = {}
+    #     for info in self.record_template.INFO:
+    #         INFO[info[0]] = self.record_template.INFO.get(info[0])
+    #     # FORMAT = self.record_template.FORMAT
+    #     FORMAT = ['GT','SRC']
+    #     samp_fmt = make_calldata_tuple(FORMAT)
 
-        # Create list of pre-alleles
-        res_pas = self.ResolveAllSampleCalls()
-        print(res_pas)
-        out_rec = OutVCFRecord(res_pas)
-        SAMPLES=[]
-        for sample in self.record_cluster.samples:
-            SAMPLES.append(_Call(self, sample, samp_fmt(GT=out_rec.sample_to_GT[sample],SRC=out_rec.sample_to_SRC[sample])))
+    #     # Create list of pre-alleles
+    #     res_pas = self.ResolveAllSampleCalls()
+    #     print(res_pas)
+    #     out_rec = OutVCFRecord(res_pas)
+    #     SAMPLES=[]
+    #     for sample in self.record_cluster.samples:
+    #         SAMPLES.append(_Call(self, sample, samp_fmt(GT=out_rec.sample_to_GT[sample],SRC=out_rec.sample_to_SRC[sample])))
         
-        ALTS = []
-        for alt_allele in out_rec.alts:
-            ALTS.append(_Substitution(alt_allele))
-        return _Record(self.record_template.CHROM, 
-            self.record_template.POS, 
-            self.record_template.ID,
-            out_rec.ref,
-            ALTS,
-            self.record_template.QUAL,
-            self.record_template.FILTER,
-            INFO,
-            ':'.join(FORMAT),
-            dict([(x,i) for (i,x) in enumerate(self.record_cluster.samples)]),
-            SAMPLES)
+    #     ALTS = []
+    #     for alt_allele in out_rec.alts:
+    #         ALTS.append(_Substitution(alt_allele))
+    #     return _Record(self.record_template.CHROM, 
+    #         self.record_template.POS, 
+    #         self.record_template.ID,
+    #         out_rec.ref,
+    #         ALTS,
+    #         self.record_template.QUAL,
+    #         self.record_template.FILTER,
+    #         INFO,
+    #         ':'.join(FORMAT),
+    #         dict([(x,i) for (i,x) in enumerate(self.record_cluster.samples)]),
+    #         SAMPLES)
 
     def GetRawVCFRecord(self):
-        INFO = 'TESTINFO1=100;TESTINFO2=20' # TODO convert from dict
         FORMAT = ['GT','SRC']
-
         # Create list of pre-alleles
-        res_pas = self.ResolveAllSampleCalls()
-        print(res_pas)
+        res_pas, certain = self.ResolveAllSampleCalls()
+
+        INFO_DICT = {'certain': certain}
+        # print(res_pas)
         out_rec = OutVCFRecord(res_pas)
         SAMPLE_DATA=[]
         for sample in self.record_cluster.samples:
             SAMPLE_DATA.append(':'.join([out_rec.sample_to_GT[sample],out_rec.sample_to_SRC[sample]]))
         
         ALTS = []
+        INFO = get_info_string(INFO_DICT)
         for alt_allele in out_rec.alts:
             ALTS.append(_Substitution(alt_allele))
         # TODO remove record template and get information from pre allele

@@ -317,21 +317,28 @@ class RecordResolver:
                 num_valid_methods += 1
             conn_comp_sg_dict[method] = [ccsg0, ccsg1]
 
-        sorted_ccsg_support = dict(sorted(ccsg_support.items(), key=lambda item: item[1]))
+        sorted_ccsg_support = dict(sorted(ccsg_support.items(), key=lambda item: item[1], reverse=True))
         ret_sgs = []
+        certain = True
         for sg in sorted_ccsg_support:
             # If all alleles in all methods point to one cc
-            # TODO for Hom require support to be perfect (2x num_valide) if not, report not certain
-            # TODO for Het do the same for support two ccs each with num_valid
-            if sorted_ccsg_support[sg] <= num_valid_methods * 2 and sorted_ccsg_support[sg] > (num_valid_methods - 1) * 2:
-                return [sg, sg]
-            if len(ret_sgs) < 2:
-                ret_sgs.append(sg)
+            # for Hom require support to be perfect (2x num_valide) if not, report not certain
+            # for Het do the same for support two ccs each with num_valid
+            if sorted_ccsg_support[sg] == num_valid_methods * 2: 
+                return [sg, sg], certain
+            elif sorted_ccsg_support[sg] == num_valid_methods:
+                if len(ret_sgs) < 2:
+                    ret_sgs.append(sg)
+                else:
+                    certain = False
+                    # We have already added 2 top supported ccs, but we still have another cc
+                    print("WARNING: extra cc", sg)
+                    
             else:
-                # We have already added 2 top supported ccs, but we still have another cc
-                print("WARNING: extra cc", sg)
-
-        return ret_sgs
+                certain = False
+                print("WARNING: at least one CC is not fully supported by either one or both alleles", sg)
+        return ret_sgs, certain
+        
 
 
     def ResolveSequenceForSingleCall(self, ccsg_list, samp_call):
