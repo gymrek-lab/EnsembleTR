@@ -89,11 +89,13 @@ class RecordClusterMerger:
         
     def ResolveAllSampleCalls(self):
         res_pas = {}
+        res_cer = {}
         for sample in self.samples:
             samp_call = self.record_cluster.GetSampleCall(sample)   # Get calls for this sample
             resolved_connected_comps, certain_cc = self.record_resolver.GetConnectedCompForSingleCall(samp_call)      # Resolve call for this sample (pick which caller(s) call we use)
+            res_cer[sample] = certain_cc
             res_pas[sample] = self.record_resolver.ResolveSequenceForSingleCall(resolved_connected_comps, samp_call)
-        return res_pas, certain_cc
+        return res_pas, res_cer
 
     
 
@@ -133,16 +135,16 @@ class RecordClusterMerger:
     #         SAMPLES)
 
     def GetRawVCFRecord(self):
-        FORMAT = ['GT','SRC']
+        FORMAT = ['GT','SRC','CERT']
         # Create list of pre-alleles
-        res_pas, certain = self.ResolveAllSampleCalls()
+        res_pas, res_cert = self.ResolveAllSampleCalls()
 
-        INFO_DICT = {'certain': certain}
+        INFO_DICT = {'TESTINFO0': 12}
         # print(res_pas)
         out_rec = OutVCFRecord(res_pas)
         SAMPLE_DATA=[]
         for sample in self.record_cluster.samples:
-            SAMPLE_DATA.append(':'.join([out_rec.sample_to_GT[sample],out_rec.sample_to_SRC[sample]]))
+            SAMPLE_DATA.append(':'.join([out_rec.sample_to_GT[sample],out_rec.sample_to_SRC[sample],str(res_cert[sample])]))
         
         ALTS = []
         INFO = get_info_string(INFO_DICT)
