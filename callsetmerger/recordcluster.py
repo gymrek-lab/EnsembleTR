@@ -337,6 +337,7 @@ class RecordResolver:
             else:
                 certain = False
                 print("WARNING: at least one CC is not fully supported by either one or both alleles", sg)
+        print (certain)
         return ret_sgs, certain
         
 
