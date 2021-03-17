@@ -60,7 +60,7 @@ def main():
                 nx.draw(cg.graph, pos, node_color=cg.colors)
                 nx.draw_networkx_labels(cg.graph, pos, labels=cg.labels)
 
-                plt.show()
+                # plt.show()
                 
                 # Merge calls
                 mo = RecordClusterMerger(rc, readers.samples)
