@@ -143,9 +143,6 @@ class Readers:
         # print("############")
         # print("%s:%s-%s" % (self.cur_range_chrom, self.cur_range_start_pos, self.cur_range_end_pos))
         record_cluster_list = []
-        # TODO remove (moving to another class)
-        # allele_list = []
-        # sample_calls = {}
 
         # Print out info
         for i in range(len(self.current_tr_records)):

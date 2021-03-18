@@ -54,12 +54,14 @@ class PreAllele:
         return "Ref: " + self.ref_seq + "\nSeq: " + self.seq + "\nSupp: " + str(self.support)
     
 class Allele:
-    def __init__(self, vcf_type, atype, allele_sequence, reference_sequence, diff_from_ref, genotype_idx):
+    def __init__(self, vcf_type, atype, allele_sequence, reference_sequence, diff_from_ref, genotype_idx, prepend_seq, append_seq):
         if atype not in [AlleleType.Reference, AlleleType.Alternate]:
             raise ValueError('Unknown allele type: ' + atype)
         self.allele_type = atype
-        self.allele_sequence = allele_sequence
-        self.reference_sequence = reference_sequence
+        self.original_allele_sequence = allele_sequence
+        self.original_reference_sequnce = reference_sequence
+        self.allele_sequence = prepend_seq + allele_sequence + append_seq
+        self.reference_sequence = prepend_seq + reference_sequence + append_seq
         self.allele_size = diff_from_ref
         self.genotype_idx = genotype_idx
         self.vcf_type = vcf_type
@@ -81,6 +83,8 @@ class RecordObj:
         self.ref = self.hm_record.ref_allele
         self.motif = self.hm_record.motif
         self.canonical_motif = GetCanonicalMotif(self.motif)
+        self.prepend_seq = ''
+        self.append_seq = ''
 
     def GetSamples(self):
         return self.cyvcf2_record.samples
@@ -99,20 +103,74 @@ class RecordCluster:
         self.canonical_motif = GetCanonicalMotif(self.motif)
         self.vcf_types = [False] * len(convert_type_to_idx.keys())
         self.samples = recobjs[0].samples
+        self.first_pos = -1
+        self.last_end = -1
+        # References used for prepending and appending (can be different)
+        self.PREP_REF = ''
+        self.APP_REF = ''
+        
+        # First, find the first start and last end
         for rec in recobjs:
+            if self.first_pos == -1:
+                self.first_pos = rec.cyvcf2_record.POS
+                self.PREP_REF = rec.cyvcf2_record.REF
+            if self.last_end == -1:
+                self.last_end = rec.cyvcf2_record.end
+                self.APP_REF = rec.cyvcf2_record.REF
+            if rec.cyvcf2_record.POS < self.first_pos:
+                self.first_pos = rec.cyvcf2_record.POS
+                self.PREP_REF = rec.cyvcf2_record.REF
+            if rec.cyvcf2_record.end > self.last_end:
+                self.last_end = rec.cyvcf2_record.end
+                self.APP_REF = rec.cyvcf2_record.REF
+
             self.vcf_types[convert_type_to_idx[rec.vcf_type]] = True
             if rec.canonical_motif != self.canonical_motif:
                 raise ValueError('RecordObjs in a cluster must share canonical motif.\n' +
                                  'Cannot add RO with ' + rec.canonical_motif + ' canonical motif to cluster' +
                                  'with ' + self.canonical_motif + 'canonical motif.')
+
         self.record_objs = recobjs
+        for rec in self.record_objs:
+            if rec.cyvcf2_record.POS > self.first_pos:
+                # Found a record that starts after
+                # Should prepend the record
+                rec.prepend_str = self.PREP_REF[0:rec.cyvcf2_record.POS - self.first_pos]
+            
+            if rec.cyvcf2_record.end < self.last_end:
+                # Found a record that ends before last end
+                # Should append the record
+                rec.append_str = self.APP_REF[-(self.last_end - rec.cyvcf2_record.end):]
+
+        
         
 
     def AppendRecordObject(self, ro):
         if self.canonical_motif != ro.canonical_motif:
             raise ValueError('Canonical motif of appended record object mush match record cluster.')
+
         self.record_objs.append(ro)
         self.vcf_types[convert_type_to_idx[ro.vcf_type]] = True
+
+        # Update first pos and last end and appropriate references for prepending and appending
+        if ro.cyvcf2_record.POS < self.first_pos:
+            self.first_pos = ro.cyvcf2_record.POS
+            self.PREP_REF = ro.cyvcf2_record.REF
+        if ro.cyvcf2_record.end > self.last_end:
+            self.last_end = ro.cyvcf2_record.end
+            self.APP_REF = ro.cyvcf2_record.REF
+
+        # Update prepend and append strings:
+        for rec in self.record_objs:
+            if rec.cyvcf2_record.POS > self.first_pos:
+                # Found a record that starts after
+                # Should prepend the record
+                rec.prepend_seq = self.PREP_REF[0:rec.cyvcf2_record.POS - self.first_pos]
+            
+            if rec.cyvcf2_record.end < self.last_end:
+                # Found a record that ends before last end
+                # Should append the record
+                rec.append_seq = self.APP_REF[-(self.last_end - rec.cyvcf2_record.end):]
 
     def GetVcfTypesTuple(self):
         return tuple(self.vcf_types)
@@ -121,10 +179,10 @@ class RecordCluster:
         alist = []
         for ro in self.record_objs:
             ref = ro.hm_record.ref_allele
-            alist.append(Allele(ro.vcf_type, AlleleType.Reference, ref, ref, 0, 0))
+            alist.append(Allele(ro.vcf_type, AlleleType.Reference, ref, ref, 0, 0, ro.prepend_seq, ro.append_seq))
             altnum = 1
             for alt in ro.hm_record.alt_alleles:
-                alist.append(Allele(ro.vcf_type, AlleleType.Alternate, alt, ref, len(alt) - len(ref), altnum))
+                alist.append(Allele(ro.vcf_type, AlleleType.Alternate, alt, ref, len(alt) - len(ref), altnum, ro.prepend_seq, ro.append_seq))
                 altnum += 1
         return alist
 
