@@ -74,7 +74,7 @@ class Allele:
 
 
 class RecordObj:
-    def __init__(self, vcf_type, VCF, rec):
+    def __init__(self, vcf_type, VCF, rec, ref_genome):
         self.cyvcf2_record = rec
         self.VCF = VCF
         self.samples = VCF.samples
@@ -85,6 +85,7 @@ class RecordObj:
         self.canonical_motif = GetCanonicalMotif(self.motif)
         self.prepend_seq = ''
         self.append_seq = ''
+        self.ref_genome = ref_genome
 
     def GetSamples(self):
         return self.cyvcf2_record.samples
@@ -108,6 +109,7 @@ class RecordCluster:
         # References used for prepending and appending (can be different)
         self.PREP_REF = ''
         self.APP_REF = ''
+        self.fasta = recobjs[0].ref_genome
         
         # First, find the first start and last end
         for rec in recobjs:
@@ -136,11 +138,13 @@ class RecordCluster:
                 # Found a record that starts after
                 # Should prepend the record
                 rec.prepend_str = self.PREP_REF[0:rec.cyvcf2_record.POS - self.first_pos]
+                print('>> pre: ', rec.prepend_str)
             
             if rec.cyvcf2_record.end < self.last_end:
                 # Found a record that ends before last end
                 # Should append the record
                 rec.append_str = self.APP_REF[-(self.last_end - rec.cyvcf2_record.end):]
+                print('>> app: ', rec.append_str)
 
         
         
@@ -395,7 +399,7 @@ class RecordResolver:
             else:
                 certain = False
                 print("WARNING: at least one CC is not fully supported by either one or both alleles", sg)
-        print (certain)
+        # print (certain)
         return ret_sgs, certain
         
 

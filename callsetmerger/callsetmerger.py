@@ -42,7 +42,8 @@ def GetWriter(out_path, samples):
         
 
 class Readers:
-    def __init__(self, vcfpaths):
+    def __init__(self, vcfpaths, ref_genome):
+        self.ref_genome = ref_genome
         self.vcfwrappers = []
         self.samples = []
         # Load all VCFs, make sure we can infer type
@@ -147,7 +148,7 @@ class Readers:
         # Print out info
         for i in range(len(self.current_tr_records)):
             if self.is_overlap_min[i] and self.current_tr_records[i] is not None:
-                curr_ro = RecordObj(self.vcfwrappers[i].vcftype, self.vcfwrappers[i].vcfreader, self.current_tr_records[i].vcfrecord)
+                curr_ro = RecordObj(self.vcfwrappers[i].vcftype, self.vcfwrappers[i].vcfreader, self.current_tr_records[i].vcfrecord, self.ref_genome)
                 added = False
                 for rc in record_cluster_list:
                     if rc.canonical_motif == curr_ro.canonical_motif:
