@@ -434,11 +434,12 @@ class RecordResolver:
                             if allele.vcf_type == trh.VcfTypes.hipstr and allele.genotype_idx in samp_call[trh.VcfTypes.hipstr]:
                                 tmp_node = allele
                         if tmp_node is None:
-                            raise ValueError("Could not find HipSTR allele matching samp_call in this ccsg!")
-                        pa = PreAllele(tmp_node.reference_sequence, tmp_node.allele_sequence, [trh.VcfTypes.hipstr])
-                        for node in ccsg:
-                            if node != tmp_node and node.allele_sequence == tmp_node.allele_sequence:
-                                pa.add_support([node.vcf_type])
+                            print ("WARNING: Could not find HipSTR allele matching samp_call in this ccsg!")
+                        else:
+                            pa = PreAllele(tmp_node.reference_sequence, tmp_node.allele_sequence, [trh.VcfTypes.hipstr])
+                            for node in ccsg:
+                                if node != tmp_node and node.allele_sequence == tmp_node.allele_sequence:
+                                    pa.add_support([node.vcf_type])
                 else:
                     raise ValueError("HipSTR doesn't exist and we have a discrepancy!")
 
