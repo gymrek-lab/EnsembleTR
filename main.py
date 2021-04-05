@@ -85,7 +85,7 @@ def main():
 
         # Move on
         readers.goToNext()
-        if i == 3:
+        if i == 300:
             break
     outvcf.close()
 
