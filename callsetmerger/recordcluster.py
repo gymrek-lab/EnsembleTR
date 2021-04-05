@@ -107,24 +107,18 @@ class RecordCluster:
         self.first_pos = -1
         self.last_end = -1
         # References used for prepending and appending (can be different)
-        self.PREP_REF = ''
-        self.APP_REF = ''
         self.fasta = recobjs[0].ref_genome
         
         # First, find the first start and last end
         for rec in recobjs:
             if self.first_pos == -1:
                 self.first_pos = rec.cyvcf2_record.POS
-                self.PREP_REF = rec.cyvcf2_record.REF
             if self.last_end == -1:
                 self.last_end = rec.cyvcf2_record.end
-                self.APP_REF = rec.cyvcf2_record.REF
             if rec.cyvcf2_record.POS < self.first_pos:
                 self.first_pos = rec.cyvcf2_record.POS
-                self.PREP_REF = rec.cyvcf2_record.REF
             if rec.cyvcf2_record.end > self.last_end:
                 self.last_end = rec.cyvcf2_record.end
-                self.APP_REF = rec.cyvcf2_record.REF
 
             self.vcf_types[convert_type_to_idx[rec.vcf_type]] = True
             if rec.canonical_motif != self.canonical_motif:
@@ -158,10 +152,8 @@ class RecordCluster:
         # Update first pos and last end and appropriate references for prepending and appending
         if ro.cyvcf2_record.POS < self.first_pos:
             self.first_pos = ro.cyvcf2_record.POS
-            self.PREP_REF = ro.cyvcf2_record.REF
         if ro.cyvcf2_record.end > self.last_end:
             self.last_end = ro.cyvcf2_record.end
-            self.APP_REF = ro.cyvcf2_record.REF
 
         # Update prepend and append strings:
         for rec in self.record_objs:
