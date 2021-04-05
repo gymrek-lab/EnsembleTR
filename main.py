@@ -17,6 +17,7 @@ import numpy as np
 import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
+from pyfaidx import Fasta
 
 def main():
     parser = argparse.ArgumentParser(__doc__)
@@ -25,13 +26,16 @@ def main():
     parser.add_argument("--outvcftemplate", help="(TODO make general tmp or remove if pyvcf) Template to use for output VCF.", type=str,
                         required=True)
     parser.add_argument("--out", help="Output merged VCF file", type=str, required= True)
+    parser.add_argument("--ref", help="Reference genome .fa file", type=str, required=True)
 
     args = parser.parse_args()
 
-    readers = Readers(args.vcfs.split(","))
+    ref_genome = Fasta(args.ref)
+    readers = Readers(args.vcfs.split(","), ref_genome)
     out_path = args.out
     # CyVCF2 needs a VCF template, I'm using HipSTR for first iteration
     template_path = args.outvcftemplate # NOT USED IN PYVCF OUTPUT, REMOVE
+    
 
     # Check samples same in each VCF
     # TODO
@@ -66,8 +70,8 @@ def main():
                 mo = RecordClusterMerger(rc, readers.samples)
                 # rec = mo.GetPyVCFRecord()
                 rec = mo.GetRawVCFRecord()
-                print(rec)
-                print("Writing:")
+                # print(rec)
+                # print("Writing:")
                 try:
                     outvcf.write(rec)
                 except:
