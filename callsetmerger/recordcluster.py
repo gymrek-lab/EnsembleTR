@@ -134,17 +134,16 @@ class RecordCluster:
 
         self.record_objs = recobjs
         for rec in self.record_objs:
+            chrom = rec.cyvcf2_record.CHROM
             if rec.cyvcf2_record.POS > self.first_pos:
                 # Found a record that starts after
                 # Should prepend the record
-                rec.prepend_str = self.PREP_REF[0:rec.cyvcf2_record.POS - self.first_pos]
-                print('>> pre: ', rec.prepend_str)
+                rec.prepend_str = self.fasta[chrom][self.first_pos : rec.cyvcf2_record.POS].seq.upper()
             
             if rec.cyvcf2_record.end < self.last_end:
                 # Found a record that ends before last end
                 # Should append the record
-                rec.append_str = self.APP_REF[-(self.last_end - rec.cyvcf2_record.end):]
-                print('>> app: ', rec.append_str)
+                rec.append_str = self.fasta[chrom][rec.cyvcf2_record.end : self.last_end].seq.upper()  
 
         
         
@@ -166,15 +165,16 @@ class RecordCluster:
 
         # Update prepend and append strings:
         for rec in self.record_objs:
+            chrom = rec.cyvcf2_record.CHROM
             if rec.cyvcf2_record.POS > self.first_pos:
                 # Found a record that starts after
                 # Should prepend the record
-                rec.prepend_seq = self.PREP_REF[0:rec.cyvcf2_record.POS - self.first_pos]
+                rec.prepend_seq = self.fasta[chrom][self.first_pos : rec.cyvcf2_record.POS].seq.upper()
             
             if rec.cyvcf2_record.end < self.last_end:
                 # Found a record that ends before last end
                 # Should append the record
-                rec.append_seq = self.APP_REF[-(self.last_end - rec.cyvcf2_record.end):]
+                rec.append_seq = self.fasta[chrom][rec.cyvcf2_record.end : self.last_end].seq.upper()
 
     def GetVcfTypesTuple(self):
         return tuple(self.vcf_types)
