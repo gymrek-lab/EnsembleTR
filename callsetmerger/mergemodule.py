@@ -91,9 +91,9 @@ class RecordClusterMerger:
         res_cer = {}
         for sample in self.samples:
             samp_call = self.record_cluster.GetSampleCall(sample)   # Get calls for this sample
-            resolved_connected_comps, certain_cc = self.record_resolver.GetConnectedCompForSingleCall(samp_call)      # Resolve call for this sample (pick which caller(s) call we use)
+            resolved_connected_comp_ids, certain_cc = self.record_resolver.GetConnectedCompForSingleCall(samp_call)      # Resolve call for this sample (pick which caller(s) call we use)
             res_cer[sample] = certain_cc
-            res_pas[sample] = self.record_resolver.ResolveSequenceForSingleCall(resolved_connected_comps, samp_call)
+            res_pas[sample] = self.record_resolver.ResolveSequenceForSingleCall(resolved_connected_comp_ids, samp_call)
         return res_pas, res_cer
 
     
