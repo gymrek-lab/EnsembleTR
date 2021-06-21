@@ -69,6 +69,10 @@ class OutVCFRecord:
                 for caller in pa.support:
                     if caller.name not in SRC_list:
                         SRC_list.append(caller.name)
+            if len(GT_list) == 0:
+                GT_list = ['.']
+            if len(SRC_list) == 0:
+                SRC_list = ['.']
             self.sample_to_GT[sample] = '/'.join(GT_list)
             self.sample_to_SRC[sample] = ','.join(SRC_list)
 
