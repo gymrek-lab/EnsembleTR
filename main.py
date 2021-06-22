@@ -23,8 +23,8 @@ def main():
     parser = argparse.ArgumentParser(__doc__)
     parser.add_argument("--vcfs", help="Comma-separated list of VCFs to merge. Must be sorted/indexed", type=str,
                         required=True)
-    parser.add_argument("--outvcftemplate", help="(TODO make general tmp or remove if pyvcf) Template to use for output VCF.", type=str,
-                        required=True)
+    # parser.add_argument("--outvcftemplate", help="(TODO make general tmp or remove if pyvcf) Template to use for output VCF.", type=str,
+                        # required=True)
     parser.add_argument("--out", help="Output merged VCF file", type=str, required= True)
     parser.add_argument("--ref", help="Reference genome .fa file", type=str, required=True)
 
@@ -34,7 +34,7 @@ def main():
     readers = Readers(args.vcfs.split(","), ref_genome)
     out_path = args.out
     # CyVCF2 needs a VCF template, I'm using HipSTR for first iteration
-    template_path = args.outvcftemplate # NOT USED IN PYVCF OUTPUT, REMOVE
+    # template_path = args.outvcftemplate # NOT USED IN PYVCF OUTPUT, REMOVE
     
 
     # Check samples same in each VCF
