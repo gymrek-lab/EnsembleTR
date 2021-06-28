@@ -5,6 +5,7 @@ RecordCluster object includes mergeable records. Mergeable records are defined a
 Work in progress
 
 """
+from re import template
 from typing import List
 
 import trtools.utils.tr_harmonizer as trh
@@ -140,7 +141,28 @@ class RecordCluster:
                 # Should append the record
                 rec.append_str = self.fasta[chrom][rec.cyvcf2_record.end : self.last_end].seq.upper()  
 
-        
+    def GetAllInputs(self):
+        out_dict = {}
+        for sample in self.samples:
+            samp_call_list = []
+            for ro in self.record_objs:
+                temp_str = ro.vcf_type.name + '='
+                
+                samp_call = ro.GetROSampleCall(sample)
+                if samp_call is None or samp_call[0] == -1:
+                    temp_str = temp_str + '.'
+                else:
+                    call_idxs = samp_call[0:2]
+                    call_ncopy_list = []
+                    for idx in call_idxs:
+                        if idx == 0:
+                            call_ncopy_list.append(str(ro.hm_record.ref_allele_length))
+                        else:
+                            call_ncopy_list.append(str(ro.hm_record.alt_allele_lengths[idx - 1]))
+                    temp_str = temp_str + ','.join(call_ncopy_list)
+                samp_call_list.append(temp_str)
+            out_dict[sample] = '|'.join(samp_call_list)
+        return out_dict
         
 
     def AppendRecordObject(self, ro):

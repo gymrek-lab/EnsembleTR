@@ -41,12 +41,14 @@ def GetGTForAlleles(resolved_call):
 
 
 class OutVCFRecord:
-    def __init__(self, res_pas):
+    def __init__(self, res_pas, rc):
         self.pre_alleles = res_pas
+        self.record_cluster = rc
         self.ref = ""
         self.alts = []
         self.sample_to_GT = {}
         self.sample_to_SRC = {}
+        self.sample_to_INPUTS = rc.GetAllInputs()
         # Add INFO fields as well
 
         for sample in self.pre_alleles:
@@ -138,16 +140,22 @@ class RecordClusterOutput:
     #         SAMPLES)
 
     def GetRawVCFRecord(self):
-        FORMAT = ['GT','SRC','CERT']
+        FORMAT = ['GT','SRC','CERT','INPUTS']
         # Create list of pre-alleles
-        res_pas, res_cert = self.ResolveAllSampleCalls()
+        res_pre_alleles, res_cert = self.ResolveAllSampleCalls()
 
         INFO_DICT = {'TESTINFO0': 12}
         # print(res_pas)
-        out_rec = OutVCFRecord(res_pas)
+        out_rec = OutVCFRecord(res_pre_alleles, self.record_cluster)
         SAMPLE_DATA=[]
         for sample in self.record_cluster.samples:
-            SAMPLE_DATA.append(':'.join([out_rec.sample_to_GT[sample],out_rec.sample_to_SRC[sample],str(res_cert[sample])]))
+            SAMPLE_DATA.append(':'.join(
+                [out_rec.sample_to_GT[sample],
+                out_rec.sample_to_SRC[sample],
+                str(res_cert[sample]),
+                out_rec.sample_to_INPUTS[sample]
+                ]
+                ))
         
         ALTS = []
         INFO = get_info_string(INFO_DICT)
