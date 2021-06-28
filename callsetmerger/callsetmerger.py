@@ -139,8 +139,6 @@ class Readers:
         return is_overlap_min
 
     def getMergableCalls(self):
-        # if sum(self.is_overlap_min) <= 1:
-        #     return None  # TODO. boring for debugging. just a single genotyper
 
         # print("############")
         # print("%s:%s-%s" % (self.cur_range_chrom, self.cur_range_start_pos, self.cur_range_end_pos))
