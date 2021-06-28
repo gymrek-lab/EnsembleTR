@@ -11,7 +11,7 @@ import traceback
 import argparse
 from callsetmerger.callsetmerger import Readers, GetWriter
 from callsetmerger.recordcluster import ClusterGraph
-from callsetmerger.mergemodule import RecordClusterMerger
+from callsetmerger.mergemodule import RecordClusterOutput
 import networkx as nx
 import numpy as np
 import matplotlib
@@ -27,9 +27,13 @@ def main():
                         # required=True)
     parser.add_argument("--out", help="Output merged VCF file", type=str, required= True)
     parser.add_argument("--ref", help="Reference genome .fa file", type=str, required=True)
+    parser.add_argument("--include-boring", help="Include boring loci as well", dest='include_boring', default=False, action='store_true')
+
 
     args = parser.parse_args()
 
+    include_boring = args.include_boring
+    
     ref_genome = Fasta(args.ref)
     readers = Readers(args.vcfs.split(","), ref_genome)
     out_path = args.out
@@ -49,29 +53,37 @@ def main():
         # Get mergeable calls
         ov_region = readers.getMergableCalls()
         rc_list = ov_region.RecordClusters
-        if rc_list is None:
-            # Move on
-            # TODO Write first variant to VCF
-            readers.goToNext()
-            continue
+
 
         for rc in rc_list:
             num_vcfs = len([i for i in rc.vcf_types if i == True])
-            if num_vcfs >= 2:
+            if num_vcfs == 1:
+                # only one VCF in record cluster
+                if include_boring:
+                    a = 2
+                    mo = RecordClusterOutput(rc, readers.samples)
+                    rec = mo.GetRawVCFRecord()
+                    try:
+                        outvcf.write(rec)
+                    except:
+                        traceback.print_exc()
+                    
+            elif num_vcfs >= 2:
                 cg = ClusterGraph(rc)
-                # nx.layout()
-                pos = nx.spring_layout(cg.graph, k=2 / np.sqrt(len(cg.graph.nodes)))
-                nx.draw(cg.graph, pos, node_color=cg.colors)
-                nx.draw_networkx_labels(cg.graph, pos, labels=cg.labels)
+
+                ## draw graph
+
+                # # nx.layout()
+                # pos = nx.spring_layout(cg.graph, k=2 / np.sqrt(len(cg.graph.nodes)))
+                # nx.draw(cg.graph, pos, node_color=cg.colors)
+                # nx.draw_networkx_labels(cg.graph, pos, labels=cg.labels)
 
                 # plt.show()
                 
-                # Merge calls
-                mo = RecordClusterMerger(rc, readers.samples)
-                # rec = mo.GetPyVCFRecord()
+                ## Merge calls
+
+                mo = RecordClusterOutput(rc, readers.samples)
                 rec = mo.GetRawVCFRecord()
-                # print(rec)
-                # print("Writing:")
                 try:
                     outvcf.write(rec)
                 except:

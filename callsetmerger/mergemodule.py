@@ -83,7 +83,7 @@ def get_info_string(data):
         out_recs.append(str(key) + '=' + str(data[key]))
     return ';'.join(out_recs)
 
-class RecordClusterMerger:
+class RecordClusterOutput:
     def __init__(self, rc, samples):
         self.record_cluster = rc
         self.record_resolver = RecordResolver(rc)
