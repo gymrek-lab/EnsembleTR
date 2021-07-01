@@ -47,27 +47,31 @@ class OutVCFRecord:
         self.ref = ""
         self.alts = []
         self.sample_to_GT = {}
+        self.sample_to_NCOPY = {}
         self.sample_to_SRC = {}
         self.sample_to_INPUTS = rc.GetAllInputs()
         # Add INFO fields as well
 
         for sample in self.pre_alleles:
             GT_list = []
+            NCOPY_list  = []
             SRC_list = []
             for pa in self.pre_alleles[sample]:
                 if self.ref == "":
-                    self.ref = pa.ref_seq
+                    self.ref = pa.reference_sequence
                 # TODO Fix assertion
                 #assert self.ref == pa.ref_seq
 
-                if pa.seq != self.ref:
+                if pa.allele_sequence != self.ref:
                     # we have alt allele
-                    if pa.seq not in self.alts:
-                        self.alts.append(pa.seq)
-                    GT_list.append(str(self.alts.index(pa.seq) + 1))
+                    if pa.allele_sequence not in self.alts:
+                        self.alts.append(pa.allele_sequence)
+                    GT_list.append(str(self.alts.index(pa.allele_sequence) + 1))
+                    NCOPY_list.append(str(pa.allele_ncopy))
                 else:
                     # ref allele
                     GT_list.append('0')
+                    NCOPY_list.append(str(pa.reference_ncopy))
                 for caller in pa.support:
                     if caller.name not in SRC_list:
                         SRC_list.append(caller.name)
@@ -75,7 +79,10 @@ class OutVCFRecord:
                 GT_list = ['.']
             if len(SRC_list) == 0:
                 SRC_list = ['.']
+            if len(NCOPY_list) == 0:
+                NCOPY_list = ['.']
             self.sample_to_GT[sample] = '/'.join(GT_list)
+            self.sample_to_NCOPY[sample] = ','.join(NCOPY_list)
             self.sample_to_SRC[sample] = ','.join(SRC_list)
 
 
@@ -140,7 +147,7 @@ class RecordClusterOutput:
     #         SAMPLES)
 
     def GetRawVCFRecord(self):
-        FORMAT = ['GT','SRC','CERT','INPUTS']
+        FORMAT = ['GT', 'NCOPY', 'SRC','CERT','INPUTS']
         # Create list of pre-alleles
         res_pre_alleles, res_cert = self.ResolveAllSampleCalls()
 
@@ -151,6 +158,7 @@ class RecordClusterOutput:
         for sample in self.record_cluster.samples:
             SAMPLE_DATA.append(':'.join(
                 [out_rec.sample_to_GT[sample],
+                out_rec.sample_to_NCOPY[sample],
                 out_rec.sample_to_SRC[sample],
                 str(res_cert[sample]),
                 out_rec.sample_to_INPUTS[sample]

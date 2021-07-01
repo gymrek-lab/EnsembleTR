@@ -40,9 +40,11 @@ def GetVcfTypesKey():
     return convert_type_to_idx.keys()
 
 class PreAllele:
-    def __init__(self, ref_seq, seq, callers):
-        self.ref_seq = ref_seq
-        self.seq = seq
+    def __init__(self, allele, callers):
+        self.reference_sequence = allele.reference_sequence
+        self.allele_sequence = allele.allele_sequence
+        self.reference_ncopy = allele.reference_ncopy
+        self.allele_ncopy = allele.allele_ncopy
         self.support = callers
     
     def add_support(self, callers):
@@ -56,17 +58,24 @@ class PreAllele:
         return "Ref: " + self.ref_seq + "\nSeq: " + self.seq + "\nSupp: " + str(self.support)
     
 class Allele:
-    def __init__(self, vcf_type, atype, allele_sequence, reference_sequence, diff_from_ref, genotype_idx, prepend_seq, append_seq):
+    def __init__(self, ro, atype, allele_sequence, diff_from_ref, genotype_idx):
         if atype not in [AlleleType.Reference, AlleleType.Alternate]:
             raise ValueError('Unknown allele type: ' + atype)
         self.allele_type = atype
+        self.record_object = ro
         self.original_allele_sequence = allele_sequence
-        self.original_reference_sequnce = reference_sequence
-        self.allele_sequence = prepend_seq + allele_sequence + append_seq
-        self.reference_sequence = prepend_seq + reference_sequence + append_seq
+        self.original_reference_sequnce = ro.hm_record.ref_allele
+        self.allele_sequence = ro.prepend_seq + allele_sequence + ro.append_seq
+        self.reference_sequence = ro.prepend_seq + ro.hm_record.ref_allele + ro.append_seq
+        # self.allele_ncopy = ro.
+        if genotype_idx == 0:
+            self.allele_ncopy = ro.hm_record.ref_allele_length
+        else:
+            self.allele_ncopy = ro.hm_record.alt_allele_lengths[genotype_idx - 1]
+        self.reference_ncopy = ro.hm_record.ref_allele_length
         self.allele_size = diff_from_ref
         self.genotype_idx = genotype_idx
-        self.vcf_type = vcf_type
+        self.vcf_type = ro.vcf_type
 
     def GetLabel(self):
         if self.allele_type == AlleleType.Reference:
@@ -198,10 +207,10 @@ class RecordCluster:
         alist = []
         for ro in self.record_objs:
             ref = ro.hm_record.ref_allele
-            alist.append(Allele(ro.vcf_type, AlleleType.Reference, ref, ref, 0, 0, ro.prepend_seq, ro.append_seq))
+            alist.append(Allele(ro, AlleleType.Reference, ref, 0, 0))
             altnum = 1
             for alt in ro.hm_record.alt_alleles:
-                alist.append(Allele(ro.vcf_type, AlleleType.Alternate, alt, ref, len(alt) - len(ref), altnum, ro.prepend_seq, ro.append_seq))
+                alist.append(Allele(ro, AlleleType.Alternate, alt, len(alt) - len(ref), altnum))
                 altnum += 1
         return alist
 
@@ -288,7 +297,7 @@ class ClusterGraph:
             # If number of nodes == number of callers: 1-1-1
             if len(self.uniq_callers_dict[cc_id]) == len(self.ccid_to_subgraph_dict[cc_id].nodes()):
                 tmp_node = list(self.ccid_to_subgraph_dict[cc_id].nodes())[0]
-                pa = PreAllele(tmp_node.reference_sequence, tmp_node.allele_sequence, uniq_callers)
+                pa = PreAllele(tmp_node, uniq_callers)
                 self.ccid_to_resolved_pre_allele[cc_id]['any'] = pa
                 
             # If not 1-1-1    
@@ -298,7 +307,7 @@ class ClusterGraph:
                     # only one hipstr node
                     if len(self.caller_to_nodes_dict[cc_id][trh.VcfTypes.hipstr]) == 1:
                         tmp_node = self.caller_to_nodes_dict[cc_id][trh.VcfTypes.hipstr][0]
-                        pa = PreAllele(tmp_node.reference_sequence, tmp_node.allele_sequence, [trh.VcfTypes.hipstr])
+                        pa = PreAllele(tmp_node, [trh.VcfTypes.hipstr])
                         for node in self.ccid_to_subgraph_dict[cc_id]:
                             if node != tmp_node and node.allele_sequence == tmp_node.allele_sequence:
                                 pa.add_support([node.vcf_type])
@@ -311,7 +320,7 @@ class ClusterGraph:
                             if allele.vcf_type == trh.VcfTypes.hipstr:
                                 if allele.genotype_idx not in self.ccid_to_resolved_pre_allele[cc_id]:
                                     tmp_node = allele
-                                    pa = PreAllele(tmp_node.reference_sequence, tmp_node.allele_sequence, [trh.VcfTypes.hipstr])
+                                    pa = PreAllele(tmp_node, [trh.VcfTypes.hipstr])
                                     for node in self.ccid_to_subgraph_dict[cc_id]:
                                         if node != tmp_node and node.allele_sequence == tmp_node.allele_sequence:
                                             pa.add_support([node.vcf_type])
@@ -504,7 +513,7 @@ class RecordResolver:
 
 
     def ResolveSequenceForSingleCall(self, ccid_list, samp_call):
-        # Next update: Melissa's idea
+        # Next update: Melissa's idea --> implemented!
         # Pre resolve possible sequences for each CC. Only check if samp_call contains the caller and genot_idx of the resolved seq
         # Add support based on overlap between samp_call and methods in cc
         pre_allele_list = []
