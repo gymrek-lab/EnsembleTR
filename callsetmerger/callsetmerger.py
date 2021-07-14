@@ -55,8 +55,10 @@ class Readers:
             if len(self.samples) == 0:
                 self.samples = vcffile.samples
             else:
-                if len(self.samples) != len(vcffile.samples) or sorted(self.samples) != sorted(vcffile.samples):
-                    raise ValueError('Different samples across VCF files', self.samples,'\t', vcffile.samples)
+                # setting sample list to overlap of sample lists
+                self.samples = list(set(self.samples) & set(vcffile.samples))
+                # if len(self.samples) != len(vcffile.samples) or sorted(self.samples) != sorted(vcffile.samples):
+                #     raise ValueError('Different samples across VCF files', self.samples,'\t', vcffile.samples)
         # Get chroms
         self.chroms = utils.GetContigs(self.vcfwrappers[0].vcfreader)
         self.current_tr_records = [trh.HarmonizeRecord(wrapper.vcftype, next(wrapper.vcfreader))
@@ -147,7 +149,7 @@ class Readers:
         # Print out info
         for i in range(len(self.current_tr_records)):
             if self.is_overlap_min[i] and self.current_tr_records[i] is not None:
-                curr_ro = RecordObj(self.vcfwrappers[i].vcftype, self.vcfwrappers[i].vcfreader, self.current_tr_records[i].vcfrecord, self.ref_genome)
+                curr_ro = RecordObj(self.vcfwrappers[i].vcftype, self.vcfwrappers[i].vcfreader, self.samples, self.current_tr_records[i].vcfrecord, self.ref_genome)
                 added = False
                 for rc in record_cluster_list:
                     if rc.canonical_motif == curr_ro.canonical_motif:
