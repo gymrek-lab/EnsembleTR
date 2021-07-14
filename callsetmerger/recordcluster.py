@@ -85,10 +85,10 @@ class Allele:
 
 
 class RecordObj:
-    def __init__(self, vcf_type, VCF, rec, ref_genome):
+    def __init__(self, vcf_type, VCF, samples, rec, ref_genome):
         self.cyvcf2_record = rec
         self.VCF = VCF
-        self.samples = VCF.samples
+        self.samples = samples
         self.vcf_type = vcf_type
         self.hm_record = trh.HarmonizeRecord(vcf_type, rec)
         self.ref = self.hm_record.ref_allele
@@ -99,7 +99,8 @@ class RecordObj:
         self.ref_genome = ref_genome
 
     def GetSamples(self):
-        return self.cyvcf2_record.samples
+        # return self.cyvcf2_record.samples
+        return self.samples
 
     def GetVcfRegion(self):
         return str(self.cyvcf2_record.CHROM) + ':' + str(self.cyvcf2_record.POS)
@@ -536,7 +537,7 @@ class RecordResolver:
                     # If hipstr calls exist in this cc_id, we can use them to find the correct pa
                     if trh.VcfTypes.hipstr in self.rc_graph.uniq_callers_dict[cc_id]:
                         # this cc has hipstr nodes
-                        if trh.VcfTypes.hipstr in samp_call:
+                        if trh.VcfTypes.hipstr in samp_call and samp_call[trh.VcfTypes.hipstr][0] != -1:
                             # cc has hipstr nodes, and we have hipstr calls
                             hip_call = samp_call[trh.VcfTypes.hipstr]
                             # find the matching genotype_idx

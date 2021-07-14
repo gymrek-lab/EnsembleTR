@@ -56,6 +56,8 @@ def main():
 
 
         for rc in rc_list:
+            if rc.first_pos == 5230829:
+                print('aa')
             num_vcfs = len([i for i in rc.vcf_types if i == True])
             if num_vcfs == 1:
                 # only one VCF in record cluster
@@ -72,13 +74,13 @@ def main():
                 cg = ClusterGraph(rc)
 
                 ## draw graph
+                # if rc.first_pos == 5230829:
+                # # # nx.layout()
+                #     pos = nx.spring_layout(cg.graph, k=2 / np.sqrt(len(cg.graph.nodes)))
+                #     nx.draw(cg.graph, pos, node_color=cg.colors)
+                #     nx.draw_networkx_labels(cg.graph, pos, labels=cg.labels)
 
-                # # nx.layout()
-                # pos = nx.spring_layout(cg.graph, k=2 / np.sqrt(len(cg.graph.nodes)))
-                # nx.draw(cg.graph, pos, node_color=cg.colors)
-                # nx.draw_networkx_labels(cg.graph, pos, labels=cg.labels)
-
-                # plt.show()
+                #     plt.show()
                 
                 ## Merge calls
 
