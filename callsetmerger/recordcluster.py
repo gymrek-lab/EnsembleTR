@@ -208,10 +208,23 @@ class RecordCluster:
         alist = []
         for ro in self.record_objs:
             ref = ro.hm_record.ref_allele
-            alist.append(Allele(ro, AlleleType.Reference, ref, 0, 0))
+            # find all genotype indexes (to avoid adding alleles that are not actually called)
+            # Example: Hipstr has lines with REF ALT . . . . (all no calls)
+            # This list of available genotypes ensures we only add alleles that are 
+            # represented in the calls
+            
+            genot_set = set()
+            for call in ro.hm_record.vcfrecord.genotypes:
+                # check if no call
+                if call[0] != -1 and len(call) == 3:
+                    genot_set.add(call[0])
+                    genot_set.add(call[1])
+            if 0 in genot_set:
+                alist.append(Allele(ro, AlleleType.Reference, ref, 0, 0))
             altnum = 1
             for alt in ro.hm_record.alt_alleles:
-                alist.append(Allele(ro, AlleleType.Alternate, alt, len(alt) - len(ref), altnum))
+                if altnum in genot_set:
+                    alist.append(Allele(ro, AlleleType.Alternate, alt, len(alt) - len(ref), altnum))
                 altnum += 1
         return alist
 
@@ -486,7 +499,8 @@ class RecordResolver:
                     else:
                         cc_id_support[cc_id] += 1
                 num_valid_methods += 1
-            conn_comp_cc_id_dict[method] = [cc_id0, cc_id1]
+            if cc_id0 is not None and cc_id1 is not None:
+                conn_comp_cc_id_dict[method] = [cc_id0, cc_id1]
 
         sorted_ccid_support = dict(sorted(cc_id_support.items(), key=lambda item: item[1], reverse=True))
         ret_cc_ids = []

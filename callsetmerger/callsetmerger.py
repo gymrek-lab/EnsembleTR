@@ -48,10 +48,11 @@ class Readers:
         self.vcfwrappers = []
         self.samples = []
         # Load all VCFs, make sure we can infer type
+
+        # first pass, determine shared samples across all vcf files
         for invcf in vcfpaths:
             vcffile = cyvcf2.VCF(invcf)
             hm = trh.TRRecordHarmonizer(vcffile)
-            self.vcfwrappers.append(VCFWrapper(vcffile, hm.vcftype))
             if len(self.samples) == 0:
                 self.samples = vcffile.samples
             else:
@@ -59,6 +60,12 @@ class Readers:
                 self.samples = list(set(self.samples) & set(vcffile.samples))
                 # if len(self.samples) != len(vcffile.samples) or sorted(self.samples) != sorted(vcffile.samples):
                 #     raise ValueError('Different samples across VCF files', self.samples,'\t', vcffile.samples)
+        # Second pass, only load the shared samples
+        for invcf in vcfpaths:
+            vcffile = cyvcf2.VCF(invcf, samples = self.samples)
+            hm = trh.TRRecordHarmonizer(vcffile)
+            self.vcfwrappers.append(VCFWrapper(vcffile, hm.vcftype))
+  
         # Get chroms
         self.chroms = utils.GetContigs(self.vcfwrappers[0].vcfreader)
         self.current_tr_records = [trh.HarmonizeRecord(wrapper.vcftype, next(wrapper.vcfreader))
