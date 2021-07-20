@@ -57,8 +57,8 @@ def main():
 
         for rc in rc_list:
             ####### FOR DEBUGGING!
-            
-            # if rc.first_pos == 5041705:
+
+            # if rc.first_pos == 6376674:
             #     cg = ClusterGraph(rc)
             #     pos = nx.spring_layout(cg.graph, k=2 / np.sqrt(len(cg.graph.nodes)))
             #     nx.draw(cg.graph, pos, node_color=cg.colors)
@@ -81,14 +81,8 @@ def main():
                         traceback.print_exc()
                     
             elif num_vcfs >= 2:
-                ## draw graph
-                # if rc.first_pos == 5041705:
-                # # nx.layout()
-                    # pos = nx.spring_layout(cg.graph, k=2 / np.sqrt(len(cg.graph.nodes)))
-                    # nx.draw(cg.graph, pos, node_color=cg.colors)
-                    # nx.draw_networkx_labels(cg.graph, pos, labels=cg.labels)
-
-                    # plt.show()
+                if rc.first_pos == 6376674:
+                    print('aa')
                 
                 ## Merge calls
 
