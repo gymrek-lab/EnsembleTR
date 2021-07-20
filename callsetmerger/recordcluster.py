@@ -310,7 +310,10 @@ class ClusterGraph:
 
             # If number of nodes == number of callers: 1-1-1
             if len(self.uniq_callers_dict[cc_id]) == len(self.ccid_to_subgraph_dict[cc_id].nodes()):
-                tmp_node = list(self.ccid_to_subgraph_dict[cc_id].nodes())[0]
+                if trh.VcfTypes.hipstr in self.uniq_callers_dict[cc_id]:
+                    tmp_node = self.caller_to_nodes_dict[cc_id][trh.VcfTypes.hipstr][0]
+                else:
+                    tmp_node = list(self.ccid_to_subgraph_dict[cc_id].nodes())[0]
                 pa = PreAllele(tmp_node, uniq_callers)
                 self.ccid_to_resolved_pre_allele[cc_id]['any'] = pa
                 
