@@ -514,6 +514,9 @@ class RecordResolver:
             # for Het do the same for support two ccs each with num_valid
             if sorted_ccid_support[cc_id] == num_valid_methods * 2: 
                 return [cc_id, cc_id], certain
+            elif sorted_ccid_support[cc_id] < num_valid_methods * 2 and sorted_ccid_support[cc_id] > num_valid_methods:
+                certain = False
+                return [cc_id, cc_id], certain
             elif sorted_ccid_support[cc_id] == num_valid_methods:
                 if len(ret_cc_ids) < 2:
                     ret_cc_ids.append(cc_id)
