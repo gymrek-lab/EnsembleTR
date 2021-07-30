@@ -1,6 +1,7 @@
 *.vcf
 *.vcf.gz
 *.vcf.gz.tbi
+.mergevenv/
 venv/
 .idea
 *~
