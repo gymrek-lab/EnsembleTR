@@ -13,6 +13,7 @@ import trtools.utils.utils as utils
 import trtools.utils.mergeutils as mergeutils
 import trtools.utils.tr_harmonizer as trh
 import cyvcf2
+import vcf
 from callsetmerger.recordcluster import RecordObj, RecordCluster, OverlappingRegion
 
 
@@ -22,14 +23,49 @@ class VCFWrapper:
         self.vcftype = vcftype
 
 
+def GetWriter(out_path, samples):
+    # Create a VCF writer with appropriate header
+    # template_VCF = cyvcf2.VCF(template_path)
+    # template_VCF.add_to_header("##command=MERGIE BOI v123.13.2 yada yada") # TODO make appropriate command
+    # return cyvcf2.Writer(out_path, template_VCF)
+    # template_VCF = vcf.Reader(filename=template_path)
+    # our own VCF writer
+    f = open(out_path, 'w')
+    f.write('##fileformat=VCFv4.1\n')
+    f.write('##command=...\n')
+    f.write('##INFO=<ID=TESTINFO1,Number=1,Type=Integer,Description="Test info 1">\n')
+    f.write('##INFO=<ID=TESTINFO2,Number=1,Type=Integer,Description="Test info 2">\n')
+    f.write('##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n')
+    f.write('##FORMAT=<IR=SRC,Number=1,Type=String,Description="Source(s) of the merged call">\n')
+    f.write('##FORMAT=<ID=CERT,Number=1,Type=String,Description="Set to True if we are certain in the merged call">\n')
+    f.write('#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t' + '\t'.join(samples) + '\n')
+    return f
+        
+
 class Readers:
-    def __init__(self, vcfpaths):
+    def __init__(self, vcfpaths, ref_genome):
+        self.ref_genome = ref_genome
         self.vcfwrappers = []
+        self.samples = []
         # Load all VCFs, make sure we can infer type
+
+        # first pass, determine shared samples across all vcf files
         for invcf in vcfpaths:
             vcffile = cyvcf2.VCF(invcf)
             hm = trh.TRRecordHarmonizer(vcffile)
+            if len(self.samples) == 0:
+                self.samples = vcffile.samples
+            else:
+                # setting sample list to overlap of sample lists
+                self.samples = list(set(self.samples) & set(vcffile.samples))
+                # if len(self.samples) != len(vcffile.samples) or sorted(self.samples) != sorted(vcffile.samples):
+                #     raise ValueError('Different samples across VCF files', self.samples,'\t', vcffile.samples)
+        # Second pass, only load the shared samples
+        for invcf in vcfpaths:
+            vcffile = cyvcf2.VCF(invcf, samples = self.samples)
+            hm = trh.TRRecordHarmonizer(vcffile)
             self.vcfwrappers.append(VCFWrapper(vcffile, hm.vcftype))
+  
         # Get chroms
         self.chroms = utils.GetContigs(self.vcfwrappers[0].vcfreader)
         self.current_tr_records = [trh.HarmonizeRecord(wrapper.vcftype, next(wrapper.vcfreader))
@@ -112,20 +148,15 @@ class Readers:
         return is_overlap_min
 
     def getMergableCalls(self):
-        # if sum(self.is_overlap_min) <= 1:
-        #     return None  # TODO. boring for debugging. just a single genotyper
 
         # print("############")
         # print("%s:%s-%s" % (self.cur_range_chrom, self.cur_range_start_pos, self.cur_range_end_pos))
         record_cluster_list = []
-        # TODO remove (moving to another class)
-        # allele_list = []
-        # sample_calls = {}
 
         # Print out info
         for i in range(len(self.current_tr_records)):
             if self.is_overlap_min[i] and self.current_tr_records[i] is not None:
-                curr_ro = RecordObj(self.vcfwrappers[i].vcftype, self.current_tr_records[i].vcfrecord)
+                curr_ro = RecordObj(self.vcfwrappers[i].vcftype, self.vcfwrappers[i].vcfreader, self.samples, self.current_tr_records[i].vcfrecord, self.ref_genome)
                 added = False
                 for rc in record_cluster_list:
                     if rc.canonical_motif == curr_ro.canonical_motif:
