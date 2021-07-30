@@ -498,6 +498,7 @@ class RecordResolver:
                 cc_id1 = self.rc_graph.GetSubgraphIDForNode(self.rc_graph.GetNodeObject(method, samp_call[method][1]))
                 for cc_id in [cc_id0, cc_id1]:
                     if cc_id not in cc_id_support:
+                        # idea: instead of 1, locus_reliability(method) * call_reliability
                         cc_id_support[cc_id] = 1
                     else:
                         cc_id_support[cc_id] += 1
