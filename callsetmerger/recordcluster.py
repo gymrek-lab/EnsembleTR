@@ -14,6 +14,7 @@ from collections import Counter
 from enum import Enum
 import networkx as nx
 import numpy as np
+from callsetmerger.reliability import LocusReliability
 
 CC_PREFIX = 'cc'
 
@@ -91,6 +92,7 @@ class RecordObj:
         self.samples = samples
         self.vcf_type = vcf_type
         self.hm_record = trh.HarmonizeRecord(vcf_type, rec)
+        self.reliabilty = LocusReliability(self.hm_record).GetLocusScore()
         self.ref = self.hm_record.ref_allele
         self.motif = self.hm_record.motif
         self.canonical_motif = GetCanonicalMotif(self.motif)
@@ -120,6 +122,13 @@ class RecordCluster:
         self.last_end = -1
         # References used for prepending and appending (can be different)
         self.fasta = recobjs[0].ref_genome
+        
+        self.caller_reliability = {}
+        for rec in recobjs:
+            if rec.vcf_type not in self.caller_reliability:
+                self.caller_reliability[rec.vcf_type] = rec.reliabilty
+            else:
+                raise ValueError("Multiple records of the same caller in record cluster!")
         
         # First, find the first start and last end
         for rec in recobjs:
@@ -182,6 +191,12 @@ class RecordCluster:
         self.record_objs.append(ro)
         self.vcf_types[convert_type_to_idx[ro.vcf_type]] = True
 
+        # Adding reliability scores
+        if ro.vcf_type not in self.caller_reliability:
+            self.caller_reliability[ro.vcf_type] = ro.reliabilty
+        else:
+            raise ValueError("Multiple records of the same caller in record cluster!")
+        
         # Update first pos and last end and appropriate references for prepending and appending
         if ro.cyvcf2_record.POS < self.first_pos:
             self.first_pos = ro.cyvcf2_record.POS
@@ -496,12 +511,13 @@ class RecordResolver:
             else:
                 cc_id0 = self.rc_graph.GetSubgraphIDForNode(self.rc_graph.GetNodeObject(method, samp_call[method][0]))
                 cc_id1 = self.rc_graph.GetSubgraphIDForNode(self.rc_graph.GetNodeObject(method, samp_call[method][1]))
+                # idea: instead of 1, score = locus_reliability(method) * call_reliability
+                score = self.record_cluster.caller_reliability[method] * 1.0
                 for cc_id in [cc_id0, cc_id1]:
                     if cc_id not in cc_id_support:
-                        # idea: instead of 1, locus_reliability(method) * call_reliability
-                        cc_id_support[cc_id] = 1
+                        cc_id_support[cc_id] = score
                     else:
-                        cc_id_support[cc_id] += 1
+                        cc_id_support[cc_id] += score
                 num_valid_methods += 1
             if cc_id0 is not None and cc_id1 is not None:
                 conn_comp_cc_id_dict[method] = [cc_id0, cc_id1]
