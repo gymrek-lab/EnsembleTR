@@ -20,8 +20,7 @@ class LocusReliability:
         one_over_neg_log = 1 / neg_log
         multiplier = 3
         ret_value = multiplier * one_over_neg_log
-        if ret_value != 1.0:
-            print("WOWOW!!!")
+
         if ret_value >= 1:
             return 1
         elif ret_value < 0:
