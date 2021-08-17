@@ -151,7 +151,10 @@ class RecordClusterOutput:
         # Create list of pre-alleles
         res_pre_alleles, res_cert = self.ResolveAllSampleCalls()
 
-        INFO_DICT = {'TESTINFO0': 12}
+        INFO_DICT = {'START': self.record_cluster.first_pos,
+            'END': self.record_cluster.last_end,
+            'PERIOD': len(self.record_cluster.motif),
+            'RU': self.record_cluster.motif}
         # print(res_pas)
         out_rec = OutVCFRecord(res_pre_alleles, self.record_cluster)
         SAMPLE_DATA=[]
