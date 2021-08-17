@@ -28,7 +28,7 @@ def main():
     parser.add_argument("--out", help="Output merged VCF file", type=str, required= True)
     parser.add_argument("--ref", help="Reference genome .fa file", type=str, required=True)
     parser.add_argument("--include-boring", help="Include boring loci as well", dest='include_boring', default=False, action='store_true')
-
+    parser.add_argument("--end-after", help="Only process the first N records", type=int, default=-1)
 
     args = parser.parse_args()
 
@@ -37,6 +37,7 @@ def main():
     ref_genome = Fasta(args.ref)
     readers = Readers(args.vcfs.split(","), ref_genome)
     out_path = args.out
+    end_after = args.end_after
     # CyVCF2 needs a VCF template, I'm using HipSTR for first iteration
     # template_path = args.outvcftemplate # NOT USED IN PYVCF OUTPUT, REMOVE
     
@@ -58,12 +59,12 @@ def main():
         for rc in rc_list:
             ####### FOR DEBUGGING!
 
-            if rc.first_pos == 8993626:
-                cg = ClusterGraph(rc)
-                pos = nx.spring_layout(cg.graph, k=2 / np.sqrt(len(cg.graph.nodes)))
-                nx.draw(cg.graph, pos, node_color=cg.colors)
-                nx.draw_networkx_labels(cg.graph, pos, labels=cg.labels)
-                plt.show()
+            # if rc.first_pos == 8993626:
+            #     cg = ClusterGraph(rc)
+            #     pos = nx.spring_layout(cg.graph, k=2 / np.sqrt(len(cg.graph.nodes)))
+            #     nx.draw(cg.graph, pos, node_color=cg.colors)
+            #     nx.draw_networkx_labels(cg.graph, pos, labels=cg.labels)
+            #     plt.show()
 
             ###########
 
@@ -101,7 +102,7 @@ def main():
 
         # Move on
         readers.goToNext()
-        if i == 300:
+        if end_after != -1 and i >= end_after:
             break
     outvcf.close()
 
