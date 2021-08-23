@@ -15,7 +15,7 @@ from callsetmerger.mergemodule import RecordClusterOutput
 import networkx as nx
 import numpy as np
 import matplotlib
-matplotlib.use('TkAgg')
+# matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from pyfaidx import Fasta
 
@@ -59,12 +59,12 @@ def main():
         for rc in rc_list:
             ####### FOR DEBUGGING!
 
-            # if rc.first_pos == 8993626:
-            #     cg = ClusterGraph(rc)
-            #     pos = nx.spring_layout(cg.graph, k=2 / np.sqrt(len(cg.graph.nodes)))
-            #     nx.draw(cg.graph, pos, node_color=cg.colors)
-            #     nx.draw_networkx_labels(cg.graph, pos, labels=cg.labels)
-            #     plt.show()
+            if rc.first_pos == 8993626:
+                cg = ClusterGraph(rc)
+                pos = nx.spring_layout(cg.graph, k=2 / np.sqrt(len(cg.graph.nodes)))
+                nx.draw(cg.graph, pos, node_color=cg.colors)
+                nx.draw_networkx_labels(cg.graph, pos, labels=cg.labels)
+                plt.show()
 
             ###########
 
