@@ -85,12 +85,16 @@ class Readers:
         for r, wrapper in zip(self.current_tr_records, self.vcfwrappers):
             if r is None or r.vcfrecord is None:
                 continue
+            "Error: found a record in file {} with "
+            "chromosome '{}' which was not found in the contig list "
+            "({})".format(wrapper.vcftype.name, r.vcfrecord.CHROM,
+                                                  ", ".join(self.chroms))
             if r.vcfrecord.CHROM not in self.chroms:
                 common.WARNING((
                                    "Error: found a record in file {} with "
-                                   "chromosome '{}' which was not found in the contig list "
-                                   "({})").format(wrapper.vcfreader.filename, r.vcfrecord.CHROM,
-                                                  ", ".join(self.chroms)))
+                                    "chromosome '{}' which was not found in the contig list "
+                                    "({})".format(wrapper.vcftype.name, r.vcfrecord.CHROM,
+                                                  ", ".join(self.chroms))))
                 return False
         return True
 
