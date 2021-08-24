@@ -69,7 +69,12 @@ class Readers:
             self.vcfwrappers.append(VCFWrapper(vcffile, hm.vcftype))
   
         # Get chroms
-        self.chroms = utils.GetContigs(self.vcfwrappers[0].vcfreader)
+        self.chroms = []
+        for wrapp in self.vcfwrappers:
+            if len(self.chroms) == 0:
+                self.chroms = utils.GetContigs(wrapp.vcfreader)
+            else:
+                self.chroms = list(set(self.chroms) | set(utils.GetContigs(wrapp.vcfreader)))
         self.current_tr_records = [trh.HarmonizeRecord(wrapper.vcftype, next(wrapper.vcfreader))
                                    for wrapper in self.vcfwrappers]
         self.done = all([item.vcfrecord is None for item in self.current_tr_records])
