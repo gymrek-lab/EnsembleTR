@@ -37,8 +37,9 @@ def GetWriter(out_path, samples):
     f.write('##INFO=<ID=END,Number=1,Type=Integer,Description="Last position in all alleles">\n')
     f.write('##INFO=<ID=PERIOD,Number=1,Type=Integer,Description="Length of motif (repeat unit)">\n')
     f.write('##INFO=<ID=RU,Number=1,Type=String,Description="Motif (repeat unit)">\n')
+    f.write('##INFO=<ID=METHODS,Number=1,Type=String,Description="Methods that attempted to genotype this locus (AdVNTR, EH, HipSTR, GangSTR)">\n')
     f.write('##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n')
-    f.write('##FORMAT=<IR=SRC,Number=1,Type=String,Description="Source(s) of the merged call">\n')
+    f.write('##FORMAT=<ID=SRC,Number=1,Type=String,Description="Source(s) of the merged call">\n')
     f.write('##FORMAT=<ID=CERT,Number=1,Type=String,Description="Set to True if we are certain in the merged call">\n')
     f.write('#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t' + '\t'.join(samples) + '\n')
     return f

@@ -9,25 +9,6 @@ from callsetmerger.recordcluster import ClusterGraph, RecordResolver
 from vcf.model import _Record,_Substitution,_Call, make_calldata_tuple
 import traceback
 
-
-# class MergeOverlappingRegion:
-#     def __init__(self, overlapping_region):
-#         self.ov_region = overlapping_region
-#         self.rc_merge_objects = []
-#         for rc in overlapping_region.RecordClusters:
-#             self.rc_merge_objects.append(RecordClusterMerger(rc))
-
-#     def GetVCFLines(self):
-#         ret = []
-#         for rc_merge_obj in self.rc_merge_objects:
-#             line = rc_merge_obj.GetVCFLine()
-#             if line is not None:
-#                 ret.append(line)
-#         return ret
-
-
-
-
 def GetGTForAlleles(resolved_call):
     # resolved_call is a list of two alleles
     if resolved_call[0] == None and resolved_call[1] == None:
@@ -38,7 +19,6 @@ def GetGTForAlleles(resolved_call):
     for al in resolved_call:
         GTs.append(str(al.genotype_idx))
     return '/'.join(GTs)
-
 
 class OutVCFRecord:
     def __init__(self, res_pas, rc):
@@ -98,7 +78,7 @@ class RecordClusterOutput:
         self.record_resolver = RecordResolver(rc)
         self.samples = samples
         self.record_template = rc.record_objs[0].cyvcf2_record
-        
+
     def ResolveAllSampleCalls(self):
         res_pas = {}
         res_cer = {}
@@ -109,42 +89,9 @@ class RecordClusterOutput:
             res_pas[sample] = self.record_resolver.ResolveSequenceForSingleCall(resolved_connected_comp_ids, samp_call)
         return res_pas, res_cer
 
-    
-
     def GetCyVCFRecord(self):
         # TODO update template with info for resolved genotypes
         return self.record_template
-
-    # def GetPyVCFRecord(self):
-    #     INFO = {}
-    #     for info in self.record_template.INFO:
-    #         INFO[info[0]] = self.record_template.INFO.get(info[0])
-    #     # FORMAT = self.record_template.FORMAT
-    #     FORMAT = ['GT','SRC']
-    #     samp_fmt = make_calldata_tuple(FORMAT)
-
-    #     # Create list of pre-alleles
-    #     res_pas = self.ResolveAllSampleCalls()
-    #     print(res_pas)
-    #     out_rec = OutVCFRecord(res_pas)
-    #     SAMPLES=[]
-    #     for sample in self.record_cluster.samples:
-    #         SAMPLES.append(_Call(self, sample, samp_fmt(GT=out_rec.sample_to_GT[sample],SRC=out_rec.sample_to_SRC[sample])))
-        
-    #     ALTS = []
-    #     for alt_allele in out_rec.alts:
-    #         ALTS.append(_Substitution(alt_allele))
-    #     return _Record(self.record_template.CHROM, 
-    #         self.record_template.POS, 
-    #         self.record_template.ID,
-    #         out_rec.ref,
-    #         ALTS,
-    #         self.record_template.QUAL,
-    #         self.record_template.FILTER,
-    #         INFO,
-    #         ':'.join(FORMAT),
-    #         dict([(x,i) for (i,x) in enumerate(self.record_cluster.samples)]),
-    #         SAMPLES)
 
     def GetRawVCFRecord(self):
         FORMAT = ['GT', 'NCOPY', 'SRC','CERT','INPUTS']
@@ -152,10 +99,11 @@ class RecordClusterOutput:
         res_pre_alleles, res_cert = self.ResolveAllSampleCalls()
 
         INFO_DICT = {'START': self.record_cluster.first_pos,
-            'END': self.record_cluster.last_end,
-            'PERIOD': len(self.record_cluster.motif),
-            'RU': self.record_cluster.motif}
-        # print(res_pas)
+                     'END': self.record_cluster.last_end,
+                     'PERIOD': len(self.record_cluster.motif),
+                     'RU': self.record_cluster.motif,
+                     'METHODS': "|".join([str(int(item)) for item in self.record_cluster.vcf_types])}
+
         out_rec = OutVCFRecord(res_pre_alleles, self.record_cluster)
         SAMPLE_DATA=[]
         for sample in self.record_cluster.samples:
@@ -168,10 +116,9 @@ class RecordClusterOutput:
                 ]
                 ))
         
-        ALTS = []
+        ALTS = out_rec.alts
+        if len(ALTS) == 0: ALTS.append(".")
         INFO = get_info_string(INFO_DICT)
-        for alt_allele in out_rec.alts:
-            ALTS.append(_Substitution(alt_allele))
         # TODO remove record template and get information from pre allele
         return '\t'.join([str(self.record_template.CHROM), 
             str(self.record_template.POS), 
