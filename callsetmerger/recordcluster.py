@@ -286,6 +286,7 @@ class ClusterGraph:
         self.uniq_callers_dict = {}
         self.num_ccs = 0
         i = 0
+
         for cc in self.sorted_connected_comps:
             cc_id = CC_PREFIX + str(i)
             self.ccid_to_connected_comp_dict[cc_id] = cc

@@ -7,6 +7,7 @@ Work in progress
 # Usage
 python callsetmerger.py --vcfs hipstr.chr21.sorted.vcf.gz,advntr.chr21.sorted.vcf.gz,gangstr.chr21.sorted.vcf.gz
 """
+
 import traceback
 import argparse
 from callsetmerger.callsetmerger import Readers, GetWriter
@@ -15,7 +16,7 @@ from callsetmerger.mergemodule import RecordClusterOutput
 import networkx as nx
 import numpy as np
 import matplotlib
-# matplotlib.use('TkAgg')
+matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from pyfaidx import Fasta
 
@@ -23,8 +24,6 @@ def main():
     parser = argparse.ArgumentParser(__doc__)
     parser.add_argument("--vcfs", help="Comma-separated list of VCFs to merge. Must be sorted/indexed", type=str,
                         required=True)
-    # parser.add_argument("--outvcftemplate", help="(TODO make general tmp or remove if pyvcf) Template to use for output VCF.", type=str,
-                        # required=True)
     parser.add_argument("--out", help="Output merged VCF file", type=str, required= True)
     parser.add_argument("--ref", help="Reference genome .fa file", type=str, required=True)
     parser.add_argument("--include-boring", help="Include boring loci as well", dest='include_boring', default=False, action='store_true')
@@ -38,13 +37,9 @@ def main():
     readers = Readers(args.vcfs.split(","), ref_genome)
     out_path = args.out
     end_after = args.end_after
-    # CyVCF2 needs a VCF template, I'm using HipSTR for first iteration
-    # template_path = args.outvcftemplate # NOT USED IN PYVCF OUTPUT, REMOVE
-    
 
     # Check samples same in each VCF
     # TODO
-
 
     # Create VCF writer for output
     outvcf = GetWriter(out_path, readers.samples)
@@ -54,7 +49,6 @@ def main():
         # Get mergeable calls
         ov_region = readers.getMergableCalls()
         rc_list = ov_region.RecordClusters
-
 
         for rc in rc_list:
             ####### FOR DEBUGGING!
@@ -80,7 +74,6 @@ def main():
                         outvcf.write(rec)
                     except:
                         traceback.print_exc()
-                    
             elif num_vcfs >= 2:
                 if rc.first_pos == 8993629:
                     print('aa')
@@ -94,8 +87,7 @@ def main():
                 except:
                     traceback.print_exc()
                 
-
-                i = i + 1
+            i = i + 1
                 # input('Press any key to move on to next record.\n')
 
         # TODO will need to update is_min_pos_list if we merged something
@@ -108,3 +100,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
