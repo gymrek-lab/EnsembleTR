@@ -14,8 +14,8 @@ import trtools.utils.mergeutils as mergeutils
 import trtools.utils.tr_harmonizer as trh
 import cyvcf2
 import vcf
-from callsetmerger.recordcluster import RecordObj, RecordCluster, OverlappingRegion
 
+from . import recordcluster as recordcluster
 
 class VCFWrapper:
     def __init__(self, reader, vcftype):
@@ -168,15 +168,15 @@ class Readers:
         # Print out info
         for i in range(len(self.current_tr_records)):
             if self.is_overlap_min[i] and self.current_tr_records[i] is not None:
-                curr_ro = RecordObj(self.vcfwrappers[i].vcftype, self.vcfwrappers[i].vcfreader, self.samples, self.current_tr_records[i].vcfrecord, self.ref_genome)
+                curr_ro = recordcluster.RecordObj(self.vcfwrappers[i].vcftype, self.vcfwrappers[i].vcfreader, self.samples, self.current_tr_records[i].vcfrecord, self.ref_genome)
                 added = False
                 for rc in record_cluster_list:
                     if rc.canonical_motif == curr_ro.canonical_motif:
                         rc.AppendRecordObject(curr_ro)
                         added = True
                 if not added:
-                    record_cluster_list.append(RecordCluster([curr_ro]))
-        ov_region = OverlappingRegion(record_cluster_list)
+                    record_cluster_list.append(recordcluster.RecordCluster([curr_ro]))
+        ov_region = recordcluster.OverlappingRegion(record_cluster_list)
         return ov_region
 
     def getCurrentRecords(self):
