@@ -235,15 +235,16 @@ class Readers:
         record_cluster_list = []
         for i in range(len(self.current_tr_records)):
             if self.is_overlap_min[i] and self.current_tr_records[i] is not None:
-                curr_ro = recordcluster.RecordObj(self.vcfwrappers[i].vcftype, self.vcfwrappers[i].vcfreader, \
-                                                  self.samples, self.current_tr_records[i].vcfrecord)
+                curr_ro = recordcluster.RecordObj(self.current_tr_records[i].vcfrecord, self.vcfwrappers[i].vcftype)
+                canon_motif = utils.GetCanonicalMotif(curr_ro.hm_record.motif)
                 added = False
                 for rc in record_cluster_list:
-                    if rc.canonical_motif == curr_ro.canonical_motif:
+                    if rc.canonical_motif == canon_motif:
                         rc.AppendRecordObject(curr_ro)
                         added = True
                 if not added:
-                    record_cluster_list.append(recordcluster.RecordCluster([curr_ro], self.ref_genome))
+                    record_cluster_list.append(recordcluster.RecordCluster([curr_ro], self.ref_genome, \
+                                                                           canon_motif, self.samples))
         ov_region = recordcluster.OverlappingRegion(record_cluster_list)
         return ov_region
 

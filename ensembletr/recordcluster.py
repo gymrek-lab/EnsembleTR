@@ -32,37 +32,132 @@ class RecordObj:
 
     Parameters
     ----------
-    vcf_type: trh.TRRecordHarmonizer.vcftype
-       Type of the VCF file
-    VCF : cyvcf2.VCF
-       VCF reader from which the object came
-    samples : list of str
-       List of samples included
     rec : cyvcf2.VCF.vcfrecord
        VCF record for the object
+    vcf_type: trh.TRRecordHarmonizer.vcftype
+       Type of the VCF file
     """
-    def __init__(self, vcf_type, VCF, samples, rec):
+    def __init__(self, rec, vcf_type):
         self.cyvcf2_record = rec
-        self.VCF = VCF
-        self.samples = samples
         self.vcf_type = vcf_type
         self.hm_record = trh.HarmonizeRecord(vcf_type, rec)
+        self.canonical_motif = GetCanonicalMotif(self.hm_record.motif)
         self.ref = self.hm_record.ref_allele
-        self.motif = self.hm_record.motif
-        self.canonical_motif = GetCanonicalMotif(self.motif)
         self.prepend_seq = ''
         self.append_seq = ''
 
     def GetSamples(self):
         return self.samples
 
-    def GetVcfRegion(self):
-        return str(self.cyvcf2_record.CHROM) + ':' + str(self.cyvcf2_record.POS)
-    
-    def GetROSampleCall(self, sample):
-        samp_idx = self.samples.index(sample)
+    def GetROSampleCall(self, samp_idx):
         return self.cyvcf2_record.genotypes[samp_idx]
 
+    def GetSampleString(self, samp_idx):
+        samp_call = self.GetROSampleCall(samp_idx)
+        if samp_call is None or samp_call[0] == -1:
+            sampdata = "."
+        else:
+            call_ncopy_list = []
+            for idx in samp_call[0:2]:
+                if idx == 0:
+                    call_ncopy_list.append(str(self.hm_record.ref_allele_length))
+                else:
+                    call_ncopy_list.append(str(self.hm_record.alt_allele_lengths[idx - 1]))
+            sampdata = ",".join(call_ncopy_list)
+        callstr = "%s=%s"%(self.vcf_type.name, sampdata)
+        return callstr
+            
+
+class RecordCluster:
+    r"""
+    Class to keep track of a list of mergeable records
+
+    Parameters
+    ----------
+    recobjs : list of RecordObj
+       list of record objects to be merged
+    ref_genome : pyfaidx.Fasta
+       reference genome
+    canon_motif : str
+       canonical repeat motif
+    samples : list of str
+       List of samples to analyze
+    """
+    def __init__(self, recobjs, ref_genome, canon_motif, samples):
+        self.canonical_motif = canon_motif
+        self.vcf_types = [False] * len(convert_type_to_idx.keys())
+        self.samples = samples
+        self.fasta = ref_genome        
+        self.record_objs = recobjs
+        self.update()
+
+    def AppendRecordObject(self, ro):
+        self.record_objs.append(ro)
+        self.update()
+
+    def update(self):
+        self.first_pos = min([rec.cyvcf2_record.POS for rec in self.record_objs])
+        self.last_end = max([rec.cyvcf2_record.end for rec in self.record_objs])
+
+        for rec in self.record_objs:
+            self.vcf_types[convert_type_to_idx[rec.vcf_type]] = True
+            chrom = rec.cyvcf2_record.CHROM
+            if rec.cyvcf2_record.POS > self.first_pos:
+                # Found a record that starts after
+                # Should prepend the record
+                rec.prepend_str = self.fasta[chrom][self.first_pos : rec.cyvcf2_record.POS].seq.upper()
+            
+            if rec.cyvcf2_record.end < self.last_end:
+                # Found a record that ends before last end
+                # Should append the record
+                rec.append_str = self.fasta[chrom][rec.cyvcf2_record.end : self.last_end].seq.upper()  
+
+    def GetAllInputs(self):
+        r"""
+        Get string of inputs to use for debug info in VCF
+
+        Returns
+        -------
+        out_dict : (dict of str: str)
+           Key=sample, Value=comma-separated list of genotypes
+        """
+        out_dict = {}
+        for sample in self.samples:
+            samp_call_list = [ro.GetSampleString(self.samples.index(sample)) for ro in self.record_objs]
+            out_dict[sample] = '|'.join(samp_call_list)
+        return out_dict
+        
+    def GetAlleleList(self):
+        alist = []
+        for ro in self.record_objs:
+            ref = ro.hm_record.ref_allele
+            # find all genotype indexes (to avoid adding alleles that are not actually called)
+            # Example: Hipstr has lines with REF ALT . . . . (all no calls)
+            # This list of available genotypes ensures we only add alleles that are 
+            # represented in the calls
+            
+            genot_set = set()
+            for call in ro.hm_record.vcfrecord.genotypes:
+                # check if no call
+                if call[0] != -1 and len(call) == 3:
+                    genot_set.add(call[0])
+                    genot_set.add(call[1])
+            if 0 in genot_set:
+                alist.append(Allele(ro, AlleleType.Reference, ref, 0, 0))
+            altnum = 1
+            for alt in ro.hm_record.alt_alleles:
+                if altnum in genot_set:
+                    alist.append(Allele(ro, AlleleType.Alternate, alt, len(alt) - len(ref), altnum))
+                altnum += 1
+        return alist
+
+    def GetSampleCall(self, sample):
+        ret_dict = {}
+        for rec in self.record_objs:
+            if rec.vcf_type in ret_dict:
+                raise ValueError("Multiple records with same VCF type: " + str(rec.vcf_type))
+            ret_dict[rec.vcf_type] = rec.GetROSampleCall(self.samples.index(sample))
+        return ret_dict
 
 class PreAllele:
     def __init__(self, allele, callers):
@@ -108,141 +203,6 @@ class Allele:
         else:
             return self.vcf_type.name + '_' + str(self.allele_size)
 
-
-
-class RecordCluster:
-    def __init__(self, recobjs, ref_genome):
-        self.motif = recobjs[0].motif
-        self.canonical_motif = GetCanonicalMotif(self.motif)
-        self.vcf_types = [False] * len(convert_type_to_idx.keys())
-        self.samples = recobjs[0].samples
-        self.first_pos = -1
-        self.last_end = -1
-        # References used for prepending and appending (can be different)
-        self.fasta = ref_genome
-        
-        # First, find the first start and last end
-        for rec in recobjs:
-            if self.first_pos == -1:
-                self.first_pos = rec.cyvcf2_record.POS
-            if self.last_end == -1:
-                self.last_end = rec.cyvcf2_record.end
-            if rec.cyvcf2_record.POS < self.first_pos:
-                self.first_pos = rec.cyvcf2_record.POS
-            if rec.cyvcf2_record.end > self.last_end:
-                self.last_end = rec.cyvcf2_record.end
-
-            self.vcf_types[convert_type_to_idx[rec.vcf_type]] = True
-            if rec.canonical_motif != self.canonical_motif:
-                raise ValueError('RecordObjs in a cluster must share canonical motif.\n' +
-                                 'Cannot add RO with ' + rec.canonical_motif + ' canonical motif to cluster' +
-                                 'with ' + self.canonical_motif + 'canonical motif.')
-
-        self.record_objs = recobjs
-        for rec in self.record_objs:
-            chrom = rec.cyvcf2_record.CHROM
-            if rec.cyvcf2_record.POS > self.first_pos:
-                # Found a record that starts after
-                # Should prepend the record
-                rec.prepend_str = self.fasta[chrom][self.first_pos : rec.cyvcf2_record.POS].seq.upper()
-            
-            if rec.cyvcf2_record.end < self.last_end:
-                # Found a record that ends before last end
-                # Should append the record
-                rec.append_str = self.fasta[chrom][rec.cyvcf2_record.end : self.last_end].seq.upper()  
-
-    def GetAllInputs(self):
-        out_dict = {}
-        for sample in self.samples:
-            samp_call_list = []
-            for ro in self.record_objs:
-                temp_str = ro.vcf_type.name + '='
-                
-                samp_call = ro.GetROSampleCall(sample)
-                if samp_call is None or samp_call[0] == -1:
-                    temp_str = temp_str + '.'
-                else:
-                    call_idxs = samp_call[0:2]
-                    call_ncopy_list = []
-                    for idx in call_idxs:
-                        if idx == 0:
-                            call_ncopy_list.append(str(ro.hm_record.ref_allele_length))
-                        else:
-                            call_ncopy_list.append(str(ro.hm_record.alt_allele_lengths[idx - 1]))
-                    temp_str = temp_str + ','.join(call_ncopy_list)
-                samp_call_list.append(temp_str)
-            out_dict[sample] = '|'.join(samp_call_list)
-        return out_dict
-        
-
-    def AppendRecordObject(self, ro):
-        if self.canonical_motif != ro.canonical_motif:
-            raise ValueError('Canonical motif of appended record object mush match record cluster.')
-
-        self.record_objs.append(ro)
-        self.vcf_types[convert_type_to_idx[ro.vcf_type]] = True
-
-        # Update first pos and last end and appropriate references for prepending and appending
-        if ro.cyvcf2_record.POS < self.first_pos:
-            self.first_pos = ro.cyvcf2_record.POS
-        if ro.cyvcf2_record.end > self.last_end:
-            self.last_end = ro.cyvcf2_record.end
-
-        # Update prepend and append strings:
-        for rec in self.record_objs:
-            chrom = rec.cyvcf2_record.CHROM
-            if rec.cyvcf2_record.POS > self.first_pos:
-                # Found a record that starts after
-                # Should prepend the record
-                rec.prepend_seq = self.fasta[chrom][self.first_pos : rec.cyvcf2_record.POS].seq.upper()
-            
-            if rec.cyvcf2_record.end < self.last_end:
-                # Found a record that ends before last end
-                # Should append the record
-                rec.append_seq = self.fasta[chrom][rec.cyvcf2_record.end : self.last_end].seq.upper()
-
-    def GetVcfTypesTuple(self):
-        return tuple(self.vcf_types)
-
-    def GetAlleleList(self):
-        alist = []
-        for ro in self.record_objs:
-            ref = ro.hm_record.ref_allele
-            # find all genotype indexes (to avoid adding alleles that are not actually called)
-            # Example: Hipstr has lines with REF ALT . . . . (all no calls)
-            # This list of available genotypes ensures we only add alleles that are 
-            # represented in the calls
-            
-            genot_set = set()
-            for call in ro.hm_record.vcfrecord.genotypes:
-                # check if no call
-                if call[0] != -1 and len(call) == 3:
-                    genot_set.add(call[0])
-                    genot_set.add(call[1])
-            if 0 in genot_set:
-                alist.append(Allele(ro, AlleleType.Reference, ref, 0, 0))
-            altnum = 1
-            for alt in ro.hm_record.alt_alleles:
-                if altnum in genot_set:
-                    alist.append(Allele(ro, AlleleType.Alternate, alt, len(alt) - len(ref), altnum))
-                altnum += 1
-        return alist
-
-    def GetVcfRegions(self):
-        ret_list = []
-        for ro in self.record_objs:
-            ret_list.append(ro.GetVcfRegion())
-
-        return ret_list
-
-    def GetSampleCall(self, sample):
-        ret_dict = {}
-        for rec in self.record_objs:
-            if rec.vcf_type in ret_dict:
-                raise ValueError("Multiple records with same VCF type: " + str(rec.vcf_type))
-            ret_dict[rec.vcf_type] = rec.GetROSampleCall(sample)
-        return ret_dict
-
 # OverlappingRegion includes 1 or more record clusters.
 # These RCs can have different motifs.
 class OverlappingRegion:
@@ -254,7 +214,6 @@ class OverlappingRegion:
         for rc in self.RecordClusters:
             ret.append(rc.canonical_motif)
         return ret
-
 
 class ClusterGraph:
     def __init__(self, record_cluster):
@@ -449,7 +408,6 @@ def get_seq_to_pa_idx_dict(pa_list):
         seq_to_pa[pa.seq] = idx
     return seq_to_pa
         
-
 def add_preallele_support(pa_list, pa):
     if pa is not None:
         seq_to_pa_idx = get_seq_to_pa_idx_dict(pa_list)
@@ -463,15 +421,6 @@ class RecordResolver:
     def __init__(self, rc):
         self.record_cluster = rc
         self.rc_graph = ClusterGraph(rc)
-        # Resolve sequence for all connected components
-        # for component in self.rc_graph.GetSortedConnectedComponents():
-        #     num_unique_callers_in_component = 0
-        #     callers_seen = []
-        #     for allele in component:
-        #         if allele.vcf_type not in callers_seen:
-        #             callers_seen.append(allele.vcf_type)
-        #             num_unique_callers_in_component += 1
-        #     list_unique_caller_nodes_in_conn_comp.append(num_unique_callers_in_component)
 
     def GetConnectedCompForSingleCall(self, samp_call):
         r"""
@@ -533,8 +482,6 @@ class RecordResolver:
         # print (certain)
         return ret_cc_ids, certain
         
-
-
     def ResolveSequenceForSingleCall(self, ccid_list, samp_call):
         # Next update: Melissa's idea --> implemented!
         # Pre resolve possible sequences for each CC. Only check if samp_call contains the caller and genot_idx of the resolved seq
@@ -585,46 +532,6 @@ class RecordResolver:
         elif len(pre_allele_list) == 1:
             return [pre_allele_list[0], pre_allele_list[0]]
         else:
-            # import networkx as nx
-            # import matplotlib
-            # matplotlib.use('TkAgg')
-            # import matplotlib.pyplot as plt
-
-            # pos = nx.spring_layout(self.rc_graph.graph, k=2 / np.sqrt(len(self.rc_graph.graph.nodes)))
-            # nx.draw(self.rc_graph.graph, pos, node_color=self.rc_graph.colors)
-            # nx.draw_networkx_labels(self.rc_graph.graph, pos, labels=self.rc_graph.labels)
-
-            # plt.show()
-            # raise ValueError("Too few pre_alleles")
             print('Warning: too few pre alleles: ', pre_allele_list)
             return pre_allele_list
              
-        # node_dict = {}
-        # for method in samp_call:
-        #     if samp_call[method][0] == -1:
-        #         nd0 = None
-        #         nd1 = None
-        #     else:
-        #         nd0 = self.rc_graph.GetNodeObject(method, samp_call[method][0])
-        #         nd1 = self.rc_graph.GetNodeObject(method, samp_call[method][1])
-        #         if nd0 in ccsg_list[0].nodes() or nd0 in ccsg_list[1].nodes:
-        #             add_preallele_support(pre_allele_list, PreAllele(nd0.reference_sequence, nd0.allele_sequence, [nd0.vcf_type]))
-        #         if nd1 in ccsg_list[0].nodes() or nd1 in ccsg_list[1].nodes:
-        #             add_preallele_support(pre_allele_list, PreAllele(nd1.reference_sequence, nd1.allele_sequence, [nd1.vcf_type]))
-        #     node_dict[method] = [nd0, nd1]
-        
-        # # First iteration, just return the first two pre alleles
-        # if len(pre_allele_list) >= 2:
-        #     return pre_allele_list[0:2]
-        # elif len(pre_allele_list) == 1:
-        #     return [pre_allele_list[0], pre_allele_list[0]]
-        # else:
-        #     # raise ValueError("Too few pre_alleles")
-        #     print('Warning: too few pre alleles: ', pre_allele_list)
-        #     return pre_allele_list
-
-        # for cc in self.rc_graph.
-        # Check if 1-to-1-to-1
-        # TODO
-        #
-
