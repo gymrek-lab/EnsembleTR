@@ -100,8 +100,8 @@ class RecordClusterOutput:
 
         INFO_DICT = {'START': self.record_cluster.first_pos,
                      'END': self.record_cluster.last_end,
-                     'PERIOD': len(self.record_cluster.motif),
-                     'RU': self.record_cluster.motif,
+                     'PERIOD': len(self.record_cluster.canonical_motif),
+                     'RU': self.record_cluster.canonical_motif,
                      'METHODS': "|".join([str(int(item)) for item in self.record_cluster.vcf_types])}
 
         out_rec = OutVCFRecord(res_pre_alleles, self.record_cluster)
