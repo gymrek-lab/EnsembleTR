@@ -1,10 +1,6 @@
-#!/usr/bin/env python3
-
 """
-Tool to merge STR calls across multiple tools
-Work in progress
-
-# Usage
+This file contains classes for reading/writing 
+VCF files.
 """
 
 import trtools.utils.common as common
@@ -240,14 +236,14 @@ class Readers:
         for i in range(len(self.current_tr_records)):
             if self.is_overlap_min[i] and self.current_tr_records[i] is not None:
                 curr_ro = recordcluster.RecordObj(self.vcfwrappers[i].vcftype, self.vcfwrappers[i].vcfreader, \
-                                                  self.samples, self.current_tr_records[i].vcfrecord, self.ref_genome)
+                                                  self.samples, self.current_tr_records[i].vcfrecord)
                 added = False
                 for rc in record_cluster_list:
                     if rc.canonical_motif == curr_ro.canonical_motif:
                         rc.AppendRecordObject(curr_ro)
                         added = True
                 if not added:
-                    record_cluster_list.append(recordcluster.RecordCluster([curr_ro]))
+                    record_cluster_list.append(recordcluster.RecordCluster([curr_ro], self.ref_genome))
         ov_region = recordcluster.OverlappingRegion(record_cluster_list)
         return ov_region
 

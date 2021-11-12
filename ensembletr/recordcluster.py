@@ -1,16 +1,10 @@
-#!/usr/bin/env python3
-
 """
-RecordCluster object includes mergeable records. Mergeable records are defined as records that overlap and share a motif
-Work in progress
-
+RecordCluster object includes mergeable records.
+Mergeable records are defined as records that overlap and share a motif
 """
-from re import template
-from typing import List
 
 import trtools.utils.tr_harmonizer as trh
 from trtools.utils.utils import GetCanonicalMotif
-from collections import Counter
 from enum import Enum
 import networkx as nx
 import numpy as np
@@ -21,23 +15,54 @@ class AlleleType(Enum):
     Reference = 0
     Alternate = 1
 
-
 ColorDict = {trh.VcfTypes.advntr: "tab:blue",
              trh.VcfTypes.eh: "tab:orange",
              trh.VcfTypes.hipstr: "tab:red",
              trh.VcfTypes.gangstr: "tab:green",
-             # trh.VcfTypes.popstr: "tab:yellow",
              }
 convert_type_to_idx = {trh.VcfTypes.advntr: 0,
                        trh.VcfTypes.eh: 1,
                        trh.VcfTypes.hipstr: 2,
                        trh.VcfTypes.gangstr: 3,
-                       # trh.VcfTypes.popstr: 4,
                        }
 
+class RecordObj:
+    r"""
+    Main object to store a VCF record and associated metadata
 
-def GetVcfTypesKey():
-    return convert_type_to_idx.keys()
+    Parameters
+    ----------
+    vcf_type: trh.TRRecordHarmonizer.vcftype
+       Type of the VCF file
+    VCF : cyvcf2.VCF
+       VCF reader from which the object came
+    samples : list of str
+       List of samples included
+    rec : cyvcf2.VCF.vcfrecord
+       VCF record for the object
+    """
+    def __init__(self, vcf_type, VCF, samples, rec):
+        self.cyvcf2_record = rec
+        self.VCF = VCF
+        self.samples = samples
+        self.vcf_type = vcf_type
+        self.hm_record = trh.HarmonizeRecord(vcf_type, rec)
+        self.ref = self.hm_record.ref_allele
+        self.motif = self.hm_record.motif
+        self.canonical_motif = GetCanonicalMotif(self.motif)
+        self.prepend_seq = ''
+        self.append_seq = ''
+
+    def GetSamples(self):
+        return self.samples
+
+    def GetVcfRegion(self):
+        return str(self.cyvcf2_record.CHROM) + ':' + str(self.cyvcf2_record.POS)
+    
+    def GetROSampleCall(self, sample):
+        samp_idx = self.samples.index(sample)
+        return self.cyvcf2_record.genotypes[samp_idx]
+
 
 class PreAllele:
     def __init__(self, allele, callers):
@@ -84,34 +109,9 @@ class Allele:
             return self.vcf_type.name + '_' + str(self.allele_size)
 
 
-class RecordObj:
-    def __init__(self, vcf_type, VCF, samples, rec, ref_genome):
-        self.cyvcf2_record = rec
-        self.VCF = VCF
-        self.samples = samples
-        self.vcf_type = vcf_type
-        self.hm_record = trh.HarmonizeRecord(vcf_type, rec)
-        self.ref = self.hm_record.ref_allele
-        self.motif = self.hm_record.motif
-        self.canonical_motif = GetCanonicalMotif(self.motif)
-        self.prepend_seq = ''
-        self.append_seq = ''
-        self.ref_genome = ref_genome
-
-    def GetSamples(self):
-        # return self.cyvcf2_record.samples
-        return self.samples
-
-    def GetVcfRegion(self):
-        return str(self.cyvcf2_record.CHROM) + ':' + str(self.cyvcf2_record.POS)
-    
-    def GetROSampleCall(self, sample):
-        samp_idx = self.samples.index(sample)
-        return self.cyvcf2_record.genotypes[samp_idx]
-
 
 class RecordCluster:
-    def __init__(self, recobjs):
+    def __init__(self, recobjs, ref_genome):
         self.motif = recobjs[0].motif
         self.canonical_motif = GetCanonicalMotif(self.motif)
         self.vcf_types = [False] * len(convert_type_to_idx.keys())
@@ -119,7 +119,7 @@ class RecordCluster:
         self.first_pos = -1
         self.last_end = -1
         # References used for prepending and appending (can be different)
-        self.fasta = recobjs[0].ref_genome
+        self.fasta = ref_genome
         
         # First, find the first start and last end
         for rec in recobjs:
