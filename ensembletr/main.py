@@ -5,12 +5,12 @@ Tool to merge STR calls across multiple tools
 Work in progress
 
 # Usage
-python callsetmerger.py --vcfs hipstr.chr21.sorted.vcf.gz,advntr.chr21.sorted.vcf.gz,gangstr.chr21.sorted.vcf.gz
+python vcfio.py --vcfs hipstr.chr21.sorted.vcf.gz,advntr.chr21.sorted.vcf.gz,gangstr.chr21.sorted.vcf.gz
 """
 
 import argparse
 
-from . import callsetmerger as callsetmerger
+from . import vcfio as vcfio
 from . import recordcluster as recordcluster
 from . import mergemodule as mergemodule
 
@@ -20,6 +20,7 @@ import os
 from pyfaidx import Fasta
 import trtools.utils.utils as utils
 from ensembletr import __version__
+import sys
 
 def main(args):
     if not os.path.exists(args.ref):
@@ -29,10 +30,13 @@ def main(args):
         if not os.path.exists(vcffile):
             common.WARNING("Error: %s does not exist"%vcffile)
             return 1
+    if not args.out.endswith("vcf"):
+        common.WARNING("Error: --out must end with '.vcf'")
+        return 1
 
     ref_genome = Fasta(args.ref)
-    readers = callsetmerger.Readers(args.vcfs.split(","), ref_genome)
-    outvcf = callsetmerger.GetWriter(args.out, readers.samples)
+    readers = vcfio.Readers(args.vcfs.split(","), ref_genome)
+    outvcf = vcfio.GetWriter(args.out, readers.samples, " ".join(sys.argv))
 
     recnum = 0
 
