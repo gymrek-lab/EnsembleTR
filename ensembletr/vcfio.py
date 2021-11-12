@@ -6,7 +6,6 @@ Work in progress
 
 # Usage
 """
-import argparse
 
 import trtools.utils.common as common
 import trtools.utils.utils as utils
@@ -18,39 +17,83 @@ import vcf
 from . import recordcluster as recordcluster
 
 class VCFWrapper:
+    """
+    Simple class to keep track of VCF files and
+    associated attributes
+
+    Parameters
+    ----------
+    reader : cyvcf2.VCF
+       VCF Reader
+    vcftype : trh.TRRecordHarmonizer.vcftype
+       Type of the VCF file (e.g. Hipstr, GangSTR, etc.)
+
+    Attributes
+    ----------
+    reader : cyvcf2.VCF
+       VCF Reader
+    vcftype : trh.TRRecordHarmonizer.vcftype
+       Type of the VCF file (e.g. Hipstr, GangSTR, etc.)
+    """
     def __init__(self, reader, vcftype):
         self.vcfreader = reader
         self.vcftype = vcftype
 
+def GetWriter(out_path, samples, command):
+    r"""Create a VCF writer with appropriate header
 
-def GetWriter(out_path, samples):
-    # Create a VCF writer with appropriate header
-    # template_VCF = cyvcf2.VCF(template_path)
-    # template_VCF.add_to_header("##command=MERGIE BOI v123.13.2 yada yada") # TODO make appropriate command
-    # return cyvcf2.Writer(out_path, template_VCF)
-    # template_VCF = vcf.Reader(filename=template_path)
-    # our own VCF writer
-    f = open(out_path, 'w')
-    f.write('##fileformat=VCFv4.1\n')
-    f.write('##command=...\n')
-    f.write('##INFO=<ID=START,Number=1,Type=Integer,Description="First position in all alleles">\n')
-    f.write('##INFO=<ID=END,Number=1,Type=Integer,Description="Last position in all alleles">\n')
-    f.write('##INFO=<ID=PERIOD,Number=1,Type=Integer,Description="Length of motif (repeat unit)">\n')
-    f.write('##INFO=<ID=RU,Number=1,Type=String,Description="Motif (repeat unit)">\n')
-    f.write('##INFO=<ID=METHODS,Number=1,Type=String,Description="Methods that attempted to genotype this locus (AdVNTR, EH, HipSTR, GangSTR)">\n')
-    f.write('##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n')
-    f.write('##FORMAT=<ID=SRC,Number=1,Type=String,Description="Source(s) of the merged call">\n')
-    f.write('##FORMAT=<ID=CERT,Number=1,Type=String,Description="Set to True if we are certain in the merged call">\n')
-    f.write('#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t' + '\t'.join(samples) + '\n')
-    return f
-        
+    Parameters
+    ----------
+    out_path : str
+          Name of the output VCF file
+    samples : list of str
+          IDs of samples to be included in the output
+    command : str
+          Command used to invoke this tool
+
+    Returns
+    -------
+    vcf_writer : file
+          Writeable file object to write VCF file to
+    """
+    vcf_writer = open(out_path, "w")
+    vcf_writer.write('##fileformat=VCFv4.1\n')
+    vcf_writer.write('##command=%s\n'%command)
+    vcf_writer.write('##INFO=<ID=START,Number=1,Type=Integer,Description="First position in all alleles">\n')
+    vcf_writer.write('##INFO=<ID=END,Number=1,Type=Integer,Description="Last position in all alleles">\n')
+    vcf_writer.write('##INFO=<ID=PERIOD,Number=1,Type=Integer,Description="Length of motif (repeat unit)">\n')
+    vcf_writer.write('##INFO=<ID=RU,Number=1,Type=String,Description="Motif (repeat unit)">\n')
+    vcf_writer.write('##INFO=<ID=METHODS,Number=1,Type=String,Description="Methods that attempted to genotype this locus (AdVNTR, EH, HipSTR, GangSTR)">\n')
+    vcf_writer.write('##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n')
+    vcf_writer.write('##FORMAT=<ID=SRC,Number=1,Type=String,Description="Source(s) of the merged call">\n')
+    vcf_writer.write('##FORMAT=<ID=CERT,Number=1,Type=String,Description="Set to True if we are certain in the merged call">\n')
+    vcf_writer.write('#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t' + '\t'.join(samples) + '\n')
+    return vcf_writer
 
 class Readers:
+    """
+    Class to keep track of VCF readers being merged
+
+    Parameters
+    ----------
+    vcfpaths : list of str
+       List of paths to each of the input VCF files
+    ref_genome : pyfaidx.Fasta
+       Reference genome
+
+    Attributes
+    ----------
+    ref_genome : pyfaidx.Fasta
+       Reference genome
+    vcfwrappers : list of VCFWrapper
+       VCF wrappers for each input VCF 
+    samples : list of str
+       Samples shared by input VCF files
+    """
     def __init__(self, vcfpaths, ref_genome):
         self.ref_genome = ref_genome
         self.vcfwrappers = []
         self.samples = []
-        # Load all VCFs, make sure we can infer type
 
         # first pass, determine shared samples across all vcf files
         for invcf in vcfpaths:
@@ -60,27 +103,27 @@ class Readers:
                 self.samples = vcffile.samples
             else:
                 # setting sample list to overlap of sample lists
-                self.samples = list(set(self.samples) & set(vcffile.samples))
-                # if len(self.samples) != len(vcffile.samples) or sorted(self.samples) != sorted(vcffile.samples):
-                #     raise ValueError('Different samples across VCF files', self.samples,'\t', vcffile.samples)
+                self.samples = list(set(self.samples).intersection(set(vcffile.samples)))
         # Second pass, only load the shared samples
         for invcf in vcfpaths:
             vcffile = cyvcf2.VCF(invcf, samples = self.samples)
             hm = trh.TRRecordHarmonizer(vcffile)
             self.vcfwrappers.append(VCFWrapper(vcffile, hm.vcftype))
   
-        # Get chroms
+        # Get chroms and check if valid
         self.chroms = []
         for wrapp in self.vcfwrappers:
             if len(self.chroms) == 0:
                 self.chroms = utils.GetContigs(wrapp.vcfreader)
             else:
                 self.chroms = list(set(self.chroms) | set(utils.GetContigs(wrapp.vcfreader)))
+
+        # Load current records
         self.current_tr_records = [trh.HarmonizeRecord(wrapper.vcftype, next(wrapper.vcfreader))
                                    for wrapper in self.vcfwrappers]
-        self.done = all([item.vcfrecord is None for item in self.current_tr_records])
         if not self.areChromsValid():
             raise ValueError('Invalid CHROM detected in record.')
+        self.done = all([item.vcfrecord is None for item in self.current_tr_records])
         self.is_min_pos_list = mergeutils.GetMinRecords(self.getCurrentRecordVCFRecs(),
                                                         self.chroms)
         self.cur_range_chrom, self.cur_range_start_pos, self.cur_range_end_pos = \
@@ -88,26 +131,37 @@ class Readers:
         self.is_overlap_min = self.getOverlapMinRecords()
 
     def areChromsValid(self):
+        r"""
+        Check if chromosomes of current records are valid
+
+        Returns
+        -------
+
+        is_valid : bool
+           Equal to true if all are valid, else False
+        """
+        is_valid = True
         for r, wrapper in zip(self.current_tr_records, self.vcfwrappers):
             if r is None or r.vcfrecord is None:
                 continue
-            "Error: found a record in file {} with "
-            "chromosome '{}' which was not found in the contig list "
-            "({})".format(wrapper.vcftype.name, r.vcfrecord.CHROM,
-                                                  ", ".join(self.chroms))
             if r.vcfrecord.CHROM not in self.chroms:
                 common.WARNING((
                                    "Error: found a record in file {} with "
                                     "chromosome '{}' which was not found in the contig list "
                                     "({})".format(wrapper.vcftype.name, r.vcfrecord.CHROM,
                                                   ", ".join(self.chroms))))
-                return False
-        return True
-
-    def getIsMinPosList(self):
-        return mergeutils.GetMinRecords(self.getCurrentRecordVCFRecs(), self.chroms)
+                is_valid = False
+        return is_valid
 
     def getCurrentRecordVCFRecs(self):
+        r"""
+        Get list of the current records for each VCF reader
+
+        Returns
+        -------
+        ret : list of trh.TRRecord
+           List of VCF records for each reader
+        """
         ret = []
         for item in self.current_tr_records:
             if item is None or item.vcfrecord is None:
@@ -117,6 +171,19 @@ class Readers:
         return ret
 
     def getCurrentRange(self):
+        r"""
+        Get range (chrom, start, end) of current records
+
+        Returns
+        -------
+
+        chrom : str
+            Chromosome of current range
+        start_pos : int
+            Start position of the list of records
+        end_pos : int
+            Largest end position of the group of records
+        """
         start_pos = None
         end_pos = -1
         chrom = None
@@ -131,26 +198,26 @@ class Readers:
         return chrom, start_pos, end_pos
 
     def getOverlapMinRecords(self):
+        r"""
+        Check of each record overlaps the min record
+
+        Returns
+        -------
+        is_overlap_min : list of bool
+           One entry for each VCF reader. Set to True
+           if the current record for that reader overlaps
+           the min record
+        """
         # Set is_overlap_min for anything overlapping
         is_overlap_min = []
         for i in range(len(self.current_tr_records)):
-
-            # a = self.current_tr_records[i].vcfrecord
             if self.current_tr_records[i] is None:
                 is_overlap_min.append(False)
                 continue
             if self.current_tr_records[i].vcfrecord.CHROM != self.cur_range_chrom:
                 is_overlap_min.append(False)
                 continue
-            # TODO Discuss
             start_pos = self.current_tr_records[i].vcfrecord.POS
-            # end = start_pos + len(trh.HarmonizeRecord(self.vcfwrappers[i].vcftype,
-            #                                           self.current_tr_records[i].vcfrecord).ref_allele)
-            # if end <= self.cur_range_end_pos:
-            #     is_overlap_min.append(True)
-            # else:
-            #     is_overlap_min.append(False)
-
             end = start_pos + len(self.current_tr_records[i].vcfrecord.REF)
             if (self.cur_range_start_pos <= start_pos <= self.cur_range_end_pos) or \
                     (self.cur_range_start_pos <= end <= self.cur_range_end_pos):
@@ -160,15 +227,20 @@ class Readers:
         return is_overlap_min
 
     def getMergableCalls(self):
+        r"""
+        Determine which calls are mergeable
+        Make one list of record clusters for each canonical motif
 
-        # print("############")
-        # print("%s:%s-%s" % (self.cur_range_chrom, self.cur_range_start_pos, self.cur_range_end_pos))
+        Returns
+        -------
+        ov_region : recordcluster.OverlappingRegion
+           contains VCF records in an overlapping region
+        """
         record_cluster_list = []
-
-        # Print out info
         for i in range(len(self.current_tr_records)):
             if self.is_overlap_min[i] and self.current_tr_records[i] is not None:
-                curr_ro = recordcluster.RecordObj(self.vcfwrappers[i].vcftype, self.vcfwrappers[i].vcfreader, self.samples, self.current_tr_records[i].vcfrecord, self.ref_genome)
+                curr_ro = recordcluster.RecordObj(self.vcfwrappers[i].vcftype, self.vcfwrappers[i].vcfreader, \
+                                                  self.samples, self.current_tr_records[i].vcfrecord, self.ref_genome)
                 added = False
                 for rc in record_cluster_list:
                     if rc.canonical_motif == curr_ro.canonical_motif:
@@ -179,20 +251,14 @@ class Readers:
         ov_region = recordcluster.OverlappingRegion(record_cluster_list)
         return ov_region
 
-    def getCurrentRecords(self):
-        ret = []
-        for rec in self.current_tr_records:
-            if rec is not None:
-                ret.append(rec.vcfrecord)
-            else:
-                ret.append(None)
-        return ret
-
     def goToNext(self):
+        r"""
+        Get next records for each reader
+        """
         prev_records = self.current_tr_records
         new_records = []
         for idx, rec in enumerate(prev_records):
-            if self.getIsMinPosList()[idx]:
+            if mergeutils.GetMinRecords(self.getCurrentRecordVCFRecs(), self.chroms)[idx]:
                 try:
                     new_records.append(
                         trh.HarmonizeRecord(self.vcfwrappers[idx].vcftype,
@@ -208,22 +274,12 @@ class Readers:
                                             prev_records[idx].vcfrecord)
                     )
         self.current_tr_records = new_records
-        self.updateObject()
 
-    def updateObject(self):
+        # Update
         if not self.areChromsValid():
             raise ValueError('Invalid CHROM detected in record.')
         self.done = all([item is None or item.vcfrecord is None for item in self.current_tr_records])
-        self.is_min_pos_list = mergeutils.GetMinRecords(self.getCurrentRecords(), self.chroms)
+        self.is_min_pos_list = mergeutils.GetMinRecords(self.getCurrentRecordVCFRecs(), self.chroms)
         self.cur_range_chrom, self.cur_range_start_pos, self.cur_range_end_pos = \
             self.getCurrentRange()
         self.is_overlap_min = self.getOverlapMinRecords()
-
-
-class MergeObject:
-    def __init__(self, allele_list, sample_calls):
-        self.allele_list = allele_list
-        self.sample_calls = sample_calls
-
-    def merge(self):
-        pass
