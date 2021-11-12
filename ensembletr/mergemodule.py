@@ -5,7 +5,7 @@ Merge Module includes code and classes for merging record clusters.
 Work in progress
 
 """
-from callsetmerger.recordcluster import ClusterGraph, RecordResolver
+from . import recordcluster as recordcluster
 from vcf.model import _Record,_Substitution,_Call, make_calldata_tuple
 import traceback
 
@@ -75,7 +75,7 @@ def get_info_string(data):
 class RecordClusterOutput:
     def __init__(self, rc, samples):
         self.record_cluster = rc
-        self.record_resolver = RecordResolver(rc)
+        self.record_resolver = recordcluster.RecordResolver(rc)
         self.samples = samples
         self.record_template = rc.record_objs[0].cyvcf2_record
 
