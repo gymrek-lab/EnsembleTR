@@ -6,71 +6,6 @@ Work in progress
 
 """
 from . import recordcluster as recordcluster
-from vcf.model import _Record,_Substitution,_Call, make_calldata_tuple
-import traceback
-
-def GetGTForAlleles(resolved_call):
-    # resolved_call is a list of two alleles
-    if resolved_call[0] == None and resolved_call[1] == None:
-        return '.'
-    if resolved_call[0] == None or resolved_call[1] == None:
-        raise ValueError('Only one genotype set to None!')
-    GTs = []
-    for al in resolved_call:
-        GTs.append(str(al.genotype_idx))
-    return '/'.join(GTs)
-
-class OutVCFRecord:
-    def __init__(self, res_pas, rc):
-        self.pre_alleles = res_pas
-        self.record_cluster = rc
-        self.ref = ""
-        self.alts = []
-        self.sample_to_GT = {}
-        self.sample_to_NCOPY = {}
-        self.sample_to_SRC = {}
-        self.sample_to_INPUTS = rc.GetAllInputs()
-        # Add INFO fields as well
-
-        for sample in self.pre_alleles:
-            GT_list = []
-            NCOPY_list  = []
-            SRC_list = []
-            for pa in self.pre_alleles[sample]:
-                if self.ref == "":
-                    self.ref = pa.reference_sequence
-                # TODO Fix assertion
-                #assert self.ref == pa.ref_seq
-
-                if pa.allele_sequence != self.ref:
-                    # we have alt allele
-                    if pa.allele_sequence not in self.alts:
-                        self.alts.append(pa.allele_sequence)
-                    GT_list.append(str(self.alts.index(pa.allele_sequence) + 1))
-                    NCOPY_list.append(str(pa.allele_ncopy))
-                else:
-                    # ref allele
-                    GT_list.append('0')
-                    NCOPY_list.append(str(pa.reference_ncopy))
-                for caller in pa.support:
-                    if caller.name not in SRC_list:
-                        SRC_list.append(caller.name)
-            if len(GT_list) == 0:
-                GT_list = ['.']
-            if len(SRC_list) == 0:
-                SRC_list = ['.']
-            if len(NCOPY_list) == 0:
-                NCOPY_list = ['.']
-            self.sample_to_GT[sample] = '/'.join(GT_list)
-            self.sample_to_NCOPY[sample] = ','.join(NCOPY_list)
-            self.sample_to_SRC[sample] = ','.join(SRC_list)
-
-
-def get_info_string(data):
-    out_recs = []
-    for key in data:
-        out_recs.append(str(key) + '=' + str(data[key]))
-    return ';'.join(out_recs)
 
 class RecordClusterOutput:
     def __init__(self, rc, samples):
@@ -131,4 +66,3 @@ class RecordClusterOutput:
             ':'.join(FORMAT),
             '\t'.join(SAMPLE_DATA)]) + '\n'
 
-# For each sample, we have 1 object that we pass the graph to -> call for that sample
