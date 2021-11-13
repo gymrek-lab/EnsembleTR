@@ -89,6 +89,9 @@ class RecordCluster:
         self.samples = samples
         self.fasta = ref_genome        
         self.record_objs = recobjs
+        self.first_pos = -1
+        self.last_pos = -1
+        self.chrom = recobjs[0].cyvcf2_record.CHROM
         self.update()
 
     def AppendRecordObject(self, ro):
@@ -112,7 +115,7 @@ class RecordCluster:
                 # Should append the record
                 rec.append_str = self.fasta[chrom][rec.cyvcf2_record.end : self.last_end].seq.upper()  
 
-    def PrintRawCalls(self):
+    def GetRawCalls(self):
         r"""
         Get string of inputs to use for debug info in VCF
 
@@ -158,8 +161,18 @@ class RecordResolver:
         self.record_cluster = rc
         self.rc_graph = ClusterGraph(rc)
         self.resolved = False
+
+        # TODO rename these
         self.res_pas = None
         self.res_cer = None
+
+    def GetRefAllele(self):
+        ref = ""
+        for sample in self.res_pas:
+            for pa in self.res_pas[sample]:
+                if ref == "":
+                    ref = pa.reference_sequence
+        return ref
 
     def Resolve(self):
         res_pas = {}
