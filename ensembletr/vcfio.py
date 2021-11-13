@@ -8,9 +8,14 @@ import trtools.utils.utils as utils
 import trtools.utils.mergeutils as mergeutils
 import trtools.utils.tr_harmonizer as trh
 import cyvcf2
-import vcf
 
 from . import recordcluster as recordcluster
+
+##################################################
+#
+#       Reader classes
+#
+##################################################
 
 class VCFWrapper:
     """
@@ -34,151 +39,6 @@ class VCFWrapper:
     def __init__(self, reader, vcftype):
         self.vcfreader = reader
         self.vcftype = vcftype
-
-class Writer:
-    """
-    Class to write the merged VCF file
-
-    Parameters
-    ----------
-    out_path : str
-          Name of the output VCF file
-    samples : list of str
-          IDs of samples to be included in the output
-    command : str
-          Command used to invoke this tool
-
-    Attributes
-    ----------
-    vcf_writer : file
-          Writeable file object to write VCF file to
-    """
-    
-    def __init__(self, out_path, samples, command):
-        self.vcf_writer = open(out_path, "w")
-        self.vcf_writer.write('##fileformat=VCFv4.1\n')
-        self.vcf_writer.write('##command=%s\n'%command)
-        self.vcf_writer.write('##INFO=<ID=START,Number=1,Type=Integer,Description="First position in all alleles">\n')
-        self.vcf_writer.write('##INFO=<ID=END,Number=1,Type=Integer,Description="Last position in all alleles">\n')
-        self.vcf_writer.write('##INFO=<ID=PERIOD,Number=1,Type=Integer,Description="Length of motif (repeat unit)">\n')
-        self.vcf_writer.write('##INFO=<ID=RU,Number=1,Type=String,Description="Motif (repeat unit)">\n')
-        self.vcf_writer.write('##INFO=<ID=METHODS,Number=1,Type=String,Description="Methods that attempted to genotype this locus (AdVNTR, EH, HipSTR, GangSTR)">\n')
-        self.vcf_writer.write('##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n')
-        self.vcf_writer.write('##FORMAT=<ID=SRC,Number=1,Type=String,Description="Source(s) of the merged call">\n')
-        self.vcf_writer.write('##FORMAT=<ID=CERT,Number=1,Type=String,Description="Set to True if we are certain in the merged call">\n')
-        self.vcf_writer.write('#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t' + '\t'.join(samples) + '\n')
-
-    def WriteRecord(self, rcres):
-        r"""
-        Write a VCF record for the record cluster
-
-        Parameters
-        ----------
-
-        rcres : recordcluster.RecordResolver
-            resolver of record cluster 
-        """
-        if not rcres.resolved:
-            common.WARNING("Warning: attempting to write record for unresolved record cluster")
-            return
-
-        FORMAT = ['GT', 'NCOPY', 'SRC','CERT','INPUTS']
-        INFO_DICT = {'START': rcres.record_cluster.first_pos,
-                     'END': rcres.record_cluster.last_end,
-                     'PERIOD': len(rcres.record_cluster.canonical_motif),
-                     'RU': rcres.record_cluster.canonical_motif,
-                     'METHODS': "|".join([str(int(item)) for item in rcres.record_cluster.vcf_types])}
-        
-        res_pre_alleles = rcres.res_pas
-        res_cert = rcres.res_cer
-#        res_pre_alleles, res_cert = self.ResolveAllSampleCalls()
-        out_rec = OutVCFRecord(res_pre_alleles, rcres.record_cluster)
-        ####
-
-        SAMPLE_DATA=[]
-        for sample in rcres.record_cluster.samples:
-            SAMPLE_DATA.append(':'.join(
-                [out_rec.sample_to_GT[sample],
-                out_rec.sample_to_NCOPY[sample],
-                out_rec.sample_to_SRC[sample],
-                str(res_cert[sample]),
-                out_rec.sample_to_INPUTS[sample]
-                ]
-                ))
-        
-        ALTS = out_rec.alts
-        if len(ALTS) == 0: ALTS.append(".")
-        INFO = get_info_string(INFO_DICT)
-        record_template = rcres.record_cluster.record_objs[0].cyvcf2_record
-        # TODO remove record template and get information from pre allele
-        self.vcf_writer.write('\t'.join([str(record_template.CHROM), 
-            str(record_template.POS), 
-            '.',
-            out_rec.ref,
-            ','.join(out_rec.alts),
-            '.',
-            '.',
-            INFO,
-            ':'.join(FORMAT),
-            '\t'.join(SAMPLE_DATA)]) + '\n')
-
-    def Close(self):
-        r"""
-        Close the writer file object
-        """
-        self.vcf_writer.close()
-
-# TODO edit 
-def get_info_string(data):
-    out_recs = []
-    for key in data:
-        out_recs.append(str(key) + '=' + str(data[key]))
-    return ';'.join(out_recs)
-
-class OutVCFRecord:
-    def __init__(self, res_pas, rc):
-        self.pre_alleles = res_pas
-        self.record_cluster = rc
-        self.ref = ""
-        self.alts = []
-        self.sample_to_GT = {}
-        self.sample_to_NCOPY = {}
-        self.sample_to_SRC = {}
-        self.sample_to_INPUTS = rc.PrintRawCalls()
-        # Add INFO fields as well
-
-        for sample in self.pre_alleles:
-            GT_list = []
-            NCOPY_list  = []
-            SRC_list = []
-            for pa in self.pre_alleles[sample]:
-                if self.ref == "":
-                    self.ref = pa.reference_sequence
-                # TODO Fix assertion
-                #assert self.ref == pa.ref_seq
-
-                if pa.allele_sequence != self.ref:
-                    # we have alt allele
-                    if pa.allele_sequence not in self.alts:
-                        self.alts.append(pa.allele_sequence)
-                    GT_list.append(str(self.alts.index(pa.allele_sequence) + 1))
-                    NCOPY_list.append(str(pa.allele_ncopy))
-                else:
-                    # ref allele
-                    GT_list.append('0')
-                    NCOPY_list.append(str(pa.reference_ncopy))
-                for caller in pa.support:
-                    if caller.name not in SRC_list:
-                        SRC_list.append(caller.name)
-            if len(GT_list) == 0:
-                GT_list = ['.']
-            if len(SRC_list) == 0:
-                SRC_list = ['.']
-            if len(NCOPY_list) == 0:
-                NCOPY_list = ['.']
-            self.sample_to_GT[sample] = '/'.join(GT_list)
-            self.sample_to_NCOPY[sample] = ','.join(NCOPY_list)
-            self.sample_to_SRC[sample] = ','.join(SRC_list)
 
 class Readers:
     """
@@ -394,3 +254,139 @@ class Readers:
         self.cur_range_chrom, self.cur_range_start_pos, self.cur_range_end_pos = \
             self.getCurrentRange()
         self.is_overlap_min = self.getOverlapMinRecords()
+
+##################################################
+#
+#       Writer classes
+#
+##################################################
+
+class Writer:
+    """
+    Class to write the merged VCF file
+
+    Parameters
+    ----------
+    out_path : str
+          Name of the output VCF file
+    samples : list of str
+          IDs of samples to be included in the output
+    command : str
+          Command used to invoke this tool
+
+    Attributes
+    ----------
+    vcf_writer : file
+          Writeable file object to write VCF file to
+    """
+    
+    def __init__(self, out_path, samples, command):
+        self.vcf_writer = open(out_path, "w")
+        self.vcf_writer.write('##fileformat=VCFv4.1\n')
+        self.vcf_writer.write('##command=%s\n'%command)
+        self.vcf_writer.write('##INFO=<ID=START,Number=1,Type=Integer,Description="First position in all alleles">\n')
+        self.vcf_writer.write('##INFO=<ID=END,Number=1,Type=Integer,Description="Last position in all alleles">\n')
+        self.vcf_writer.write('##INFO=<ID=PERIOD,Number=1,Type=Integer,Description="Length of motif (repeat unit)">\n')
+        self.vcf_writer.write('##INFO=<ID=RU,Number=1,Type=String,Description="Motif (repeat unit)">\n')
+        self.vcf_writer.write('##INFO=<ID=METHODS,Number=1,Type=String,Description="Methods that attempted to genotype this locus (AdVNTR, EH, HipSTR, GangSTR)">\n')
+        self.vcf_writer.write('##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n')
+        self.vcf_writer.write('##FORMAT=<ID=SRC,Number=1,Type=String,Description="Source(s) of the merged call">\n')
+        self.vcf_writer.write('##FORMAT=<ID=CERT,Number=1,Type=String,Description="Set to True if we are certain in the merged call">\n')
+        self.vcf_writer.write('#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t' + '\t'.join(samples) + '\n')
+
+    def WriteRecord(self, rcres):
+        r"""
+        Write a VCF record for the record cluster
+
+        Parameters
+        ----------
+
+        rcres : recordcluster.RecordResolver
+            resolver of record cluster 
+        """
+        if not rcres.resolved:
+            common.WARNING("Warning: attempting to write record for unresolved record cluster")
+            return
+        #### TODO remove need for OutVCFRecord
+        res_pre_alleles = rcres.res_pas
+        res_cert = rcres.res_cer
+        out_rec = OutVCFRecord(res_pre_alleles, rcres.record_cluster)
+        #######
+
+        CHROM = rcres.record_cluster.chrom
+        POS = rcres.record_cluster.first_pos # TODO check this
+        RECID = "."
+        REF = rcres.GetRefAllele()
+        ALTS = out_rec.alts # TODO change to not out_rec
+        if len(ALTS) == 0: ALTS.append(".")
+        QUAL = "."
+        FILTER = "."
+        INFO_DICT = {'START': rcres.record_cluster.first_pos,
+                     'END': rcres.record_cluster.last_end,
+                     'PERIOD': len(rcres.record_cluster.canonical_motif),
+                     'RU': rcres.record_cluster.canonical_motif,
+                     'METHODS': "|".join([str(int(item)) for item in rcres.record_cluster.vcf_types])}
+        INFO = ";".join(["%s=%s"%(key, INFO_DICT[key]) for key in INFO_DICT])
+        FORMAT = ['GT', 'NCOPY', 'SRC','CERT','INPUTS']
+
+        SAMPLE_DATA=[]
+        raw_calls = rcres.record_cluster.GetRawCalls()
+        for sample in rcres.record_cluster.samples: # TODO change to put this stuff in record resolver
+            SAMPLE_DATA.append(':'.join(
+                [out_rec.sample_to_GT[sample],
+                 out_rec.sample_to_NCOPY[sample],
+                 out_rec.sample_to_SRC[sample],
+                 str(res_cert[sample]),
+                 raw_calls[sample]
+                ]
+                ))
+        self.vcf_writer.write('\t'.join([CHROM, str(POS), RECID,
+            REF, ",".join(ALTS), QUAL, FILTER, INFO,
+            ':'.join(FORMAT),
+            '\t'.join(SAMPLE_DATA)]) + '\n')
+
+    def Close(self):
+        r"""
+        Close the writer file object
+        """
+        self.vcf_writer.close()
+
+# TODO edit  to get rid of this class
+# Shoul be taken care of in recordresolver
+class OutVCFRecord:
+    def __init__(self, res_pas, rc):
+        self.pre_alleles = res_pas
+        self.record_cluster = rc
+        self.alts = []
+        self.sample_to_GT = {}
+        self.sample_to_NCOPY = {}
+        self.sample_to_SRC = {}
+
+        for sample in self.pre_alleles:
+            GT_list = []
+            NCOPY_list  = []
+            SRC_list = []
+            for pa in self.pre_alleles[sample]:
+                if pa.allele_sequence != self.ref:
+                    # we have alt allele
+                    if pa.allele_sequence not in self.alts:
+                        self.alts.append(pa.allele_sequence)
+                    GT_list.append(str(self.alts.index(pa.allele_sequence) + 1))
+                    NCOPY_list.append(str(pa.allele_ncopy))
+                else:
+                    # ref allele
+                    GT_list.append('0')
+                    NCOPY_list.append(str(pa.reference_ncopy))
+                for caller in pa.support:
+                    if caller.name not in SRC_list:
+                        SRC_list.append(caller.name)
+            if len(GT_list) == 0:
+                GT_list = ['.']
+            if len(SRC_list) == 0:
+                SRC_list = ['.']
+            if len(NCOPY_list) == 0:
+                NCOPY_list = ['.']
+            self.sample_to_GT[sample] = '/'.join(GT_list)
+            self.sample_to_NCOPY[sample] = ','.join(NCOPY_list)
+            self.sample_to_SRC[sample] = ','.join(SRC_list)
+
