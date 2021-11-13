@@ -12,7 +12,6 @@ import argparse
 
 from . import vcfio as vcfio
 from . import recordcluster as recordcluster
-from . import mergemodule as mergemodule
 
 import networkx as nx
 import numpy as np
@@ -36,7 +35,7 @@ def main(args):
 
     ref_genome = Fasta(args.ref)
     readers = vcfio.Readers(args.vcfs.split(","), ref_genome)
-    outvcf = vcfio.GetWriter(args.out, readers.samples, " ".join(sys.argv))
+    writer = vcfio.Writer(args.out, readers.samples, " ".join(sys.argv))
 
     recnum = 0
 
@@ -47,14 +46,16 @@ def main(args):
             if (num_vcfs == 1 and args.exclude_single):
                 recnum += 1
                 continue
-            mo = mergemodule.RecordClusterOutput(rc, readers.samples)
-            rec = mo.GetRawVCFRecord()
-            outvcf.write(rec)
+            recresolver = recordcluster.RecordResolver(rc)
+            if not recresolver.Resolve(): 
+                recnum += 1
+                continue
+            writer.WriteRecord(recresolver)
             recnum += 1
         readers.goToNext()
         if args.end_after != -1 and recnum >= args.end_after:
             break
-    outvcf.close()
+    writer.Close()
 
 def getargs(): # pragma: no cover
     parser = argparse.ArgumentParser(
