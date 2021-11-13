@@ -92,7 +92,7 @@ class Writer:
         res_pre_alleles = rcres.res_pas
         res_cert = rcres.res_cer
 #        res_pre_alleles, res_cert = self.ResolveAllSampleCalls()
-        out_rec = OutVCFRecord(res_pre_alleles, self.record_cluster)
+        out_rec = OutVCFRecord(res_pre_alleles, rcres.record_cluster)
         ####
 
         SAMPLE_DATA=[]
@@ -109,9 +109,10 @@ class Writer:
         ALTS = out_rec.alts
         if len(ALTS) == 0: ALTS.append(".")
         INFO = get_info_string(INFO_DICT)
+        record_template = rcres.record_cluster.record_objs[0].cyvcf2_record
         # TODO remove record template and get information from pre allele
-        return '\t'.join([str(self.record_template.CHROM), 
-            str(self.record_template.POS), 
+        self.vcf_writer.write('\t'.join([str(record_template.CHROM), 
+            str(record_template.POS), 
             '.',
             out_rec.ref,
             ','.join(out_rec.alts),
@@ -119,7 +120,7 @@ class Writer:
             '.',
             INFO,
             ':'.join(FORMAT),
-            '\t'.join(SAMPLE_DATA)]) + '\n'
+            '\t'.join(SAMPLE_DATA)]) + '\n')
 
     def Close(self):
         r"""
