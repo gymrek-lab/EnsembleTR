@@ -174,30 +174,6 @@ class RecordResolver:
         self.resolved = True
         return self.resolved # TODO should this ever return False?
 
-    def GetAlleleList(self):
-        alist = []
-        for ro in self.record_cluster.record_objs:
-            ref = ro.hm_record.ref_allele
-            # find all genotype indexes (to avoid adding alleles that are not actually called)
-            # Example: Hipstr has lines with REF ALT . . . . (all no calls)
-            # This list of available genotypes ensures we only add alleles that are 
-            # represented in the calls
-            
-            genot_set = set()
-            for call in ro.hm_record.vcfrecord.genotypes:
-                # check if no call
-                if call[0] != -1 and len(call) == 3:
-                    genot_set.add(call[0])
-                    genot_set.add(call[1])
-            if 0 in genot_set:
-                alist.append(Allele(ro, AlleleType.Reference, ref, 0, 0))
-            altnum = 1
-            for alt in ro.hm_record.alt_alleles:
-                if altnum in genot_set:
-                    alist.append(Allele(ro, AlleleType.Alternate, alt, len(alt) - len(ref), altnum))
-                altnum += 1
-        return alist
-
     def GetConnectedCompForSingleCall(self, samp_call):
         r"""
 
@@ -359,7 +335,7 @@ class Allele:
 
 class ClusterGraph:
     def __init__(self, record_cluster):
-        allele_list = record_cluster.GetAlleleList()
+        allele_list = self.GetAlleleList(record_cluster)
         self.allele_list = allele_list
         self.graph = nx.Graph()
         self.labels = {}
@@ -461,6 +437,30 @@ class ClusterGraph:
         #             callers_seen.append(allele.vcf_type)
         #             num_unique_callers_in_component += 1
         #     list_unique_caller_nodes_in_conn_comp.append(num_unique_callers_in_component)
+
+    def GetAlleleList(self, record_cluster):
+        alist = []
+        for ro in record_cluster.record_objs:
+            ref = ro.hm_record.ref_allele
+            # find all genotype indexes (to avoid adding alleles that are not actually called)
+            # Example: Hipstr has lines with REF ALT . . . . (all no calls)
+            # This list of available genotypes ensures we only add alleles that are 
+            # represented in the calls
+            
+            genot_set = set()
+            for call in ro.hm_record.vcfrecord.genotypes:
+                # check if no call
+                if call[0] != -1 and len(call) == 3:
+                    genot_set.add(call[0])
+                    genot_set.add(call[1])
+            if 0 in genot_set:
+                alist.append(Allele(ro, AlleleType.Reference, ref, 0, 0))
+            altnum = 1
+            for alt in ro.hm_record.alt_alleles:
+                if altnum in genot_set:
+                    alist.append(Allele(ro, AlleleType.Alternate, alt, len(alt) - len(ref), altnum))
+                altnum += 1
+        return alist
 
     def GetNodeObject(self, vcf_type, genotype_idx):
         for allele in self.graph.nodes:
