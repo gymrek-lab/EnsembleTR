@@ -10,15 +10,6 @@ import numpy as np
 
 CC_PREFIX = 'cc'
 
-class AlleleType(Enum):
-    Reference = 0
-    Alternate = 1
-
-ColorDict = {trh.VcfTypes.advntr: "tab:blue",
-             trh.VcfTypes.eh: "tab:orange",
-             trh.VcfTypes.hipstr: "tab:red",
-             trh.VcfTypes.gangstr: "tab:green",
-             }
 convert_type_to_idx = {trh.VcfTypes.advntr: 0,
                        trh.VcfTypes.eh: 1,
                        trh.VcfTypes.hipstr: 2,
@@ -41,12 +32,19 @@ class RecordObj:
         self.vcf_type = vcf_type
         self.hm_record = trh.HarmonizeRecord(vcf_type, rec)
         self.canonical_motif = GetCanonicalMotif(self.hm_record.motif)
-        self.ref = self.hm_record.ref_allele
         self.prepend_seq = ''
         self.append_seq = ''
 
     def GetSamples(self):
         return self.samples
+
+    def GetCalledAlleles(self):
+        al_idx = set()
+        for call in self.hm_record.vcfrecord.genotypes:
+            if call[0] != -1 and len(call) == 3:
+                al_idx.add(call[0])
+                al_idx.add(call[1])
+        return al_idx
 
     def GetROSampleCall(self, samp_idx):
         return self.cyvcf2_record.genotypes[samp_idx]
@@ -65,7 +63,7 @@ class RecordObj:
             sampdata = ",".join(call_ncopy_list)
         callstr = "%s=%s"%(self.vcf_type.name, sampdata)
         return callstr
-            
+
 
 class RecordCluster:
     r"""
@@ -95,10 +93,26 @@ class RecordCluster:
         self.update()
 
     def AppendRecordObject(self, ro):
+        r"""
+        Add a record object to the RecordCluster
+        and update associated metadata
+
+        Parameters
+        ----------
+        ro : RecordObj
+           the Record Object to be added
+        """
         self.record_objs.append(ro)
         self.update()
 
     def update(self):
+        r"""
+        Update prepend/append sequences
+        of individual record objects so they
+        start and end at the same location.
+        Extends all alleles to the maximum region
+        spanned by all records in the cluster.
+        """
         self.first_pos = min([rec.cyvcf2_record.POS for rec in self.record_objs])
         self.last_end = max([rec.cyvcf2_record.end for rec in self.record_objs])
 
@@ -131,6 +145,18 @@ class RecordCluster:
         return out_dict        
 
     def GetSampleCall(self, sample):
+        r"""
+        Get calls for an individual sample
+        
+        Parameters
+        ----------
+        sample : str
+
+        Returns
+        -------
+        ret_dict : (dict of str: str)
+           Key=VCF type, Value=sample call
+        """
         ret_dict = {}
         for rec in self.record_objs:
             if rec.vcf_type in ret_dict:
@@ -152,154 +178,41 @@ class OverlappingRegion:
             ret.append(rc.canonical_motif)
         return ret
 
-####### TODO editing below #######
-class RecordResolver:
+class Allele:
     """
-    Main class to resolve info for a record cluster
+    Object to store alleles (nodes)
+
+    Parameters
+    ----------
+    ro : RecordObj
+       record object from which the allele originates
+    al_idx : int
+       Allele index (0=ref, 1+ =alt alleles)
+
+    Attributes
+    ----------
+    allele_sequence : str
+       Full string of the allele
+    allele_size : int
+       Length difference from the reference genome (in bp)
+
+    TODO: get rid of allele_ncopy, reference_ncopy
     """
-    def __init__(self, rc):
-        self.record_cluster = rc
-        self.rc_graph = ClusterGraph(rc)
-        self.resolved = False
+    def __init__(self, ro, al_idx):
+        self.record_object = ro
+        self.al_idx = al_idx
 
-        # TODO rename these
-        self.res_pas = None
-        self.res_cer = None
+        alleles = [ro.hm_record.ref_allele]+ro.hm_record.alt_alleles
+        allele_lengths = [ro.hm_record.ref_allele_length] + ro.hm_record.alt_allele_lengths
 
-    def GetRefAllele(self):
-        ref = ""
-        for sample in self.res_pas:
-            for pa in self.res_pas[sample]:
-                if ref == "":
-                    ref = pa.reference_sequence
-        return ref
+        self.reference_sequence = ro.prepend_seq + alleles[0] + ro.append_seq
+        self.allele_sequence = ro.prepend_seq + alleles[al_idx] + ro.append_seq
+        self.allele_size = len(self.allele_sequence) - len(self.reference_sequence)
+        self.allele_ncopy = allele_lengths[al_idx]
+        self.reference_ncopy = ro.hm_record.ref_allele_length
 
-    def Resolve(self):
-        res_pas = {}
-        res_cer = {}
-        for sample in self.record_cluster.samples:
-            samp_call = self.record_cluster.GetSampleCall(sample)
-            resolved_connected_comp_ids, certain_cc = self.GetConnectedCompForSingleCall(samp_call)
-            res_cer[sample] = certain_cc
-            res_pas[sample] = self.ResolveSequenceForSingleCall(resolved_connected_comp_ids, samp_call)
-        self.res_pas = res_pas
-        self.res_cer = res_cer
-        self.resolved = True
-        return self.resolved # TODO should this ever return False?
-
-    def GetConnectedCompForSingleCall(self, samp_call):
-        r"""
-
-        Parameters
-        ----------
-        samp_call: dict(vcftype:allele)
-                allele: [al1, al2, BOOL] or [-1, BOOL] for no calls
-
-        Returns
-        -------
-        list of connected component ids corresponding to resolved call
-        """
-        # Assign connected component ids to alleles
-        conn_comp_cc_id_dict = {}
-        cc_id_support = {}
-        num_valid_methods = 0
-        for method in samp_call:
-            # check for no calls
-            if samp_call[method][0] == -1:
-                cc_id0 = None
-                cc_id1 = None
-            else:
-                cc_id0 = self.rc_graph.GetSubgraphIDForNode(self.rc_graph.GetNodeObject(method, samp_call[method][0]))
-                cc_id1 = self.rc_graph.GetSubgraphIDForNode(self.rc_graph.GetNodeObject(method, samp_call[method][1]))
-                for cc_id in [cc_id0, cc_id1]:
-                    if cc_id not in cc_id_support:
-                        # idea: instead of 1, locus_reliability(method) * call_reliability
-                        cc_id_support[cc_id] = 1
-                    else:
-                        cc_id_support[cc_id] += 1
-                num_valid_methods += 1
-            if cc_id0 is not None and cc_id1 is not None:
-                conn_comp_cc_id_dict[method] = [cc_id0, cc_id1]
-
-        sorted_ccid_support = dict(sorted(cc_id_support.items(), key=lambda item: item[1], reverse=True))
-        ret_cc_ids = []
-        certain = True
-        for cc_id in sorted_ccid_support:
-            # If all alleles in all methods point to one cc
-            # for Hom require support to be perfect (2x num_valide) if not, report not certain
-            # for Het do the same for support two ccs each with num_valid
-            if sorted_ccid_support[cc_id] == num_valid_methods * 2: 
-                return [cc_id, cc_id], certain
-            elif sorted_ccid_support[cc_id] < num_valid_methods * 2 and sorted_ccid_support[cc_id] > num_valid_methods:
-                certain = False
-                return [cc_id, cc_id], certain
-            elif sorted_ccid_support[cc_id] == num_valid_methods:
-                if len(ret_cc_ids) < 2:
-                    ret_cc_ids.append(cc_id)
-                else:
-                    certain = False
-                    # We have already added 2 top supported ccs, but we still have another cc
-                    print("WARNING: extra cc", cc_id)
-                    
-            else:
-                certain = False
-                print("WARNING: at least one CC is not fully supported by either one or both alleles", cc_id)
-        # print (certain)
-        return ret_cc_ids, certain
-        
-    def ResolveSequenceForSingleCall(self, ccid_list, samp_call):
-        # Next update: Melissa's idea --> implemented!
-        # Pre resolve possible sequences for each CC. Only check if samp_call contains the caller and genot_idx of the resolved seq
-        # Add support based on overlap between samp_call and methods in cc
-        pre_allele_list = []
-        all_no_calls = True
-        for vcftyp in samp_call:
-            if samp_call[vcftyp][0] != -1:
-                all_no_calls = False
-        if all_no_calls:
-            return pre_allele_list
-        if len(ccid_list) == 0:
-            return pre_allele_list
-        for cc_id in ccid_list:
-            resolved_ccid = False
-            if cc_id in self.rc_graph.ccid_to_resolved_pre_allele:
-                # Check if any caller points to same pa (1-1-1):
-                if 'any' in self.rc_graph.ccid_to_resolved_pre_allele[cc_id]:
-                    pre_allele_list.append(self.rc_graph.ccid_to_resolved_pre_allele[cc_id]['any'])
-                else:
-                    # We use hipster call to find the correct allele
-                    # If hipstr calls exist in this cc_id, we can use them to find the correct pa
-                    if trh.VcfTypes.hipstr in self.rc_graph.uniq_callers_dict[cc_id]:
-                        # this cc has hipstr nodes
-                        if trh.VcfTypes.hipstr in samp_call and samp_call[trh.VcfTypes.hipstr][0] != -1:
-                            # cc has hipstr nodes, and we have hipstr calls
-                            hip_call = samp_call[trh.VcfTypes.hipstr]
-                            # find the matching genotype_idx
-                            for genot_idx in hip_call[0:1]:
-                                if genot_idx in self.rc_graph.ccid_to_resolved_pre_allele[cc_id]:
-                                    pre_allele_list.append(self.rc_graph.ccid_to_resolved_pre_allele[cc_id][genot_idx])
-                                    resolved_ccid = True
-                                    break
-                        else:
-                            # samp_call doesn't have hipstr, but the resolved cc_id points to a cc that has hipstr calls
-                            # (we can't resolve correctly)
-                            print('Warning: samp_call does not have hipstr, but the resolved cc_id points to a cc that has hipstr calls ')
-                    else:
-                        # This cc doesn't have hipstr calls, we should resolve using whatever caller exists:
-                        # TODO implement
-                        raise ValueError("AAA lol")
-            else:
-                raise ValueError("No resolved sequence for cc_id: ", cc_id)
-            
-
-        if len(pre_allele_list) >= 2:
-            return pre_allele_list[0:2]
-        elif len(pre_allele_list) == 1:
-            return [pre_allele_list[0], pre_allele_list[0]]
-        else:
-            print('Warning: too few pre alleles: ', pre_allele_list)
-            return pre_allele_list
-             
+    def GetVCFType(self):
+        return self.record_object.vcf_type
 
 class PreAllele:
     def __init__(self, allele, callers):
@@ -314,261 +227,310 @@ class PreAllele:
             if caller not in self.support:
                 self.support.append(caller)
 
-    def __str__(self):
-        return "Ref: " + self.ref_seq + "\nSeq: " + self.seq + "\nSupp: " + str(self.support)
-    def __repr__(self):
-        return "Ref: " + self.ref_seq + "\nSeq: " + self.seq + "\nSupp: " + str(self.support)
-    
-class Allele:
-    def __init__(self, ro, atype, allele_sequence, diff_from_ref, genotype_idx):
-        if atype not in [AlleleType.Reference, AlleleType.Alternate]:
-            raise ValueError('Unknown allele type: ' + atype)
-        self.allele_type = atype
-        self.record_object = ro
-        self.original_allele_sequence = allele_sequence
-        self.original_reference_sequnce = ro.hm_record.ref_allele
-        self.allele_sequence = ro.prepend_seq + allele_sequence + ro.append_seq
-        self.reference_sequence = ro.prepend_seq + ro.hm_record.ref_allele + ro.append_seq
-        # self.allele_ncopy = ro.
-        if genotype_idx == 0:
-            self.allele_ncopy = ro.hm_record.ref_allele_length
-        else:
-            self.allele_ncopy = ro.hm_record.alt_allele_lengths[genotype_idx - 1]
-        self.reference_ncopy = ro.hm_record.ref_allele_length
-        self.allele_size = diff_from_ref
-        self.genotype_idx = genotype_idx
-        self.vcf_type = ro.vcf_type
+class ConnectedComponent:
+    """
+    Subgraph corresponding to nodes mapped to a single allele
+    """
+    def __init__(self, ccid, subgraph):
+        self.cc_id = ccid
+        self.subgraph = subgraph
+        self.uniq_callers = self.GetUniqueCallers()
+        self.caller_to_nodes = self.GetCallerToNodes()
+        self.resolved_prealleles = self.GetResolvedPreAlleles()
 
-    def GetLabel(self):
-        if self.allele_type == AlleleType.Reference:
-            return self.vcf_type.name + '_*'
-        else:
-            return self.vcf_type.name + '_' + str(self.allele_size)
+    def GetUniqueCallers(self):
+        uniq_callers = set()
+        for node in self.subgraph.nodes():
+            uniq_callers.add(node.GetVCFType())
+        return uniq_callers
 
+    def GetCallerToNodes(self):
+        caller_to_nodes = {}
+        for node in self.subgraph.nodes():
+            if node.GetVCFType() not in caller_to_nodes:
+                caller_to_nodes[node.GetVCFType()] = [node]
+            else:
+                caller_to_nodes[node.GetVCFType()].append(node)
+        return caller_to_nodes
+
+    def GetResolvedPreAlleles(self):
+        resolved_prealleles = {}
+        # If number of nodes == number of callers: 1-1-1
+        if len(self.uniq_callers) == len(self.subgraph.nodes()):
+            if trh.VcfTypes.hipstr in self.uniq_callers:
+                tmp_node = self.caller_to_nodes[trh.VcfTypes.hipstr][0]
+            else:
+                tmp_node = list(self.subgraph.nodes())[0]
+            pa = PreAllele(tmp_node, self.uniq_callers)
+            resolved_prealleles['any'] = pa
+
+        # If not 1-1-1    
+        else:
+            # This should only happen if hipSTR node exists
+            # If that's not true, something bad happened...
+            if trh.VcfTypes.hipstr not in self.uniq_callers:
+                raise ValueError("HipSTR doesn't exist and we have a discrepancy!")
+
+            # only one hipstr node
+            if len(self.caller_to_nodes[trh.VcfTypes.hipstr]) == 1:
+                tmp_node = self.caller_to_nodes[trh.VcfTypes.hipstr][0]
+                pa = PreAllele(tmp_node, [trh.VcfTypes.hipstr])
+                for node in self.subgraph:
+                    if node != tmp_node and node.allele_sequence == tmp_node.allele_sequence:
+                        pa.add_support([node.GetVCFType()])
+                self.resolved_preallele['any'] = pa
+
+            # More than one hipstr node: we need to assign 
+            # different hipstr nodes for different allele idx
+            else:
+                tmp_node = None
+                for node1 in self.subgraph:
+                    if node1.GetVCFType() == trh.VcfTypes.hipstr:
+                        if node1.al_idx not in resolved_prealleles:
+                            tmp_node = node1
+                            pa = PreAllele(tmp_node, [trh.VcfTypes.hipstr])
+                            for node2 in self.subgraph:
+                                if node2 != tmp_node and node2.allele_sequence == tmp_node.allele_sequence:
+                                    pa.add_support([node2.GetVCFType()])
+                            resolved_prealleles[node1.al_idx] = pa  
+        return resolved_prealleles
 
 class ClusterGraph:
+    """
+    Keeps track of graph of alleles called by each method
+
+    Parameters
+    ----------
+    record_cluster : RecordCluster
+       record cluster to build a graph out of 
+    """
+
     def __init__(self, record_cluster):
-        allele_list = self.GetAlleleList(record_cluster)
-        self.allele_list = allele_list
-        self.graph = nx.Graph()
-        self.labels = {}
-        self.vcf_types = [False] * len(convert_type_to_idx.keys())
+        self.rclust = record_cluster
+        self.graph = self.BuildGraph()
+
+        # Get list of connected components
+        # Sorted by the number of nodes in each
+        sorted_ccs = sorted(nx.algorithms.components.connected_components(self.graph), \
+                    key=len, reverse=True)
+        self.connected_comps = [ConnectedComponent(CC_PREFIX+str(i), \
+                                        self.graph.subgraph(sorted_ccs[i]).copy()) \
+                                    for i in range(len(sorted_ccs))]
+
+    def BuildGraph(self):
+        r"""
+        Build the allele graph
+        """
+        allele_list = self.GetAlleleList()
+        graph = nx.Graph()
+
+        # Add nodes - one for each allele
         for al in allele_list:
-            self.graph.add_node(al)
-            self.labels[al] = al.GetLabel()
-            self.vcf_types[convert_type_to_idx[al.vcf_type]] = True
-        self.colors = []
-        for node in self.graph.nodes():
-            self.colors.append(ColorDict[node.vcf_type])
-        for nd1 in self.graph.nodes():
-            for nd2 in self.graph.nodes():
+            graph.add_node(al)
+
+        # Add edges between nodes of equivalent size
+        # from different methods
+        for nd1 in graph.nodes():
+            for nd2 in graph.nodes():
                 if nd1 == nd2:
                     continue
                 if nd1.allele_size == nd2.allele_size \
-                        and not self.graph.has_edge(nd1, nd2) \
-                        and nd1.vcf_type != nd2.vcf_type:
-                    self.graph.add_edge(nd1, nd2)
-        self.sorted_connected_comps = sorted(nx.algorithms.components.connected_components(self.graph), key=len, reverse=True)
-        self.ccid_to_connected_comp_dict = {}
-        self.ccid_to_subgraph_dict = {}
-        self.ccid_to_resolved_pre_allele = {}
-        self.caller_to_nodes_dict = {}
-        self.uniq_callers_dict = {}
-        self.num_ccs = 0
-        i = 0
+                        and not graph.has_edge(nd1, nd2) \
+                        and nd1.GetVCFType() != nd2.GetVCFType():
+                    graph.add_edge(nd1, nd2)
+        return graph
 
-        for cc in self.sorted_connected_comps:
-            cc_id = CC_PREFIX + str(i)
-            self.ccid_to_connected_comp_dict[cc_id] = cc
-            self.ccid_to_subgraph_dict[cc_id] = self.graph.subgraph(cc).copy()
-            # Update: For each cc_id, we have one resolved pre allele per genotype idx
-            # If only one pre_allele, we have {'any': pa}
-            self.ccid_to_resolved_pre_allele[cc_id] = {}
-
-            uniq_callers = []
-            caller_to_nodes = {}
-            for node in self.ccid_to_subgraph_dict[cc_id].nodes():
-                if node.vcf_type not in caller_to_nodes:
-                    caller_to_nodes[node.vcf_type] = [node]
-                else:
-                    caller_to_nodes[node.vcf_type].append(node)
-                
-                if node.vcf_type not in uniq_callers:
-                    uniq_callers.append(node.vcf_type)
-            self.caller_to_nodes_dict[cc_id] = caller_to_nodes
-            self.uniq_callers_dict[cc_id] = uniq_callers
-
-
-            # If number of nodes == number of callers: 1-1-1
-            if len(self.uniq_callers_dict[cc_id]) == len(self.ccid_to_subgraph_dict[cc_id].nodes()):
-                if trh.VcfTypes.hipstr in self.uniq_callers_dict[cc_id]:
-                    tmp_node = self.caller_to_nodes_dict[cc_id][trh.VcfTypes.hipstr][0]
-                else:
-                    tmp_node = list(self.ccid_to_subgraph_dict[cc_id].nodes())[0]
-                pa = PreAllele(tmp_node, uniq_callers)
-                self.ccid_to_resolved_pre_allele[cc_id]['any'] = pa
-                
-            # If not 1-1-1    
-            else:
-                # if hipstr exists (it should):
-                if trh.VcfTypes.hipstr in self.uniq_callers_dict[cc_id]:
-                    # only one hipstr node
-                    if len(self.caller_to_nodes_dict[cc_id][trh.VcfTypes.hipstr]) == 1:
-                        tmp_node = self.caller_to_nodes_dict[cc_id][trh.VcfTypes.hipstr][0]
-                        pa = PreAllele(tmp_node, [trh.VcfTypes.hipstr])
-                        for node in self.ccid_to_subgraph_dict[cc_id]:
-                            if node != tmp_node and node.allele_sequence == tmp_node.allele_sequence:
-                                pa.add_support([node.vcf_type])
-                        self.ccid_to_resolved_pre_allele[cc_id]['any'] = pa
-                        
-                    else:
-                        # More than one hipstr node: we need to assign different hipstr nodes for different genotype idx
-                        tmp_node = None
-                        for allele in self.ccid_to_subgraph_dict[cc_id]:
-                            if allele.vcf_type == trh.VcfTypes.hipstr:
-                                if allele.genotype_idx not in self.ccid_to_resolved_pre_allele[cc_id]:
-                                    tmp_node = allele
-                                    pa = PreAllele(tmp_node, [trh.VcfTypes.hipstr])
-                                    for node in self.ccid_to_subgraph_dict[cc_id]:
-                                        if node != tmp_node and node.allele_sequence == tmp_node.allele_sequence:
-                                            pa.add_support([node.vcf_type])
-                                    self.ccid_to_resolved_pre_allele[cc_id][allele.genotype_idx] = pa  
-                else:
-                    raise ValueError("HipSTR doesn't exist and we have a discrepancy!")
-
-            i+=1
-        self.subgraphs = list(self.ccid_to_subgraph_dict.values())
-
-        # Identify representative nodes:
-        # These are the nodes that are used as representatives for their connected comp
-        # for component in self.GetSortedConnectedComponents():
-        #     num_unique_callers_in_component = 0
-        #     # If we see
-        #     callers_seen = []
-        #     for allele in component:
-        #         if allele.vcf_type not in callers_seen:
-        #             callers_seen.append(allele.vcf_type)
-        #             num_unique_callers_in_component += 1
-        #     list_unique_caller_nodes_in_conn_comp.append(num_unique_callers_in_component)
-
-    def GetAlleleList(self, record_cluster):
+    def GetAlleleList(self):
+        """
+        Get list of Alleles called at least
+        once across all RecordObj objects
+        """
         alist = []
-        for ro in record_cluster.record_objs:
-            ref = ro.hm_record.ref_allele
-            # find all genotype indexes (to avoid adding alleles that are not actually called)
-            # Example: Hipstr has lines with REF ALT . . . . (all no calls)
-            # This list of available genotypes ensures we only add alleles that are 
-            # represented in the calls
-            
-            genot_set = set()
-            for call in ro.hm_record.vcfrecord.genotypes:
-                # check if no call
-                if call[0] != -1 and len(call) == 3:
-                    genot_set.add(call[0])
-                    genot_set.add(call[1])
-            if 0 in genot_set:
-                alist.append(Allele(ro, AlleleType.Reference, ref, 0, 0))
-            altnum = 1
-            for alt in ro.hm_record.alt_alleles:
-                if altnum in genot_set:
-                    alist.append(Allele(ro, AlleleType.Alternate, alt, len(alt) - len(ref), altnum))
-                altnum += 1
+        for ro in self.rclust.record_objs:
+            called_alleles = ro.GetCalledAlleles()
+            for al_idx in called_alleles:
+                alist.append(Allele(ro, al_idx))
         return alist
 
-    def GetNodeObject(self, vcf_type, genotype_idx):
+    def GetNodeObject(self, vcf_type, al_idx):
         for allele in self.graph.nodes:
-            if allele.vcf_type == vcf_type and allele.genotype_idx == genotype_idx:
+            if allele.GetVCFType() == vcf_type and allele.al_idx == al_idx:
                 return allele
         return None
 
-    def GetConnectedCompForNode(self, node):
+    def GetSubgraphIndexForNode(self, node):
         if node is None:
             return None
-        for component in self.GetSortedConnectedComponents():
-            if node in component:
-                return component
+        for i in range(len(self.connected_comps)):
+            if node in self.connected_comps[i].subgraph:
+                return i
         return None
 
-    def GetSubgraphForNode(self, node):
-        if node is None:
-            return None
-        for subg in self.subgraphs:
-            if subg in self.GetConnectedComponentSubgraphs():
-                if node in subg.nodes():
-                    return subg
-        return None
-    def GetSubgraphIDForNode(self, node):
-        if node is None:
-            return None
-        for cc_id in self.ccid_to_subgraph_dict:
-            if node in self.ccid_to_subgraph_dict[cc_id].nodes():
-                return cc_id
-        return None
+class RecordResolver:
+    """
+    Main class to resolve info for a record cluster
 
-    def GetSortedConnectedComponents(self):
-        return self.sorted_connected_comps
+    Parameters
+    ----------
+    rc : RecordCluster
+       the record cluster being resolved
 
-    def GetConnectedComponentSubgraphs(self):
-        return self.subgraphs
+    Attributes
+    ----------
+    rc_graph : ClusterGraph
+       keeps track of alleles across records being merged
+    resolved : bool
+       Set to True once the record cluster has been resolved
+    resolution_score : dict (str: float)
+       Key=sample, Value=resolution score
+       (i.e. all callers agreed)
+    """
+    def __init__(self, rc):
+        self.record_cluster = rc
+        self.rc_graph = ClusterGraph(rc)
+        self.resolved = False
 
-    def GetSingularityScore(self):
-        # 1 means all components at least 1-to-1 (could be 2-to-1)
-        # Lower than 1 means there are singular nodes
-        num_callers_in_graph = sum(self.vcf_types)
-        list_unique_caller_nodes_in_conn_comp = []
-        for component in self.GetSortedConnectedComponents():
-            num_unique_callers_in_component = 0
-            callers_seen = []
-            for allele in component:
-                if allele.vcf_type not in callers_seen:
-                    callers_seen.append(allele.vcf_type)
-                    num_unique_callers_in_component += 1
-            list_unique_caller_nodes_in_conn_comp.append(num_unique_callers_in_component)
-        return np.mean(list_unique_caller_nodes_in_conn_comp) / float(num_callers_in_graph)
+        # Get set after resolving
+        self.resolved_prealleles = {}
+        self.resolution_score = {}
+        self.ref = None
+        self.alts = []
+        self.sample_to_info = {} # sample -> GT, NCOPY, SRC
 
-    def GetConfusionScore(self):
-        # Measure of 1-to-1 ness
-        # average over all connected components:
-        # For each connected component: number of nodes / number of unique caller nodes
-        list_comp_confusion_score = []
-        for component in self.GetSortedConnectedComponents():
-            num_nodes = 0
-            num_unique_callers_in_component = 0
-            callers_seen = []
-            for allele in component:
-                num_nodes += 1
-                if allele.vcf_type not in callers_seen:
-                    callers_seen.append(allele.vcf_type)
-                    num_unique_callers_in_component += 1
-            list_comp_confusion_score.append(float(num_nodes) / float(num_unique_callers_in_component))
-        return np.mean(list_comp_confusion_score)
+    def Resolve(self):
+        resolved_prealleles = {}
+        resolution_score = {}
+        for sample in self.record_cluster.samples:
+            samp_call = self.record_cluster.GetSampleCall(sample)
+            resolved_connected_comp_ids, score = \
+                self.GetConnectedCompForSingleCall(samp_call)
+            resolution_score[sample] = score
+            resolved_prealleles[sample] = self.ResolveSequenceForSingleCall(resolved_connected_comp_ids, samp_call)
+        self.resolved_prealleles = resolved_prealleles
+        self.resolution_score = resolution_score
+        self.update()
+        self.resolved = True
+        return self.resolved
 
-    # Could be independent (take graph as input)
-    # TODO a function to assign ref and alt alleles for a given sample
-    # Boundaries? if there is discrepancy
-    # -> Pos filed to be consistent
+    def update(self):
+        # First update alleles list
+        for sample in self.resolved_prealleles:
+            for pa in self.resolved_prealleles[sample]:
+                if self.ref is None:
+                    self.ref = pa.reference_sequence
+                if pa.allele_sequence != pa.reference_sequence:
+                    if pa.allele_sequence not in self.alts:
+                        self.alts.append(pa.allele_sequence)
 
+        # Now update other info. need all alts for this
+        for sample in self.resolved_prealleles:
+            self.sample_to_info[sample] = {}
+            GT_list = []
+            NCOPY_list = []
+            SRC_list = []
+            for pa in self.resolved_prealleles[sample]:
+                if pa.allele_sequence != self.ref:
+                    GT_list.append(str(self.alts.index(pa.allele_sequence) + 1))
+                    NCOPY_list.append(str(pa.allele_ncopy))
+                else:
+                    GT_list.append('0')
+                    NCOPY_list.append(str(pa.reference_ncopy))
+                for caller in pa.support:
+                    if caller.name not in SRC_list:
+                        SRC_list.append(caller.name)
+            if len(GT_list) == 0:
+                GT_list = ['.']
+                NCOPY_list = ['.']
+            if len(SRC_list) == 0:
+                SRC_list = ['.']
+            self.sample_to_info[sample]["GT"] = '/'.join(GT_list)
+            self.sample_to_info[sample]["NCOPY"] = ','.join(NCOPY_list)
+            self.sample_to_info[sample]["SRC"] = ','.join(SRC_list)
 
-def add_ccsg_support(sg_support, sg):
-    if sg is not None:
-        if sg not in sg_support.keys():
-            sg_support[sg] = 1
-        else:
-            sg_support[sg] += 1
-    return sg_support
+    def GetSampleGT(self, sample):
+        return self.sample_to_info[sample]["GT"]
 
-def get_seq_to_pa_idx_dict(pa_list):
-    seq_to_pa = {}
-    for idx, pa in enumerate(pa_list):
-        seq_to_pa[pa.seq] = idx
-    return seq_to_pa
+    def GetSampleNCOPY(self, sample):
+        return self.sample_to_info[sample]["NCOPY"]
+
+    def GetSampleSRC(self, sample):
+        return self.sample_to_info[sample]["SRC"]
+
+    def GetConnectedCompForSingleCall(self, samp_call):
+        r"""
+
+        Parameters
+        ----------
+        samp_call: dict(vcftype:allele)
+                allele: [al1, al2, BOOL] or [-1, BOOL] for no calls
+
+        Returns
+        -------
+        ret_cc_ids : list of int
+           indices of CCs of resolved call
+        score : float
+           Score of caller agreement
+
+        TODO: work on logic
+        Want to instead determine which caller most reliable
+        Or alternatively vote
+        Then return its call, plus support from other callers
+        Instead of "certain", return a score
+        """
+        cc_id_support = {} # CCID -> num supporting methods
+        num_valid_methods = 0
+        for method in samp_call:
+            # check for no calls
+            if samp_call[method][0] == -1: continue # no call
+            # Get the IDs of supported connected components
+            for i in [0, 1]:
+                node = self.rc_graph.GetNodeObject(method, samp_call[method][i])
+                ccid = self.rc_graph.GetSubgraphIndexForNode(node)
+                cc_id_support[ccid] = cc_id_support.get(ccid, 0) + 1
+            num_valid_methods += 1
+
+        sorted_ccid_support = dict(sorted(cc_id_support.items(), \
+            key=lambda item: item[1], reverse=True))
+
+        ret_cc_ids = []
+        score = 1
+        for cc_id in sorted_ccid_support:
+            if sorted_ccid_support[cc_id] == num_valid_methods * 2: 
+                return [cc_id, cc_id], score
+            elif sorted_ccid_support[cc_id] > num_valid_methods:
+                score = 0
+                return [cc_id, cc_id], score
+            elif sorted_ccid_support[cc_id] == num_valid_methods:
+                if len(ret_cc_ids) < 2:
+                    ret_cc_ids.append(cc_id)
+                else:
+                    score = 0
+            else:
+                score = 0
+        return ret_cc_ids, score
         
-def add_preallele_support(pa_list, pa):
-    if pa is not None:
-        seq_to_pa_idx = get_seq_to_pa_idx_dict(pa_list)
-        if pa.seq not in seq_to_pa_idx.keys():
-            pa_list.append(pa)
-        else:
-            pa_list[seq_to_pa_idx[pa.seq]].add_support(pa.support)
-    return pa_list
+    def ResolveSequenceForSingleCall(self, ccid_list, samp_call):
+        if len(ccid_list) == 0: return []
+        pre_allele_list = []
+        for cc_id in ccid_list:
+            connected_comp = self.rc_graph.connected_comps[cc_id]
+            resolved_prealleles = connected_comp.resolved_prealleles
+            if "any" in resolved_prealleles:
+                pre_allele_list.append(resolved_prealleles["any"])
+                continue
+            if trh.VcfTypes.hipstr in connected_comp.uniq_callers and \
+                trh.VcfTypes.hipstr in samp_call and samp_call[trh.VcfTypes.hipstr][0] != -1:
 
+                # cc has hipstr nodes, and we have hipstr calls
+                hip_call = samp_call[trh.VcfTypes.hipstr]
+                for al_idx in hip_call[0:2]:
+                    if al_idx in resolved_prealleles:
+                        pre_allele_list.append(resolved_prealleles[al_idx])
+            else:
+                # TODO. For now just return a random allele if we don't have hipstr
+                pre_allele_list.append(list(resolved_prealleles.values())[0])
+
+        pre_allele_list = list(set(pre_allele_list))
+        if len(pre_allele_list) == 1:
+            pre_allele_list = [pre_allele_list[0], pre_allele_list[0]]
+        return pre_allele_list    

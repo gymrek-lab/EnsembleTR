@@ -31,7 +31,7 @@ class VCFWrapper:
 
     Attributes
     ----------
-    reader : cyvcf2.VCF
+    vcfreader : cyvcf2.VCF
        VCF Reader
     vcftype : trh.TRRecordHarmonizer.vcftype
        Type of the VCF file (e.g. Hipstr, GangSTR, etc.)
@@ -307,17 +307,11 @@ class Writer:
         if not rcres.resolved:
             common.WARNING("Warning: attempting to write record for unresolved record cluster")
             return
-        #### TODO remove need for OutVCFRecord
-        res_pre_alleles = rcres.res_pas
-        res_cert = rcres.res_cer
-        out_rec = OutVCFRecord(res_pre_alleles, rcres.record_cluster)
-        #######
-
         CHROM = rcres.record_cluster.chrom
         POS = rcres.record_cluster.first_pos # TODO check this
         RECID = "."
-        REF = rcres.GetRefAllele()
-        ALTS = out_rec.alts # TODO change to not out_rec
+        REF = rcres.ref
+        ALTS = rcres.alts
         if len(ALTS) == 0: ALTS.append(".")
         QUAL = "."
         FILTER = "."
@@ -331,12 +325,12 @@ class Writer:
 
         SAMPLE_DATA=[]
         raw_calls = rcres.record_cluster.GetRawCalls()
-        for sample in rcres.record_cluster.samples: # TODO change to put this stuff in record resolver
+        for sample in rcres.record_cluster.samples:
             SAMPLE_DATA.append(':'.join(
-                [out_rec.sample_to_GT[sample],
-                 out_rec.sample_to_NCOPY[sample],
-                 out_rec.sample_to_SRC[sample],
-                 str(res_cert[sample]),
+                [rcres.GetSampleGT(sample),
+                 rcres.GetSampleNCOPY(sample),
+                 rcres.GetSampleSRC(sample),
+                 str(rcres.resolution_score[sample]),
                  raw_calls[sample]
                 ]
                 ))
@@ -350,43 +344,3 @@ class Writer:
         Close the writer file object
         """
         self.vcf_writer.close()
-
-# TODO edit  to get rid of this class
-# Shoul be taken care of in recordresolver
-class OutVCFRecord:
-    def __init__(self, res_pas, rc):
-        self.pre_alleles = res_pas
-        self.record_cluster = rc
-        self.alts = []
-        self.sample_to_GT = {}
-        self.sample_to_NCOPY = {}
-        self.sample_to_SRC = {}
-
-        for sample in self.pre_alleles:
-            GT_list = []
-            NCOPY_list  = []
-            SRC_list = []
-            for pa in self.pre_alleles[sample]:
-                if pa.allele_sequence != self.ref:
-                    # we have alt allele
-                    if pa.allele_sequence not in self.alts:
-                        self.alts.append(pa.allele_sequence)
-                    GT_list.append(str(self.alts.index(pa.allele_sequence) + 1))
-                    NCOPY_list.append(str(pa.allele_ncopy))
-                else:
-                    # ref allele
-                    GT_list.append('0')
-                    NCOPY_list.append(str(pa.reference_ncopy))
-                for caller in pa.support:
-                    if caller.name not in SRC_list:
-                        SRC_list.append(caller.name)
-            if len(GT_list) == 0:
-                GT_list = ['.']
-            if len(SRC_list) == 0:
-                SRC_list = ['.']
-            if len(NCOPY_list) == 0:
-                NCOPY_list = ['.']
-            self.sample_to_GT[sample] = '/'.join(GT_list)
-            self.sample_to_NCOPY[sample] = ','.join(NCOPY_list)
-            self.sample_to_SRC[sample] = ','.join(SRC_list)
-

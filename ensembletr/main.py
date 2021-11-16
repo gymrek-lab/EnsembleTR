@@ -5,21 +5,20 @@ Tool to merge STR calls across multiple tools
 Work in progress
 
 # Usage
-python vcfio.py --vcfs hipstr.chr21.sorted.vcf.gz,advntr.chr21.sorted.vcf.gz,gangstr.chr21.sorted.vcf.gz
+EnsembleTR --out test.vcf --ref hg38.fa --vcfs ensembletr/ExampleData/advntr-chr20.vcf.gz,ensembletr/ExampleData/eh-chr20.vcf.gz,ensembletr/ExampleData/gangstr-chr20.vcf.gz,ensembletr/ExampleData/hipstr-chr20.vcf.gz
 """
 
 import argparse
-
-from . import vcfio as vcfio
-from . import recordcluster as recordcluster
-
 import networkx as nx
 import numpy as np
 import os
 from pyfaidx import Fasta
 import trtools.utils.utils as utils
-from ensembletr import __version__
 import sys
+
+from . import vcfio as vcfio
+from . import recordcluster as recordcluster
+from ensembletr import __version__
 
 def main(args):
     if not os.path.exists(args.ref):
@@ -38,19 +37,14 @@ def main(args):
     writer = vcfio.Writer(args.out, readers.samples, " ".join(sys.argv))
 
     recnum = 0
-
     while not readers.done:
         rc_list = readers.getMergableCalls().RecordClusters
         for rc in rc_list:
             num_vcfs = len([i for i in rc.vcf_types if i == True])
-            if (num_vcfs == 1 and args.exclude_single):
-                recnum += 1
-                continue
-            recresolver = recordcluster.RecordResolver(rc)
-            if not recresolver.Resolve(): 
-                recnum += 1
-                continue
-            writer.WriteRecord(recresolver)
+            if not (num_vcfs == 1 and args.exclude_single):
+                recresolver = recordcluster.RecordResolver(rc)
+                if recresolver.Resolve(): 
+                    writer.WriteRecord(recresolver)
             recnum += 1
         readers.goToNext()
         if args.end_after != -1 and recnum >= args.end_after:
