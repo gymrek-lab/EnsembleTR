@@ -65,7 +65,7 @@ bcftools concat RS1.snpstr_${POP}.phased.fixed.vcf.gz RS3.snpstr_${POP}.phased.f
 bcftools index rs1rs3_${POP}.vcf.gz
 bcftools query -f "[%TGT\t]\n" rs1rs3_${POP}.vcf.gz | \
     sed 's/|/\t/g' | datamash transpose | sort -k 1,1 -k2,2 | \
-    awk '{print length($1) "\t" length($2)}' | sort -k1,1 -k2,2 | uniq -c | awk '($1>=5)' > rs1rs3_haps_${POP}.tab
+    uniq -c | awk '($1>=5)' | awk -v"pop=$POP" '{print pop "\t" $0}' > rs1rs3_haps_${POP}.tab
 
 
 
