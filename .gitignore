@@ -1,6 +1,10 @@
+EnsembleTR.egg-info/
+build/
+dist/
 *.vcf
 *.vcf.gz
 *.vcf.gz.tbi
+*.ipynb_checkpoints*
 .mergevenv/
 venv/
 .idea
@@ -16,3 +20,4 @@ tmp
 .vscode/
 notebooks/.ipynb_checkpoints/
 .DS_Store
+merge-analysis/
