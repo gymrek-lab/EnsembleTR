@@ -4,6 +4,7 @@ Classes to keep track of mergeable records
 
 import trtools.utils.tr_harmonizer as trh
 from trtools.utils.utils import GetCanonicalMotif
+from collections import defaultdict
 from enum import Enum
 import networkx as nx
 import numpy as np
@@ -477,37 +478,35 @@ class RecordResolver:
         Then return its call, plus support from other callers
         Instead of "certain", return a score
         """
-        cc_id_support = {} # CCID -> num supporting methods
-        num_valid_methods = 0
+        method_cc = defaultdict(list) # methods supporting each CCID
+        seen_pairs = []
         for method in samp_call:
-            # check for no calls
-            if samp_call[method][0] == -1: continue # no call
-            # Get the IDs of supported connected components
-            for i in [0, 1]:
-                node = self.rc_graph.GetNodeObject(method, samp_call[method][i])
-                ccid = self.rc_graph.GetSubgraphIndexForNode(node)
-                cc_id_support[ccid] = cc_id_support.get(ccid, 0) + 1
-            num_valid_methods += 1
+                # check for no calls
+                if samp_call[method][0] == -1:
+                        continue # no call
+                # Get the IDs of supported connected components
+                ccids = []
+                for i in [0, 1]:
+                        node = self.rc_graph.GetNodeObject(method, samp_call[method][i])
+                        ccid = self.rc_graph.GetSubgraphIndexForNode(node)
+                        ccids.append(ccid)
 
-        sorted_ccid_support = dict(sorted(cc_id_support.items(), \
-            key=lambda item: item[1], reverse=True))
+                ccids.sort()
+                ccids = (ccids[0],ccids[1])
+                method_cc[ccids].append(method)
+                seen_pairs.append(ccids)
 
-        ret_cc_ids = []
-        score = 1
-        for cc_id in sorted_ccid_support:
-            if sorted_ccid_support[cc_id] == num_valid_methods * 2: 
-                return [cc_id, cc_id], score
-            elif sorted_ccid_support[cc_id] > num_valid_methods:
-                score = 0
-                return [cc_id, cc_id], score
-            elif sorted_ccid_support[cc_id] == num_valid_methods:
-                if len(ret_cc_ids) < 2:
-                    ret_cc_ids.append(cc_id)
-                else:
-                    score = 0
-            else:
-                score = 0
-        return ret_cc_ids, score
+        scores = {}
+        for pair in method_cc:
+                scores[pair] = len(method_cc[pair]) / len(seen_pairs)
+        #print(scores)
+        ret_cc_ids = max(scores, key=scores.get, default = -1) # get alleles with maximum score
+        if ret_cc_ids == -1:
+                return [],-1
+        return list(ret_cc_ids), round(scores[ret_cc_ids],2)
+
+
+
         
     def ResolveSequenceForSingleCall(self, ccid_list, samp_call):
         if len(ccid_list) == 0: return []
