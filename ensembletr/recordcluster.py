@@ -479,7 +479,7 @@ class RecordResolver:
         Instead of "certain", return a score
         """
         method_cc = defaultdict(list) # methods supporting each CCID
-        seen_pairs = []
+        valid_methods = 0
         for method in samp_call:
                 # check for no calls
                 if samp_call[method][0] == -1:
@@ -494,11 +494,11 @@ class RecordResolver:
                 ccids.sort()
                 ccids = (ccids[0],ccids[1])
                 method_cc[ccids].append(method)
-                seen_pairs.append(ccids)
+                valid_methods += 1
 
         scores = {}
         for pair in method_cc:
-                scores[pair] = len(method_cc[pair]) / len(seen_pairs)
+                scores[pair] = len(method_cc[pair]) / valid_methods
         #print(scores)
         ret_cc_ids = max(scores, key=scores.get, default = -1) # get alleles with maximum score
         if ret_cc_ids == -1:
