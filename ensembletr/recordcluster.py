@@ -65,6 +65,15 @@ class RecordObj:
         callstr = "%s=%s"%(self.vcf_type.name, sampdata)
         return callstr
 
+    def GetScores(self, samp_idx):
+        vcf_idx = convert_type_to_idx[self.vcf_type]
+        if vcf_idx == 0:
+            return self.cyvcf2_record.format('ML')[samp_idx][0]
+        if vcf_idx == 1:
+            return 1
+        if vcf_idx == 2 or vcf_idx == 3:
+            return self.cyvcf2_record.format('Q')[samp_idx][0]
+
 
 class RecordCluster:
     r"""
@@ -163,6 +172,26 @@ class RecordCluster:
             if rec.vcf_type in ret_dict:
                 raise ValueError("Multiple records with same VCF type: " + str(rec.vcf_type))
             ret_dict[rec.vcf_type] = rec.GetROSampleCall(self.samples.index(sample))
+        return ret_dict
+
+    def GetSampleScore(self, sample):
+        r"""
+        Get quality scores for an individual sample
+
+        Paramters
+        ---------
+        sample : str
+
+        Returns
+        -------
+        ret_dict : (dict of str: str)
+           Key=VCF type, Value=sample quality score
+        """
+        ret_dict = {}
+        for rec in self.record_objs:
+            if rec.vcf_type in ret_dict:
+                raise ValueError("Multiple records with same VCF type: " + str(rec.vcf_type))
+            ret_dict[rec.vcf_type] = rec.GetScores(self.samples.index(sample))
         return ret_dict
 
 class OverlappingRegion:
@@ -403,8 +432,9 @@ class RecordResolver:
         resolution_score = {}
         for sample in self.record_cluster.samples:
             samp_call = self.record_cluster.GetSampleCall(sample)
+            samp_qual_scores = self.record_cluster.GetSampleScore(sample)
             resolved_connected_comp_ids, score = \
-                self.GetConnectedCompForSingleCall(samp_call)
+                self.GetConnectedCompForSingleCall(samp_call, samp_qual_scores)
             resolution_score[sample] = score
             resolved_prealleles[sample] = self.ResolveSequenceForSingleCall(resolved_connected_comp_ids, samp_call)
         self.resolved_prealleles = resolved_prealleles
@@ -457,7 +487,7 @@ class RecordResolver:
     def GetSampleSRC(self, sample):
         return self.sample_to_info[sample]["SRC"]
 
-    def GetConnectedCompForSingleCall(self, samp_call):
+    def GetConnectedCompForSingleCall(self, samp_call, samp_qual_scores):
         r"""
 
         Parameters
@@ -497,9 +527,18 @@ class RecordResolver:
                 valid_methods += 1
 
         scores = {}
+        sum_scores = 0
         for pair in method_cc:
-                scores[pair] = len(method_cc[pair]) / valid_methods
-        #print(scores)
+                score = 0
+                for method in method_cc[pair]:
+                        score += samp_qual_scores[method]
+                sum_scores += score
+                scores[pair] = score
+        print(samp_qual_scores)
+        print(scores)
+        for pair in scores:
+                scores[pair] = scores[pair]/sum_scores
+        print(scores)
         ret_cc_ids = max(scores, key=scores.get, default = -1) # get alleles with maximum score
         if ret_cc_ids == -1:
                 return [],-1
