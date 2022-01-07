@@ -8,6 +8,7 @@ from collections import defaultdict
 from enum import Enum
 import networkx as nx
 import numpy as np
+import math
 
 CC_PREFIX = 'cc'
 
@@ -70,10 +71,26 @@ class RecordObj:
         if vcf_idx == 0:
             return self.cyvcf2_record.format('ML')[samp_idx][0]
         if vcf_idx == 1:
-            return 1
+            REPCI = self.cyvcf2_record.format('REPCI')[samp_idx]
+            REPCN = self.cyvcf2_record.format('REPCN')[samp_idx]
+            length = len(self.cyvcf2_record.INFO['RU'])
+            return self.ehScore(REPCI, REPCN, length)
         if vcf_idx == 2 or vcf_idx == 3:
             return self.cyvcf2_record.format('Q')[samp_idx][0]
 
+    def ehScore(self, conf_invs, CNs, length):
+        conf_invs = conf_invs.split("/")
+        CNs = CNs.split("/")
+        CNs = [(int(CN) * length) for CN in CNs]
+        score1 = self.CalcScore(conf_invs[0], CNs[0])
+        score2 = self.CalcScore(conf_invs[1], CNs[1])
+        return 0.8 * min(score1, score2) + 0.2 * max(score1, score2)
+
+    def CalcScore(self, conf_inv, allele):
+        conf_inv = conf_inv.split("-")
+        dist = abs(int(conf_inv[0]) - int(conf_inv[1]))
+        return 1/math.exp(4 * (dist) / int(allele))
+        
 
 class RecordCluster:
     r"""
