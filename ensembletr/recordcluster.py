@@ -413,6 +413,13 @@ class ClusterGraph:
                 return i
         return None
 
+    def GetSubgraphSize(self, ccid):
+        if ccid < 0 or ccid >= len(self.connected_comps):
+            return None
+        return len(self.connected_comps[ccid].subgraph.nodes())
+        
+
+
 class RecordResolver:
     """
     Main class to resolve info for a record cluster
@@ -440,6 +447,7 @@ class RecordResolver:
         # Get set after resolving
         self.resolved_prealleles = {}
         self.resolution_score = {}
+        self.resolved_supporting_methods = {}
         self.ref = None
         self.alts = []
         self.sample_to_info = {} # sample -> GT, NCOPY, SRC
@@ -447,15 +455,18 @@ class RecordResolver:
     def Resolve(self):
         resolved_prealleles = {}
         resolution_score = {}
+        resolved_supporting_methods = {}
         for sample in self.record_cluster.samples:
             samp_call = self.record_cluster.GetSampleCall(sample)
             samp_qual_scores = self.record_cluster.GetSampleScore(sample)
-            resolved_connected_comp_ids, score = \
+            resolved_connected_comp_ids, score, supporting_methods = \
                 self.GetConnectedCompForSingleCall(samp_call, samp_qual_scores)
             resolution_score[sample] = score
             resolved_prealleles[sample] = self.ResolveSequenceForSingleCall(resolved_connected_comp_ids, samp_call)
+            resolved_supporting_methods[sample] = supporting_methods
         self.resolved_prealleles = resolved_prealleles
         self.resolution_score = resolution_score
+        self.resolved_supporting_methods = resolved_supporting_methods
         self.update()
         self.resolved = True
         return self.resolved
@@ -559,7 +570,11 @@ class RecordResolver:
         ret_cc_ids = max(scores, key=scores.get, default = -1) # get alleles with maximum score
         if ret_cc_ids == -1:
                 return [],-1
-        return list(ret_cc_ids), round(scores[ret_cc_ids],2)
+
+        supporting_methods_per_allele = [self.rc_graph.GetSubgraphSize(ret_cc_ids[0]), \
+self.rc_graph.GetSubgraphSize(ret_cc_ids[1])]
+        print(supporting_methods_per_allele)
+        return list(ret_cc_ids), round(scores[ret_cc_ids],2), supporting_methods_per_allele
 
 
 
