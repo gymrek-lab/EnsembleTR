@@ -321,17 +321,20 @@ class Writer:
                      'RU': rcres.record_cluster.canonical_motif,
                      'METHODS': "|".join([str(int(item)) for item in rcres.record_cluster.vcf_types])}
         INFO = ";".join(["%s=%s"%(key, INFO_DICT[key]) for key in INFO_DICT])
-        FORMAT = ['GT', 'NCOPY', 'SRC','CERT','SMETH','INPUTS']
+        FORMAT = ['GT', 'NCOPY', 'SRC','CERT','GTS','ALS','INPUTS']
 
         SAMPLE_DATA=[]
         raw_calls = rcres.record_cluster.GetRawCalls()
         for sample in rcres.record_cluster.samples:
+            al_sup = rcres.allele_support[sample]
+            print(al_sup)
             SAMPLE_DATA.append(':'.join(
                 [rcres.GetSampleGT(sample),
                  rcres.GetSampleNCOPY(sample),
                  rcres.GetSampleSRC(sample),
                  str(rcres.resolution_score[sample]),
-                 str(",".join([str(sup_method) for sup_method in rcres.resolved_supporting_methods[sample]])),
+                 str(",".join([str(sup_method) for sup_method in rcres.resolution_method[sample]])),
+                 str(",".join([str(key) + "|" + str(val) for key,val in al_sup.items()])),
                  raw_calls[sample]
                 ]
                 ))

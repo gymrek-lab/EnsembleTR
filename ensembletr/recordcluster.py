@@ -447,7 +447,8 @@ class RecordResolver:
         # Get set after resolving
         self.resolved_prealleles = {}
         self.resolution_score = {}
-        self.resolved_supporting_methods = {}
+        self.allele_support = {}
+        self.resolution_method = {}
         self.ref = None
         self.alts = []
         self.sample_to_info = {} # sample -> GT, NCOPY, SRC
@@ -455,18 +456,21 @@ class RecordResolver:
     def Resolve(self):
         resolved_prealleles = {}
         resolution_score = {}
-        resolved_supporting_methods = {}
+        resolution_methods = {}
+        allele_supports = {}
         for sample in self.record_cluster.samples:
             samp_call = self.record_cluster.GetSampleCall(sample)
             samp_qual_scores = self.record_cluster.GetSampleScore(sample)
-            resolved_connected_comp_ids, score, supporting_methods = \
+            resolved_connected_comp_ids, resolved_methods, score, allele_support = \
                 self.GetConnectedCompForSingleCall(samp_call, samp_qual_scores)
             resolution_score[sample] = score
+            resolution_methods[sample] = resolved_methods
             resolved_prealleles[sample] = self.ResolveSequenceForSingleCall(resolved_connected_comp_ids, samp_call)
-            resolved_supporting_methods[sample] = supporting_methods
+            allele_supports[sample] = allele_support
         self.resolved_prealleles = resolved_prealleles
         self.resolution_score = resolution_score
-        self.resolved_supporting_methods = resolved_supporting_methods
+        self.allele_support = allele_supports
+        self.resolution_method = resolution_methods
         self.update()
         self.resolved = True
         return self.resolved
@@ -537,7 +541,7 @@ class RecordResolver:
         Instead of "certain", return a score
         """
         method_cc = defaultdict(list) # methods supporting each CCID
-        valid_methods = 0
+        allele_size_support = {}
         for method in samp_call:
                 # check for no calls
                 if samp_call[method][0] == -1:
@@ -548,12 +552,12 @@ class RecordResolver:
                         node = self.rc_graph.GetNodeObject(method, samp_call[method][i])
                         ccid = self.rc_graph.GetSubgraphIndexForNode(node)
                         ccids.append(ccid)
+                        allele_size_support[node.allele_size] = allele_size_support.get(ccid, 0) + 1
 
                 ccids.sort()
                 ccids = (ccids[0],ccids[1])
                 method_cc[ccids].append(method)
-                valid_methods += 1
-
+        
         scores = {}
         sum_scores = 0
         for pair in method_cc:
@@ -562,19 +566,15 @@ class RecordResolver:
                         score += samp_qual_scores[method]
                 sum_scores += score
                 scores[pair] = score
-        print(samp_qual_scores)
-        print(scores)
         for pair in scores:
                 scores[pair] = scores[pair]/sum_scores
-        print(scores)
         ret_cc_ids = max(scores, key=scores.get, default = -1) # get alleles with maximum score
+        
         if ret_cc_ids == -1:
-                return [],-1
+                return [],[], -1, {}
 
-        supporting_methods_per_allele = [self.rc_graph.GetSubgraphSize(ret_cc_ids[0]), \
-self.rc_graph.GetSubgraphSize(ret_cc_ids[1])]
-        print(supporting_methods_per_allele)
-        return list(ret_cc_ids), round(scores[ret_cc_ids],2), supporting_methods_per_allele
+        ret_sup_methods = [method.value for method in method_cc[ret_cc_ids]]
+        return list(ret_cc_ids), ret_sup_methods, round(scores[ret_cc_ids],2), allele_size_support
 
 
 
