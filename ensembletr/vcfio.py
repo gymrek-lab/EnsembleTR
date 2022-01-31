@@ -321,20 +321,18 @@ class Writer:
                      'RU': rcres.record_cluster.canonical_motif,
                      'METHODS': "|".join([str(int(item)) for item in rcres.record_cluster.vcf_types])}
         INFO = ";".join(["%s=%s"%(key, INFO_DICT[key]) for key in INFO_DICT])
-        FORMAT = ['GT', 'NCOPY', 'SRC','CERT','GTS','ALS','INPUTS']
+        FORMAT = ['GT', 'NCOPY', 'SRC','SCORE','GTS','ALS','INPUTS']
 
         SAMPLE_DATA=[]
         raw_calls = rcres.record_cluster.GetRawCalls()
         for sample in rcres.record_cluster.samples:
-            al_sup = rcres.allele_support[sample]
-            print(al_sup)
             SAMPLE_DATA.append(':'.join(
                 [rcres.GetSampleGT(sample),
                  rcres.GetSampleNCOPY(sample),
                  rcres.GetSampleSRC(sample),
-                 str(rcres.resolution_score[sample]),
-                 str(",".join([str(sup_method) for sup_method in rcres.resolution_method[sample]])),
-                 str(",".join([str(key) + "|" + str(val) for key,val in al_sup.items()])),
+                 rcres.GetSampleScore(sample),
+                 rcres.GetSampleGTS(sample),
+                 rcres.GetSampleALS(sample),
                  raw_calls[sample]
                 ]
                 ))
@@ -342,7 +340,6 @@ class Writer:
             REF, ",".join(ALTS), QUAL, FILTER, INFO,
             ':'.join(FORMAT),
             '\t'.join(SAMPLE_DATA)]) + '\n')
-
     def Close(self):
         r"""
         Close the writer file object
