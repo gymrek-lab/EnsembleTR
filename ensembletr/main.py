@@ -22,14 +22,14 @@ from ensembletr import __version__
 
 def main(args):
     if not os.path.exists(args.ref):
-        common.WARNING("Error: %s does not exist"%args.ref)
+        utils.common.WARNING("Error: %s does not exist"%args.ref)
         return 1
     for vcffile in args.vcfs.split(","):
         if not os.path.exists(vcffile):
-            common.WARNING("Error: %s does not exist"%vcffile)
+            utils.common.WARNING("Error: %s does not exist"%vcffile)
             return 1
     if not args.out.endswith("vcf"):
-        common.WARNING("Error: --out must end with '.vcf'")
+        utils.common.WARNING("Error: --out must end with '.vcf'")
         return 1
 
     ref_genome = Fasta(args.ref)

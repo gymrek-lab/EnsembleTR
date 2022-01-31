@@ -73,6 +73,8 @@ class RecordObj:
         if vcf_idx == 1:
             REPCI = self.cyvcf2_record.format('REPCI')[samp_idx]
             REPCN = self.cyvcf2_record.format('REPCN')[samp_idx]
+            if REPCI == "." or REPCN == ".":
+                return 0
             length = len(self.cyvcf2_record.INFO['RU'])
             return self.ehScore(REPCI, REPCN, length)
         if vcf_idx == 2 or vcf_idx == 3:
@@ -484,7 +486,7 @@ class RecordResolver:
                 if pa.allele_sequence != pa.reference_sequence:
                     if pa.allele_sequence not in self.alts:
                         self.alts.append(pa.allele_sequence)
-
+        
         # Now update other info. need all alts for this
         for sample in self.resolved_prealleles:
             self.sample_to_info[sample] = {}
@@ -509,6 +511,21 @@ class RecordResolver:
             self.sample_to_info[sample]["GT"] = '/'.join(GT_list)
             self.sample_to_info[sample]["NCOPY"] = ','.join(NCOPY_list)
             self.sample_to_info[sample]["SRC"] = ','.join(SRC_list)
+
+    def GetSampleScore(self, sample):
+        if self.resolution_score[sample] == -1:
+            return "."
+        return str(self.resolution_score[sample])
+
+    def GetSampleGTS(self, sample):
+        if len(self.resolution_method[sample]) == 0:
+            return "."
+        return ','.join(self.resolution_method[sample])
+
+    def GetSampleALS(self, sample):
+        if not self.allele_support[sample]:
+            return "."
+        return ",".join([str(key) + "|" + str(val) for key,val in self.allele_support[sample].items()])
 
     def GetSampleGT(self, sample):
         return self.sample_to_info[sample]["GT"]
@@ -552,7 +569,7 @@ class RecordResolver:
                         node = self.rc_graph.GetNodeObject(method, samp_call[method][i])
                         ccid = self.rc_graph.GetSubgraphIndexForNode(node)
                         ccids.append(ccid)
-                        allele_size_support[node.allele_size] = allele_size_support.get(ccid, 0) + 1
+                        allele_size_support[node.allele_size] = allele_size_support.get(node.allele_size, 0) + 1
 
                 ccids.sort()
                 ccids = (ccids[0],ccids[1])
