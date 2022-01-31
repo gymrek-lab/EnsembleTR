@@ -290,10 +290,12 @@ class Writer:
         self.vcf_writer.write('##INFO=<ID=RU,Number=1,Type=String,Description="Motif (repeat unit)">\n')
         self.vcf_writer.write('##INFO=<ID=METHODS,Number=1,Type=String,Description="Methods that attempted to genotype this locus (AdVNTR, EH, HipSTR, GangSTR)">\n')
         self.vcf_writer.write('##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n')
+        self.vcf_writer.write('##FORMAT=<ID=NCOPY,Number=1,Type=String,Description="Copy Number">\n')
         self.vcf_writer.write('##FORMAT=<ID=SRC,Number=1,Type=String,Description="Source(s) of the merged call">\n')
         self.vcf_writer.write('##FORMAT=<ID=Score,Number=1,Type=String,Description="Score of the merged call">\n')
         self.vcf_writer.write('##FORMAT=<ID=GTS,Number=1,Type=String,Description="Method(s) that support the merged call">\n')
         self.vcf_writer.write('##FORMAT=<ID=ALS,Number=1,Type=String,Description="Number of times each bp difference was seen across all calls">\n')
+        self.vcf_writer.write('##FORMAT=<ID=INPUTS,Number=1,Type=String,Description="Raw calls">\n')
         self.vcf_writer.write('#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t' + '\t'.join(samples) + '\n')
 
     def WriteRecord(self, rcres):
