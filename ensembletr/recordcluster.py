@@ -453,7 +453,7 @@ class RecordResolver:
         self.resolution_method = {}
         self.ref = None
         self.alts = []
-        self.sample_to_info = {} # sample -> GT, NCOPY, SRC
+        self.sample_to_info = {} # sample -> GT, NCOPY
 
     def Resolve(self):
         resolved_prealleles = {}
@@ -492,7 +492,6 @@ class RecordResolver:
             self.sample_to_info[sample] = {}
             GT_list = []
             NCOPY_list = []
-            SRC_list = []
             for pa in self.resolved_prealleles[sample]:
                 if pa.allele_sequence != self.ref:
                     GT_list.append(str(self.alts.index(pa.allele_sequence) + 1))
@@ -500,17 +499,11 @@ class RecordResolver:
                 else:
                     GT_list.append('0')
                     NCOPY_list.append(str(pa.reference_ncopy))
-                for caller in pa.support:
-                    if caller.name not in SRC_list:
-                        SRC_list.append(caller.name)
             if len(GT_list) == 0:
                 GT_list = ['.']
                 NCOPY_list = ['.']
-            if len(SRC_list) == 0:
-                SRC_list = ['.']
             self.sample_to_info[sample]["GT"] = '/'.join(GT_list)
             self.sample_to_info[sample]["NCOPY"] = ','.join(NCOPY_list)
-            self.sample_to_info[sample]["SRC"] = ','.join(SRC_list)
 
     def GetSampleScore(self, sample):
         if self.resolution_score[sample] == -1:
@@ -532,9 +525,6 @@ class RecordResolver:
 
     def GetSampleNCOPY(self, sample):
         return self.sample_to_info[sample]["NCOPY"]
-
-    def GetSampleSRC(self, sample):
-        return self.sample_to_info[sample]["SRC"]
 
     def GetConnectedCompForSingleCall(self, samp_call, samp_qual_scores):
         r"""

@@ -291,7 +291,6 @@ class Writer:
         self.vcf_writer.write('##INFO=<ID=METHODS,Number=1,Type=String,Description="Methods that attempted to genotype this locus (AdVNTR, EH, HipSTR, GangSTR)">\n')
         self.vcf_writer.write('##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n')
         self.vcf_writer.write('##FORMAT=<ID=NCOPY,Number=1,Type=String,Description="Copy Number">\n')
-        self.vcf_writer.write('##FORMAT=<ID=SRC,Number=1,Type=String,Description="Source(s) of the merged call">\n')
         self.vcf_writer.write('##FORMAT=<ID=Score,Number=1,Type=String,Description="Score of the merged call">\n')
         self.vcf_writer.write('##FORMAT=<ID=GTS,Number=1,Type=String,Description="Method(s) that support the merged call">\n')
         self.vcf_writer.write('##FORMAT=<ID=ALS,Number=1,Type=String,Description="Number of times each bp difference was seen across all calls">\n')
@@ -325,7 +324,7 @@ class Writer:
                      'RU': rcres.record_cluster.canonical_motif,
                      'METHODS': "|".join([str(int(item)) for item in rcres.record_cluster.vcf_types])}
         INFO = ";".join(["%s=%s"%(key, INFO_DICT[key]) for key in INFO_DICT])
-        FORMAT = ['GT', 'NCOPY', 'SRC','SCORE','GTS','ALS','INPUTS']
+        FORMAT = ['GT', 'NCOPY','SCORE','GTS','ALS','INPUTS']
 
         SAMPLE_DATA=[]
         raw_calls = rcres.record_cluster.GetRawCalls()
@@ -333,7 +332,6 @@ class Writer:
             SAMPLE_DATA.append(':'.join(
                 [rcres.GetSampleGT(sample),
                  rcres.GetSampleNCOPY(sample),
-                 rcres.GetSampleSRC(sample),
                  rcres.GetSampleScore(sample),
                  rcres.GetSampleGTS(sample),
                  rcres.GetSampleALS(sample),
