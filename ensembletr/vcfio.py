@@ -310,6 +310,8 @@ class Writer:
         if not rcres.resolved:
             common.WARNING("Warning: attempting to write record for unresolved record cluster")
             return
+        if rcres.nocall == True:
+            return
         CHROM = rcres.record_cluster.chrom
         POS = rcres.record_cluster.first_pos # TODO check this
         RECID = "."

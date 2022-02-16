@@ -91,6 +91,10 @@ class RecordObj:
     def CalcScore(self, conf_inv, allele):
         conf_inv = conf_inv.split("-")
         dist = abs(int(conf_inv[0]) - int(conf_inv[1]))
+        if dist > 100:
+             return 0
+        if allele == 0:
+             return 1/math.exp(4 * (dist))
         return 1/math.exp(4 * (dist) / int(allele))
         
 
@@ -454,6 +458,7 @@ class RecordResolver:
         self.ref = None
         self.alts = []
         self.sample_to_info = {} # sample -> GT, NCOPY
+        self.nocall = False
 
     def Resolve(self):
         resolved_prealleles = {}
@@ -476,7 +481,7 @@ class RecordResolver:
         self.update()
         self.resolved = True
         return self.resolved
-
+   
     def update(self):
         # First update alleles list
         for sample in self.resolved_prealleles:
@@ -486,7 +491,9 @@ class RecordResolver:
                 if pa.allele_sequence != pa.reference_sequence:
                     if pa.allele_sequence not in self.alts:
                         self.alts.append(pa.allele_sequence)
-        
+
+        if self.ref is None:
+            self.nocall = True 
         # Now update other info. need all alts for this
         for sample in self.resolved_prealleles:
             self.sample_to_info[sample] = {}
@@ -513,7 +520,7 @@ class RecordResolver:
     def GetSampleGTS(self, sample):
         if len(self.resolution_method[sample]) == 0:
             return "."
-        return ','.join(self.resolution_method[sample])
+        return '|'.join(self.resolution_method[sample])
 
     def GetSampleALS(self, sample):
         if not self.allele_support[sample]:
@@ -573,15 +580,21 @@ class RecordResolver:
                         score += samp_qual_scores[method]
                 sum_scores += score
                 scores[pair] = score
-        for pair in scores:
-                scores[pair] = scores[pair]/sum_scores
+        if sum_scores != 0:
+                for pair in scores:
+                        scores[pair] = scores[pair]/sum_scores
         ret_cc_ids = max(scores, key=scores.get, default = -1) # get alleles with maximum score
         
         if ret_cc_ids == -1:
                 return [],[], -1, {}
 
         ret_sup_methods = [method.value for method in method_cc[ret_cc_ids]]
-        return list(ret_cc_ids), ret_sup_methods, round(scores[ret_cc_ids],2), allele_size_support
+        method_dict = {"advntr":[1,0,0,0],"eh":[0,1,0,0],"hipstr":[0,0,1,0],"gangstr":[0,0,0,1]}
+        sup_method = [0,0,0,0]
+        for method in ret_sup_methods:
+                sup_method = [sum(x) for x in zip(sup_method, method_dict[method])] 
+        sup_method = [str(method) for method in sup_method]
+        return list(ret_cc_ids), sup_method, round(scores[ret_cc_ids],2), allele_size_support
 
 
 
@@ -597,7 +610,6 @@ class RecordResolver:
                 continue
             if trh.VcfTypes.hipstr in connected_comp.uniq_callers and \
                 trh.VcfTypes.hipstr in samp_call and samp_call[trh.VcfTypes.hipstr][0] != -1:
-
                 # cc has hipstr nodes, and we have hipstr calls
                 hip_call = samp_call[trh.VcfTypes.hipstr]
                 for al_idx in hip_call[0:2]:
