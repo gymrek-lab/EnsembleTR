@@ -10,6 +10,8 @@ import networkx as nx
 import numpy as np
 import math
 
+from . import utils as utils
+
 CC_PREFIX = 'cc'
 
 convert_type_to_idx = {trh.VcfTypes.advntr: 0,
@@ -101,7 +103,7 @@ class RecordObj:
         callstr = "%s=%s"%(self.vcf_type.name, sampdata)
         return callstr
 
-    def GetScores(self, samp_idx):
+    def GetScore(self, samp_idx):
         r"""
         Get the score of a sample's genotype
         For HipSTR/GangSTR, use "FORMAT/Q"
@@ -129,60 +131,10 @@ class RecordObj:
             if REPCI == "." or REPCN == ".":
                 return 0
             length = len(self.cyvcf2_record.INFO['RU'])
-            return self.GetEHScore(REPCI, REPCN, length)
+            return utils.GetEHScore(REPCI, REPCN, length)
         else:
             return 0 # shouldn't happen
 
-    def GetEHScore(self, conf_invs, CNs, length):
-        r"""
-        Compute a confidence score for EH genotypes
-
-        Parameters
-        ----------
-        conf_invs : str
-            FORMAT/REPCI field from EH
-        CNs : str
-            FORMAT/REPCN field from EH
-        length : int
-            Repeat unit length (bp)
-
-        Returns
-        -------
-        score : float
-            Confidence score. 0=low, 1=high
-        """
-        conf_invs = conf_invs.split("/")
-        CNs = CNs.split("/")
-        CNs = [(int(CN) * length) for CN in CNs]
-        score1 = self.CalcEHAlleleScore(conf_invs[0], CNs[0])
-        score2 = self.CalcEHAlleleScore(conf_invs[1], CNs[1])
-        return 0.8 * min(score1, score2) + 0.2 * max(score1, score2)
-
-    def CalcEHAlleleScore(self, conf_inv, allele):
-        r"""
-        Compute an allele-specific score for
-        EH genotypes
-
-        Parameters
-        ----------
-        conf_inv : str
-           low-high (based on one allele in FORMAT/REPCI field)
-        allele : int
-           Inferred allele (based on one allele in FORMAT/REPCN field)
-
-        Returns
-        -------
-        score : float
-           Confidence score for the allele. 0=low, 1=high
-        """
-        conf_inv = conf_inv.split("-")
-        dist = abs(int(conf_inv[0]) - int(conf_inv[1]))
-        if dist > 100:
-             return 0
-        if allele == 0:
-             return 1/math.exp(4 * (dist))
-        return 1/math.exp(4 * (dist) / int(allele))
-        
 class RecordCluster:
     r"""
     Class to keep track of a list of mergeable records
@@ -299,7 +251,7 @@ class RecordCluster:
         for rec in self.record_objs:
             if rec.vcf_type in ret_dict:
                 raise ValueError("Multiple records with same VCF type: " + str(rec.vcf_type))
-            ret_dict[rec.vcf_type] = rec.GetScores(self.samples.index(sample))
+            ret_dict[rec.vcf_type] = rec.GetScore(self.samples.index(sample))
         return ret_dict
 
 class OverlappingRegion:
