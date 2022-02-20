@@ -38,6 +38,15 @@ class RecordObj:
         self.append_seq = ''
 
     def GetCalledAlleles(self):
+        r"""
+        Get the set of all alternate alleles
+        with at least one calls
+
+        Returns
+        -------
+        al_idx : set of int
+            Set of called alleles (based on REF/ALT fields)
+        """
         al_idx = set()
         for call in self.hm_record.vcfrecord.genotypes:
             if call[0] != -1 and len(call) == 3:
@@ -46,9 +55,38 @@ class RecordObj:
         return al_idx
 
     def GetROSampleCall(self, samp_idx):
+        r"""
+        Get the genotype of a single sample
+
+        Parameters
+        ----------
+        samp_idx : int
+           Index of the sample
+
+        Returns
+        -------
+        sample_gt : [int, int, bool]
+           Corresponds to the genotype alleles and phasing
+           (based on cyvcf2 representation)
+        """
         return self.cyvcf2_record.genotypes[samp_idx]
 
     def GetSampleString(self, samp_idx):
+        r"""
+        Get a user-readable string of a sample's genotype
+
+        Parameters
+        ----------
+        samp_idx : int
+           Index of the sample
+
+        Returns
+        -------
+        callstr : str
+            Format is "caller=allele1,allele2"
+            Caller is one of gangstr/hipstr/eh/advntr
+            Alleles are given in copy number        
+        """
         samp_call = self.GetROSampleCall(samp_idx)
         if samp_call is None or samp_call[0] == -1:
             sampdata = "."
@@ -64,28 +102,79 @@ class RecordObj:
         return callstr
 
     def GetScores(self, samp_idx):
-        vcf_idx = convert_type_to_idx[self.vcf_type]
-        if vcf_idx == 0:
+        r"""
+        Get the score of a sample's genotype
+        For HipSTR/GangSTR, use "FORMAT/Q"
+        For adVNTR: use "FORMAT/ML"
+        For ExpansionHunter, use a custom score based on
+            FORMAT/REPCN and FORMAT/REPCI
+
+        Parameters
+        ----------
+        samp_idx : int
+           Index of the sample
+
+        Returns
+        -------
+        score : float
+           Indicates confidence in the call (0=low, 1=high)      
+        """
+        if self.vcf_type == trh.VcfTypes.advntr:
             return self.cyvcf2_record.format('ML')[samp_idx][0]
-        if vcf_idx == 1:
+        elif self.vcf_type in [trh.VcfTypes.hipstr, trh.VcfTypes.gangstr]:
+            return self.cyvcf2_record.format('Q')[samp_idx][0]
+        elif self.vcf_type == trh.VcfTypes.eh:
             REPCI = self.cyvcf2_record.format('REPCI')[samp_idx]
             REPCN = self.cyvcf2_record.format('REPCN')[samp_idx]
             if REPCI == "." or REPCN == ".":
                 return 0
             length = len(self.cyvcf2_record.INFO['RU'])
-            return self.ehScore(REPCI, REPCN, length)
-        if vcf_idx == 2 or vcf_idx == 3:
-            return self.cyvcf2_record.format('Q')[samp_idx][0]
+            return self.GetEHScore(REPCI, REPCN, length)
+        else:
+            return 0 # shouldn't happen
 
-    def ehScore(self, conf_invs, CNs, length):
+    def GetEHScore(self, conf_invs, CNs, length):
+        r"""
+        Compute a confidence score for EH genotypes
+
+        Parameters
+        ----------
+        conf_invs : str
+            FORMAT/REPCI field from EH
+        CNs : str
+            FORMAT/REPCN field from EH
+        length : int
+            Repeat unit length (bp)
+
+        Returns
+        -------
+        score : float
+            Confidence score. 0=low, 1=high
+        """
         conf_invs = conf_invs.split("/")
         CNs = CNs.split("/")
         CNs = [(int(CN) * length) for CN in CNs]
-        score1 = self.CalcScore(conf_invs[0], CNs[0])
-        score2 = self.CalcScore(conf_invs[1], CNs[1])
+        score1 = self.CalcEHAlleleScore(conf_invs[0], CNs[0])
+        score2 = self.CalcEHAlleleScore(conf_invs[1], CNs[1])
         return 0.8 * min(score1, score2) + 0.2 * max(score1, score2)
 
-    def CalcScore(self, conf_inv, allele):
+    def CalcEHAlleleScore(self, conf_inv, allele):
+        r"""
+        Compute an allele-specific score for
+        EH genotypes
+
+        Parameters
+        ----------
+        conf_inv : str
+           low-high (based on one allele in FORMAT/REPCI field)
+        allele : int
+           Inferred allele (based on one allele in FORMAT/REPCN field)
+
+        Returns
+        -------
+        score : float
+           Confidence score for the allele. 0=low, 1=high
+        """
         conf_inv = conf_inv.split("-")
         dist = abs(int(conf_inv[0]) - int(conf_inv[1]))
         if dist > 100:
@@ -94,7 +183,6 @@ class RecordObj:
              return 1/math.exp(4 * (dist))
         return 1/math.exp(4 * (dist) / int(allele))
         
-
 class RecordCluster:
     r"""
     Class to keep track of a list of mergeable records
