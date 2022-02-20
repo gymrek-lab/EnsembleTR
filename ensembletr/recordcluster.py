@@ -37,9 +37,6 @@ class RecordObj:
         self.prepend_seq = ''
         self.append_seq = ''
 
-    def GetSamples(self):
-        return self.samples
-
     def GetCalledAlleles(self):
         al_idx = set()
         for call in self.hm_record.vcfrecord.genotypes:
