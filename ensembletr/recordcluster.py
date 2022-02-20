@@ -501,6 +501,8 @@ class RecordResolver:
             NCOPY_list = []
             for pa in self.resolved_prealleles[sample]:
                 if pa.allele_sequence != self.ref:
+                    if pa.allele_sequence not in self.alts:
+                       print(self.ref,pa.allele_sequence,self.resolution_method)
                     GT_list.append(str(self.alts.index(pa.allele_sequence) + 1))
                     NCOPY_list.append(str(pa.allele_ncopy))
                 else:

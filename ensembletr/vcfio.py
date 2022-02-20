@@ -11,6 +11,13 @@ import cyvcf2
 
 from . import recordcluster as recordcluster
 
+
+convert_type_to_idx = {trh.VcfTypes.advntr: 0,
+                       trh.VcfTypes.eh: 1,
+                       trh.VcfTypes.hipstr: 2,
+                       trh.VcfTypes.gangstr: 3,
+                       }
+
 ##################################################
 #
 #       Reader classes
@@ -222,14 +229,14 @@ class Readers:
         ov_region = recordcluster.OverlappingRegion(record_cluster_list)
         return ov_region
 
-    def goToNext(self):
+    def goToNext(self, vcf_list):
         r"""
         Get next records for each reader
         """
         prev_records = self.current_tr_records
         new_records = []
         for idx, rec in enumerate(prev_records):
-            if mergeutils.GetMinRecords(self.getCurrentRecordVCFRecs(), self.chroms)[idx]:
+            if vcf_list[convert_type_to_idx[self.vcfwrappers[idx].vcftype]]:
                 try:
                     new_records.append(
                         trh.HarmonizeRecord(self.vcfwrappers[idx].vcftype,
