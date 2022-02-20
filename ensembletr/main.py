@@ -46,7 +46,7 @@ def main(args):
                 if recresolver.Resolve(): 
                     writer.WriteRecord(recresolver)
             recnum += 1
-        readers.goToNext()
+            readers.goToNext(rc.vcf_types)
         if args.end_after != -1 and recnum >= args.end_after:
             break
     writer.Close()
