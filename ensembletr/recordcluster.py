@@ -4,9 +4,11 @@ Classes to keep track of mergeable records
 
 import trtools.utils.tr_harmonizer as trh
 from trtools.utils.utils import GetCanonicalMotif
+from collections import defaultdict
 from enum import Enum
 import networkx as nx
 import numpy as np
+import math
 
 CC_PREFIX = 'cc'
 
@@ -64,6 +66,37 @@ class RecordObj:
         callstr = "%s=%s"%(self.vcf_type.name, sampdata)
         return callstr
 
+    def GetScores(self, samp_idx):
+        vcf_idx = convert_type_to_idx[self.vcf_type]
+        if vcf_idx == 0:
+            return self.cyvcf2_record.format('ML')[samp_idx][0]
+        if vcf_idx == 1:
+            REPCI = self.cyvcf2_record.format('REPCI')[samp_idx]
+            REPCN = self.cyvcf2_record.format('REPCN')[samp_idx]
+            if REPCI == "." or REPCN == ".":
+                return 0
+            length = len(self.cyvcf2_record.INFO['RU'])
+            return self.ehScore(REPCI, REPCN, length)
+        if vcf_idx == 2 or vcf_idx == 3:
+            return self.cyvcf2_record.format('Q')[samp_idx][0]
+
+    def ehScore(self, conf_invs, CNs, length):
+        conf_invs = conf_invs.split("/")
+        CNs = CNs.split("/")
+        CNs = [(int(CN) * length) for CN in CNs]
+        score1 = self.CalcScore(conf_invs[0], CNs[0])
+        score2 = self.CalcScore(conf_invs[1], CNs[1])
+        return 0.8 * min(score1, score2) + 0.2 * max(score1, score2)
+
+    def CalcScore(self, conf_inv, allele):
+        conf_inv = conf_inv.split("-")
+        dist = abs(int(conf_inv[0]) - int(conf_inv[1]))
+        if dist > 100:
+             return 0
+        if allele == 0:
+             return 1/math.exp(4 * (dist))
+        return 1/math.exp(4 * (dist) / int(allele))
+        
 
 class RecordCluster:
     r"""
@@ -162,6 +195,26 @@ class RecordCluster:
             if rec.vcf_type in ret_dict:
                 raise ValueError("Multiple records with same VCF type: " + str(rec.vcf_type))
             ret_dict[rec.vcf_type] = rec.GetROSampleCall(self.samples.index(sample))
+        return ret_dict
+
+    def GetSampleScore(self, sample):
+        r"""
+        Get quality scores for an individual sample
+
+        Paramters
+        ---------
+        sample : str
+
+        Returns
+        -------
+        ret_dict : (dict of str: str)
+           Key=VCF type, Value=sample quality score
+        """
+        ret_dict = {}
+        for rec in self.record_objs:
+            if rec.vcf_type in ret_dict:
+                raise ValueError("Multiple records with same VCF type: " + str(rec.vcf_type))
+            ret_dict[rec.vcf_type] = rec.GetScores(self.samples.index(sample))
         return ret_dict
 
 class OverlappingRegion:
@@ -366,6 +419,13 @@ class ClusterGraph:
                 return i
         return None
 
+    def GetSubgraphSize(self, ccid):
+        if ccid < 0 or ccid >= len(self.connected_comps):
+            return None
+        return len(self.connected_comps[ccid].subgraph.nodes())
+        
+
+
 class RecordResolver:
     """
     Main class to resolve info for a record cluster
@@ -393,25 +453,35 @@ class RecordResolver:
         # Get set after resolving
         self.resolved_prealleles = {}
         self.resolution_score = {}
+        self.allele_support = {}
+        self.resolution_method = {}
         self.ref = None
         self.alts = []
-        self.sample_to_info = {} # sample -> GT, NCOPY, SRC
+        self.sample_to_info = {} # sample -> GT, NCOPY
+        self.nocall = False
 
     def Resolve(self):
         resolved_prealleles = {}
         resolution_score = {}
+        resolution_methods = {}
+        allele_supports = {}
         for sample in self.record_cluster.samples:
             samp_call = self.record_cluster.GetSampleCall(sample)
-            resolved_connected_comp_ids, score = \
-                self.GetConnectedCompForSingleCall(samp_call)
+            samp_qual_scores = self.record_cluster.GetSampleScore(sample)
+            resolved_connected_comp_ids, resolved_methods, score, allele_support = \
+                self.GetConnectedCompForSingleCall(samp_call, samp_qual_scores)
             resolution_score[sample] = score
+            resolution_methods[sample] = resolved_methods
             resolved_prealleles[sample] = self.ResolveSequenceForSingleCall(resolved_connected_comp_ids, samp_call)
+            allele_supports[sample] = allele_support
         self.resolved_prealleles = resolved_prealleles
         self.resolution_score = resolution_score
+        self.allele_support = allele_supports
+        self.resolution_method = resolution_methods
         self.update()
         self.resolved = True
         return self.resolved
-
+   
     def update(self):
         # First update alleles list
         for sample in self.resolved_prealleles:
@@ -422,12 +492,13 @@ class RecordResolver:
                     if pa.allele_sequence not in self.alts:
                         self.alts.append(pa.allele_sequence)
 
+        if self.ref is None:
+            self.nocall = True 
         # Now update other info. need all alts for this
         for sample in self.resolved_prealleles:
             self.sample_to_info[sample] = {}
             GT_list = []
             NCOPY_list = []
-            SRC_list = []
             for pa in self.resolved_prealleles[sample]:
                 if pa.allele_sequence != self.ref:
                     GT_list.append(str(self.alts.index(pa.allele_sequence) + 1))
@@ -435,17 +506,26 @@ class RecordResolver:
                 else:
                     GT_list.append('0')
                     NCOPY_list.append(str(pa.reference_ncopy))
-                for caller in pa.support:
-                    if caller.name not in SRC_list:
-                        SRC_list.append(caller.name)
             if len(GT_list) == 0:
                 GT_list = ['.']
                 NCOPY_list = ['.']
-            if len(SRC_list) == 0:
-                SRC_list = ['.']
             self.sample_to_info[sample]["GT"] = '/'.join(GT_list)
             self.sample_to_info[sample]["NCOPY"] = ','.join(NCOPY_list)
-            self.sample_to_info[sample]["SRC"] = ','.join(SRC_list)
+
+    def GetSampleScore(self, sample):
+        if self.resolution_score[sample] == -1:
+            return "."
+        return str(self.resolution_score[sample])
+
+    def GetSampleGTS(self, sample):
+        if len(self.resolution_method[sample]) == 0:
+            return "."
+        return '|'.join(self.resolution_method[sample])
+
+    def GetSampleALS(self, sample):
+        if not self.allele_support[sample]:
+            return "."
+        return ",".join([str(key) + "|" + str(val) for key,val in self.allele_support[sample].items()])
 
     def GetSampleGT(self, sample):
         return self.sample_to_info[sample]["GT"]
@@ -453,10 +533,7 @@ class RecordResolver:
     def GetSampleNCOPY(self, sample):
         return self.sample_to_info[sample]["NCOPY"]
 
-    def GetSampleSRC(self, sample):
-        return self.sample_to_info[sample]["SRC"]
-
-    def GetConnectedCompForSingleCall(self, samp_call):
+    def GetConnectedCompForSingleCall(self, samp_call, samp_qual_scores):
         r"""
 
         Parameters
@@ -477,37 +554,50 @@ class RecordResolver:
         Then return its call, plus support from other callers
         Instead of "certain", return a score
         """
-        cc_id_support = {} # CCID -> num supporting methods
-        num_valid_methods = 0
+        method_cc = defaultdict(list) # methods supporting each CCID
+        allele_size_support = {}
         for method in samp_call:
-            # check for no calls
-            if samp_call[method][0] == -1: continue # no call
-            # Get the IDs of supported connected components
-            for i in [0, 1]:
-                node = self.rc_graph.GetNodeObject(method, samp_call[method][i])
-                ccid = self.rc_graph.GetSubgraphIndexForNode(node)
-                cc_id_support[ccid] = cc_id_support.get(ccid, 0) + 1
-            num_valid_methods += 1
+                # check for no calls
+                if samp_call[method][0] == -1:
+                        continue # no call
+                # Get the IDs of supported connected components
+                ccids = []
+                for i in [0, 1]:
+                        node = self.rc_graph.GetNodeObject(method, samp_call[method][i])
+                        ccid = self.rc_graph.GetSubgraphIndexForNode(node)
+                        ccids.append(ccid)
+                        allele_size_support[node.allele_size] = allele_size_support.get(node.allele_size, 0) + 1
 
-        sorted_ccid_support = dict(sorted(cc_id_support.items(), \
-            key=lambda item: item[1], reverse=True))
+                ccids.sort()
+                ccids = (ccids[0],ccids[1])
+                method_cc[ccids].append(method)
+        
+        scores = {}
+        sum_scores = 0
+        for pair in method_cc:
+                score = 0
+                for method in method_cc[pair]:
+                        score += samp_qual_scores[method]
+                sum_scores += score
+                scores[pair] = score
+        if sum_scores != 0:
+                for pair in scores:
+                        scores[pair] = scores[pair]/sum_scores
+        ret_cc_ids = max(scores, key=scores.get, default = -1) # get alleles with maximum score
+        
+        if ret_cc_ids == -1:
+                return [],[], -1, {}
 
-        ret_cc_ids = []
-        score = 1
-        for cc_id in sorted_ccid_support:
-            if sorted_ccid_support[cc_id] == num_valid_methods * 2: 
-                return [cc_id, cc_id], score
-            elif sorted_ccid_support[cc_id] > num_valid_methods:
-                score = 0
-                return [cc_id, cc_id], score
-            elif sorted_ccid_support[cc_id] == num_valid_methods:
-                if len(ret_cc_ids) < 2:
-                    ret_cc_ids.append(cc_id)
-                else:
-                    score = 0
-            else:
-                score = 0
-        return ret_cc_ids, score
+        ret_sup_methods = [method.value for method in method_cc[ret_cc_ids]]
+        method_dict = {"advntr":[1,0,0,0],"eh":[0,1,0,0],"hipstr":[0,0,1,0],"gangstr":[0,0,0,1]}
+        sup_method = [0,0,0,0]
+        for method in ret_sup_methods:
+                sup_method = [sum(x) for x in zip(sup_method, method_dict[method])] 
+        sup_method = [str(method) for method in sup_method]
+        return list(ret_cc_ids), sup_method, round(scores[ret_cc_ids],2), allele_size_support
+
+
+
         
     def ResolveSequenceForSingleCall(self, ccid_list, samp_call):
         if len(ccid_list) == 0: return []
@@ -520,7 +610,6 @@ class RecordResolver:
                 continue
             if trh.VcfTypes.hipstr in connected_comp.uniq_callers and \
                 trh.VcfTypes.hipstr in samp_call and samp_call[trh.VcfTypes.hipstr][0] != -1:
-
                 # cc has hipstr nodes, and we have hipstr calls
                 hip_call = samp_call[trh.VcfTypes.hipstr]
                 for al_idx in hip_call[0:2]:
