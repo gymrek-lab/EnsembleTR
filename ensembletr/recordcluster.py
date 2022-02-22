@@ -291,12 +291,11 @@ class Allele:
     def __init__(self, ro, al_idx):
         self.record_object = ro
         self.al_idx = al_idx
-
         alleles = [ro.hm_record.ref_allele]+ro.hm_record.alt_alleles
-        print(ro.hm_record.ref_allele, ro.vcf_type)
         allele_lengths = [ro.hm_record.ref_allele_length] + ro.hm_record.alt_allele_lengths
         self.reference_sequence = ro.prepend_seq + alleles[0] + ro.append_seq
         self.allele_sequence = ro.prepend_seq + alleles[al_idx] + ro.append_seq
+        print(self.allele_sequence, ro.vcf_type)
         self.allele_size = len(self.allele_sequence) - len(self.reference_sequence)
         self.allele_ncopy = allele_lengths[al_idx]
         self.reference_ncopy = ro.hm_record.ref_allele_length
@@ -559,7 +558,7 @@ class RecordResolver:
     def GetSampleGTS(self, sample):
         if len(self.resolution_method[sample]) == 0:
             return "."
-        return '|'.join(self.resolution_method[sample])
+        return '|'.join([str(method) for method in self.resolution_method[sample]])
 
     def GetSampleALS(self, sample):
         if not self.allele_support[sample]:
@@ -586,19 +585,18 @@ class RecordResolver:
            indices of CCs of resolved call
         score : float
            Score of caller agreement
-
-        TODO: work on logic
-        Want to instead determine which caller most reliable
-        Or alternatively vote
-        Then return its call, plus support from other callers
-        Instead of "certain", return a score
+        sup_method : list
+           Supporting method for the ret_cc_ids
+        allele_size_support: dict
+            Key=bp diff of allele and the ref genome, Value=number of times we saw this allele.
         """
-        method_cc = defaultdict(list) # methods supporting each CCID
+        method_cc = defaultdict(list)  # methods supporting each pair of CCID
+        method_dict = {"advntr": [1, 0, 0, 0], "eh": [0, 1, 0, 0], "hipstr": [0, 0, 1, 0], "gangstr": [0, 0, 0, 1]}
         allele_size_support = {}
         for method in samp_call:
                 # check for no calls
                 if samp_call[method][0] == -1:
-                        continue # no call
+                        continue  # no call
                 # Get the IDs of supported connected components
                 ccids = []
                 for i in [0, 1]:
@@ -610,30 +608,61 @@ class RecordResolver:
                 ccids.sort()
                 ccids = (ccids[0],ccids[1])
                 method_cc[ccids].append(method)
-        
+
+        if len(method_cc) == 0:  # no call across all methods
+            return [],[], -1, {}
+
+        ret_cc_ids, score = self.ResolveScore(samp_qual_scores, method_cc)
+
+        ret_sup_methods = [method.value for method in method_cc[ret_cc_ids]]
+
+        sup_method = [0, 0, 0, 0]
+        for method in ret_sup_methods:
+                sup_method = [sum(x) for x in zip(sup_method, method_dict[method])] 
+        return list(ret_cc_ids), sup_method, round(score, 2), allele_size_support
+
+    def ResolveScore(self, samp_qual_scores, method_cc):
+        r"""
+
+        Parameters
+        ----------
+        samp_qual_scores : (dict of str: str)
+           Key=VCF type, Value=sample quality score
+
+        method_cc : (dict of tuple)
+           Key=pair of ccids, Value, list of supporting methods
+        Returns
+        -------
+        ret_cc_ids : list of int
+           indices of CCs of resolved call
+        max_score : float
+           score of ret_cc_ids
+        """
+
         scores = {}
         sum_scores = 0
         for pair in method_cc:
-                score = 0
-                for method in method_cc[pair]:
-                        score += samp_qual_scores[method]
+                score = [sum(samp_qual_scores[method]) for method in method_cc[pair]]
                 sum_scores += score
                 scores[pair] = score
         if sum_scores != 0:
-                for pair in scores:
-                        scores[pair] = scores[pair]/sum_scores
-        ret_cc_ids = max(scores, key=scores.get, default = -1) # get alleles with maximum score
-        
-        if ret_cc_ids == -1:
-                return [],[], -1, {}
+            for pair in scores:
+                scores[pair] = scores[pair]/sum_scores
 
-        ret_sup_methods = [method.value for method in method_cc[ret_cc_ids]]
-        method_dict = {"advntr":[1,0,0,0],"eh":[0,1,0,0],"hipstr":[0,0,1,0],"gangstr":[0,0,0,1]}
-        sup_method = [0,0,0,0]
-        for method in ret_sup_methods:
-                sup_method = [sum(x) for x in zip(sup_method, method_dict[method])] 
-        sup_method = [str(method) for method in sup_method]
-        return list(ret_cc_ids), sup_method, round(scores[ret_cc_ids],2), allele_size_support
+        max_score = max(scores)
+        max_pair = []
+        for pair in scores:
+            if scores[pair] == max_score:
+                max_pair.append(pair)
+
+        if len(max_pair) == 1:
+            return max_pair[0], max_score
+        else:  # ties
+            for method in ['hipstr', 'gangstr', 'eh', 'advntr']:  # break ties with giving priority to methods
+                for pair in max_pair:
+                    for method.value in method_cc[pair]:
+                        if method.value == method:
+                            return pair, max_score
 
 
 
