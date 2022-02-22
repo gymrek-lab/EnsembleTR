@@ -295,7 +295,6 @@ class Allele:
         allele_lengths = [ro.hm_record.ref_allele_length] + ro.hm_record.alt_allele_lengths
         self.reference_sequence = ro.prepend_seq + alleles[0] + ro.append_seq
         self.allele_sequence = ro.prepend_seq + alleles[al_idx] + ro.append_seq
-        print(self.allele_sequence, ro.vcf_type)
         self.allele_size = len(self.allele_sequence) - len(self.reference_sequence)
         self.allele_ncopy = allele_lengths[al_idx]
         self.reference_ncopy = ro.hm_record.ref_allele_length
@@ -538,7 +537,6 @@ class RecordResolver:
             for pa in self.resolved_prealleles[sample]:
                 if pa.allele_sequence != self.ref:
                     if pa.allele_sequence not in self.alts:
-                       print(self.ref,pa.allele_sequence,self.resolution_method)
                     GT_list.append(str(self.alts.index(pa.allele_sequence) + 1))
                     NCOPY_list.append(str(pa.allele_ncopy))
                 else:
@@ -642,14 +640,16 @@ class RecordResolver:
         scores = {}
         sum_scores = 0
         for pair in method_cc:
-                score = [sum(samp_qual_scores[method]) for method in method_cc[pair]]
-                sum_scores += score
-                scores[pair] = score
+            score = 0
+            for method in method_cc[pair]:
+                score += samp_qual_scores[method]
+            sum_scores += score
+            scores[pair] = score
         if sum_scores != 0:
             for pair in scores:
                 scores[pair] = scores[pair]/sum_scores
 
-        max_score = max(scores)
+        max_score = max(scores.values())
         max_pair = []
         for pair in scores:
             if scores[pair] == max_score:
@@ -660,8 +660,8 @@ class RecordResolver:
         else:  # ties
             for method in ['hipstr', 'gangstr', 'eh', 'advntr']:  # break ties with giving priority to methods
                 for pair in max_pair:
-                    for method.value in method_cc[pair]:
-                        if method.value == method:
+                    for method_ in method_cc[pair]:
+                        if method_.value == method:
                             return pair, max_score
 
 
