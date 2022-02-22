@@ -192,12 +192,12 @@ class RecordCluster:
             if rec.cyvcf2_record.POS > self.first_pos:
                 # Found a record that starts after
                 # Should prepend the record
-                rec.prepend_str = self.fasta[chrom][self.first_pos : rec.cyvcf2_record.POS].seq.upper()
+                rec.prepend_seq = self.fasta[chrom][self.first_pos : rec.cyvcf2_record.POS].seq.upper()
             
             if rec.cyvcf2_record.end < self.last_end:
                 # Found a record that ends before last end
                 # Should append the record
-                rec.append_str = self.fasta[chrom][rec.cyvcf2_record.end : self.last_end].seq.upper()  
+                rec.append_seq = self.fasta[chrom][rec.cyvcf2_record.end : self.last_end].seq.upper()
 
     def GetRawCalls(self):
         r"""
@@ -293,8 +293,8 @@ class Allele:
         self.al_idx = al_idx
 
         alleles = [ro.hm_record.ref_allele]+ro.hm_record.alt_alleles
+        print(ro.hm_record.ref_allele, ro.vcf_type)
         allele_lengths = [ro.hm_record.ref_allele_length] + ro.hm_record.alt_allele_lengths
-
         self.reference_sequence = ro.prepend_seq + alleles[0] + ro.append_seq
         self.allele_sequence = ro.prepend_seq + alleles[al_idx] + ro.append_seq
         self.allele_size = len(self.allele_sequence) - len(self.reference_sequence)
