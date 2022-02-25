@@ -308,6 +308,7 @@ class PreAllele:
         self.allele_sequence = allele.allele_sequence
         self.reference_ncopy = allele.reference_ncopy
         self.allele_ncopy = allele.allele_ncopy
+        self.al_idx = allele.al_idx
         self.support = callers
     
     def add_support(self, callers):
@@ -535,8 +536,7 @@ class RecordResolver:
             GT_list = []
             NCOPY_list = []
             for pa in self.resolved_prealleles[sample]:
-                if pa.allele_sequence != self.ref:
-                    if pa.allele_sequence not in self.alts:
+                if pa.al_idx != 0:
                     GT_list.append(str(self.alts.index(pa.allele_sequence) + 1))
                     NCOPY_list.append(str(pa.allele_ncopy))
                 else:
