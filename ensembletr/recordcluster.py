@@ -291,13 +291,18 @@ class Allele:
     def __init__(self, ro, al_idx):
         self.record_object = ro
         self.al_idx = al_idx
-        alleles = [ro.hm_record.ref_allele]+ro.hm_record.alt_alleles
+        alleles = []
+        if ro.hm_record.full_alleles is None:
+            alleles = [ro.hm_record.ref_allele]+ro.hm_record.alt_alleles
+        else:
+            alleles = [ro.hm_record.full_alleles[0]] + ro.hm_record.full_alleles[1]
         allele_lengths = [ro.hm_record.ref_allele_length] + ro.hm_record.alt_allele_lengths
         self.reference_sequence = ro.prepend_seq + alleles[0] + ro.append_seq
         self.allele_sequence = ro.prepend_seq + alleles[al_idx] + ro.append_seq
         self.allele_size = len(self.allele_sequence) - len(self.reference_sequence)
         self.allele_ncopy = allele_lengths[al_idx]
         self.reference_ncopy = ro.hm_record.ref_allele_length
+
 
     def GetVCFType(self):
         return self.record_object.vcf_type
