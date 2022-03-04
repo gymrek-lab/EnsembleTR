@@ -443,7 +443,8 @@ class ClusterGraph:
         for ro in self.rclust.record_objs:
             called_alleles = ro.GetCalledAlleles()
             for al_idx in called_alleles:
-                alist.append(Allele(ro, al_idx))
+                allele = Allele(ro, al_idx)
+                alist.append(allele)
         return alist
 
     def GetNodeObject(self, vcf_type, al_idx):
