@@ -41,15 +41,17 @@ def main(args):
         rc_list = readers.getMergableCalls().RecordClusters
         for rc in rc_list:
             num_vcfs = len([i for i in rc.vcf_types if i == True])
-            if not (num_vcfs == 1 and args.exclude_single):
-                recresolver = recordcluster.RecordResolver(rc)
-                if recresolver.Resolve(): 
-                    writer.WriteRecord(recresolver)
-            recnum += 1
+            if num_vcfs > 0:
+                if not (num_vcfs == 1 and args.exclude_single):
+                    recresolver = recordcluster.RecordResolver(rc)
+                    if recresolver.Resolve():
+                        writer.WriteRecord(recresolver)
+                recnum += 1
             readers.goToNext(rc.vcf_types)
         if args.end_after != -1 and recnum >= args.end_after:
             break
     writer.Close()
+
 
 def getargs(): # pragma: no cover
     parser = argparse.ArgumentParser(
