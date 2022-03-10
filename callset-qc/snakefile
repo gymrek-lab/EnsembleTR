@@ -1,4 +1,4 @@
-OUTDIR="/storage/nmmsv/x_playground/callset_qc_outs" # TODO make an input. can be same as VCFDIR but didn't want to mess up Nima's directories
+OUTDIR="/storage/nicholema/callset_qc_outs/ensembleTR" # make an input. can be same as VCFDIR but didn't want to mess up Nima's directories
 FAMFILE="1000G.ped"
 
 wildcard_constraints:
@@ -8,7 +8,7 @@ wildcard_constraints:
 # Set up VCF paths
 # TODO can expand this to have if/then to determine path for other tools
 def getvcf(superpop, pop):
-    VCFDIR="/gymreklab-tscc/mousavi/results/1000genomes/outs"
+    VCFDIR="/gymreklab-tscc/helia/ensembl/ensemble_out/chrs/"
     return "%s/%s/%s/merged/%s_filtered.vcf.gz"%(VCFDIR,superpop,pop,pop)
 
 def makevcfdict():
