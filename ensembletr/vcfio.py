@@ -278,7 +278,7 @@ class Readers:
                                             next(self.vcfwrappers[idx].vcfreader))
                             if not self.checkAdVNTRCall(3, new_record.ref_allele,
                                                     new_record.motif):
-                                print("Skipped adVNTR call at " + str(self.current_tr_records[i].pos))
+                                print("Skipped adVNTR call at " + str(new_record.pos))
                             else:
                                 new_records.append(new_record)
                                 break
