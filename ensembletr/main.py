@@ -39,6 +39,7 @@ def main(args):
     recnum = 0
     while not readers.done:
         rc_list = readers.getMergableCalls().RecordClusters
+        rc_list.sort(key=lambda x: x.first_pos)
         for rc in rc_list:
             num_vcfs = len([i for i in rc.vcf_types if i == True])
             if not (num_vcfs == 1 and args.exclude_single):
