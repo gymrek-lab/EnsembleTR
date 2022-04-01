@@ -97,12 +97,14 @@ class Readers:
 
         # Load current records
         self.current_tr_records = []
+        self.samples_list = []
         for wrapper in self.vcfwrappers:
+            self.samples_list.append(wrapper.vcfreader.samples)
             if wrapper.vcftype.value == "advntr":
                 while True:
                     try:
                         new_record = trh.HarmonizeRecord(wrapper.vcftype, next(wrapper.vcfreader))
-                        if not self.checkAdVNTRCall(3, new_record.ref_allele,
+                        if not self.checkAdVNTRCall(2, new_record.ref_allele,
                                                     new_record.motif):
                             print("Skipped adVNTR call at " + str(new_record.pos))
                         else:
@@ -169,17 +171,26 @@ class Readers:
     def checkAdVNTRCall(self, n, ref, motif):
         cnt = 0
         cursor = 0
-        while True:
-            if (cursor + len(motif)) >= len(ref):
+        homo_check = False
+        homo_str = ["TTTTT", "AAAAA", "GGGGG", "CCCCC"]
+        for str in homo_str:
+            if str in motif:
+                homo_check = True
                 break
-            if motif == ref[cursor:cursor+len(motif)]:
-                cnt += 1
-                cursor += len(motif)
-            else:
-                cursor += 1
-        if cnt >= n:
+        if homo_check:
+            while True:
+                if (cursor + len(motif)) >= len(ref):
+                    break
+                if motif == ref[cursor:cursor+len(motif)]:
+                    cnt += 1
+                    cursor += len(motif)
+                else:
+                    cursor += 1
+            if cnt >= n:
+                return True
+            return False
+        else:
             return True
-        return False
 
     def getCurrentRange(self):
         r"""
@@ -250,7 +261,8 @@ class Readers:
         record_cluster_list = []
         for i in range(len(self.current_tr_records)):
             if self.is_overlap_min[i] and self.current_tr_records[i] is not None:
-                curr_ro = recordcluster.RecordObj(self.current_tr_records[i].vcfrecord, self.vcfwrappers[i].vcftype)
+                curr_ro = recordcluster.RecordObj(self.current_tr_records[i].vcfrecord, self.vcfwrappers[i].vcftype,
+                                                  self.samples_list[i])
                 canon_motif = utils.GetCanonicalMotif(curr_ro.hm_record.motif)
                 added = False
                 for rc in record_cluster_list:
@@ -258,7 +270,7 @@ class Readers:
                         rc.AppendRecordObject(curr_ro)
                         added = True
                 if not added:
-                    record_cluster_list.append(recordcluster.RecordCluster([curr_ro], self.ref_genome, \
+                    record_cluster_list.append(recordcluster.RecordCluster([curr_ro], self.ref_genome,
                                                                            canon_motif, self.samples))
         ov_region = recordcluster.OverlappingRegion(record_cluster_list)
         return ov_region
@@ -276,7 +288,7 @@ class Readers:
                         try:
                             new_record = trh.HarmonizeRecord(self.vcfwrappers[idx].vcftype,
                                             next(self.vcfwrappers[idx].vcfreader))
-                            if not self.checkAdVNTRCall(3, new_record.ref_allele,
+                            if not self.checkAdVNTRCall(2, new_record.ref_allele,
                                                     new_record.motif):
                                 print("Skipped adVNTR call at " + str(new_record.pos))
                             else:
@@ -301,6 +313,7 @@ class Readers:
                                             prev_records[idx].vcfrecord)
                     )
         self.current_tr_records = new_records
+
 
         # Update
         if not self.areChromsValid():
@@ -346,6 +359,7 @@ class Writer:
         self.vcf_writer.write('##INFO=<ID=RU,Number=1,Type=String,Description="Motif (repeat unit)">\n')
         self.vcf_writer.write('##INFO=<ID=METHODS,Number=1,Type=String,Description="Methods that attempted to genotype this locus (AdVNTR, EH, HipSTR, GangSTR)">\n')
         self.vcf_writer.write('##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n')
+        self.vcf_writer.write('##FORMAT=<ID=GB,Number=1,Type=String,Description="Base pair difference from ref allele">\n')
         self.vcf_writer.write('##FORMAT=<ID=NCOPY,Number=1,Type=String,Description="Copy Number">\n')
         self.vcf_writer.write('##FORMAT=<ID=SCORE,Number=1,Type=String,Description="Score of the merged call">\n')
         self.vcf_writer.write('##FORMAT=<ID=GTS,Number=1,Type=String,Description="Method(s) that support the merged call">\n')
@@ -382,13 +396,14 @@ class Writer:
                      'RU': rcres.record_cluster.canonical_motif,
                      'METHODS': "|".join([str(int(item)) for item in rcres.record_cluster.vcf_types])}
         INFO = ";".join(["%s=%s"%(key, INFO_DICT[key]) for key in INFO_DICT])
-        FORMAT = ['GT', 'NCOPY','SCORE','GTS','ALS','INPUTS']
+        FORMAT = ['GT','GB', 'NCOPY','SCORE','GTS','ALS','INPUTS']
 
         SAMPLE_DATA=[]
         raw_calls = rcres.record_cluster.GetRawCalls()
         for sample in rcres.record_cluster.samples:
             SAMPLE_DATA.append(':'.join(
                 [rcres.GetSampleGT(sample),
+                 rcres.GetSampleGB(sample),
                  rcres.GetSampleNCOPY(sample),
                  rcres.GetSampleScore(sample),
                  rcres.GetSampleGTS(sample),
