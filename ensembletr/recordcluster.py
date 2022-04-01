@@ -31,13 +31,14 @@ class RecordObj:
     vcf_type: trh.TRRecordHarmonizer.vcftype
        Type of the VCF file
     """
-    def __init__(self, rec, vcf_type):
+    def __init__(self, rec, vcf_type, vcf_samples):
         self.cyvcf2_record = rec
         self.vcf_type = vcf_type
         self.hm_record = trh.HarmonizeRecord(vcf_type, rec)
         self.canonical_motif = GetCanonicalMotif(self.hm_record.motif)
         self.prepend_seq = ''
         self.append_seq = ''
+        self.vcf_samples = vcf_samples
 
     def GetCalledAlleles(self):
         r"""
@@ -56,7 +57,7 @@ class RecordObj:
                 al_idx.add(call[1])
         return al_idx
 
-    def GetROSampleCall(self, samp_idx):
+    def GetROSampleCall(self, sample):
         r"""
         Get the genotype of a single sample
 
@@ -71,9 +72,10 @@ class RecordObj:
            Corresponds to the genotype alleles and phasing
            (based on cyvcf2 representation)
         """
+        samp_idx = self.vcf_samples.index(sample)
         return self.cyvcf2_record.genotypes[samp_idx]
 
-    def GetSampleString(self, samp_idx):
+    def GetSampleString(self, sample):
         r"""
         Get a user-readable string of a sample's genotype
 
@@ -89,7 +91,7 @@ class RecordObj:
             Caller is one of gangstr/hipstr/eh/advntr
             Alleles are given in copy number        
         """
-        samp_call = self.GetROSampleCall(samp_idx)
+        samp_call = self.GetROSampleCall(sample)
         if samp_call is None or samp_call[0] == -1:
             sampdata = "."
         else:
@@ -103,7 +105,7 @@ class RecordObj:
         callstr = "%s=%s"%(self.vcf_type.name, sampdata)
         return callstr
 
-    def GetScore(self, samp_idx):
+    def GetScore(self, sample):
         r"""
         Get the score of a sample's genotype
         For HipSTR/GangSTR, use "FORMAT/Q"
@@ -121,6 +123,7 @@ class RecordObj:
         score : float
            Indicates confidence in the call (0=low, 1=high)      
         """
+        samp_idx = self.vcf_samples.index(sample)
         if self.vcf_type == trh.VcfTypes.advntr:
             return self.cyvcf2_record.format('ML')[samp_idx][0]
         elif self.vcf_type in [trh.VcfTypes.hipstr, trh.VcfTypes.gangstr]:
@@ -210,7 +213,7 @@ class RecordCluster:
         """
         out_dict = {}
         for sample in self.samples:
-            samp_call_list = [ro.GetSampleString(self.samples.index(sample)) for ro in self.record_objs]
+            samp_call_list = [ro.GetSampleString(sample) for ro in self.record_objs]
             out_dict[sample] = '|'.join(samp_call_list)
         return out_dict        
 
@@ -231,10 +234,10 @@ class RecordCluster:
         for rec in self.record_objs:
             if rec.vcf_type in ret_dict:
                 raise ValueError("Multiple records with same VCF type: " + str(rec.vcf_type))
-            ret_dict[rec.vcf_type] = rec.GetROSampleCall(self.samples.index(sample))
+            ret_dict[rec.vcf_type] = rec.GetROSampleCall(sample)
         return ret_dict
 
-    def GetSampleScore(self, sample):
+    def GetQualScore(self, sample):
         r"""
         Get quality scores for an individual sample
 
@@ -251,7 +254,7 @@ class RecordCluster:
         for rec in self.record_objs:
             if rec.vcf_type in ret_dict:
                 raise ValueError("Multiple records with same VCF type: " + str(rec.vcf_type))
-            ret_dict[rec.vcf_type] = rec.GetScore(self.samples.index(sample))
+            ret_dict[rec.vcf_type] = rec.GetScore(sample)
         return ret_dict
 
 class OverlappingRegion:
@@ -496,6 +499,7 @@ class RecordResolver:
         self.resolution_score = {}
         self.allele_support = {}
         self.resolution_method = {}
+        self.empty_call = {}
         self.ref = None
         self.alts = []
         self.sample_to_info = {} # sample -> GT, NCOPY
@@ -508,7 +512,7 @@ class RecordResolver:
         allele_supports = {}
         for sample in self.record_cluster.samples:
             samp_call = self.record_cluster.GetSampleCall(sample)
-            samp_qual_scores = self.record_cluster.GetSampleScore(sample)
+            samp_qual_scores = self.record_cluster.GetQualScore(sample)
             resolved_connected_comp_ids, resolved_methods, score, allele_support = \
                 self.GetConnectedCompForSingleCall(samp_call, samp_qual_scores)
             resolution_score[sample] = score
@@ -531,45 +535,58 @@ class RecordResolver:
                     self.ref = pa.reference_sequence
                 if pa.allele_sequence != pa.reference_sequence:
                     if pa.allele_sequence not in self.alts:
-                        self.alts.append(pa.allele_sequence)
+                        if pa.allele_sequence != "":
+                            self.alts.append(pa.allele_sequence)
 
         if self.ref is None:
             self.nocall = True 
         # Now update other info. need all alts for this
         for sample in self.resolved_prealleles:
+            self.empty_call[sample] = False
             self.sample_to_info[sample] = {}
             GT_list = []
+            GB_list = []
             NCOPY_list = []
             for pa in self.resolved_prealleles[sample]:
                 if pa.al_idx != 0:
+                    if pa.allele_sequence == "":
+                        self.empty_call[sample] = True
+                        break
                     GT_list.append(str(self.alts.index(pa.allele_sequence) + 1))
+                    GB_list.append(str(len(pa.allele_sequence) - len(self.ref)))
                     NCOPY_list.append(str(pa.allele_ncopy))
                 else:
                     GT_list.append('0')
+                    GB_list.append('0')
                     NCOPY_list.append(str(pa.reference_ncopy))
-            if len(GT_list) == 0:
+            if len(GT_list) == 0 or self.empty_call[sample]:
                 GT_list = ['.']
                 NCOPY_list = ['.']
+                GB_list = ['.']
             self.sample_to_info[sample]["GT"] = '/'.join(GT_list)
+            self.sample_to_info[sample]["GB"] = '/'.join(GB_list)
             self.sample_to_info[sample]["NCOPY"] = ','.join(NCOPY_list)
 
     def GetSampleScore(self, sample):
-        if self.resolution_score[sample] == -1:
+        if self.resolution_score[sample] == -1 or self.empty_call[sample]:
             return "."
         return str(self.resolution_score[sample])
 
     def GetSampleGTS(self, sample):
-        if len(self.resolution_method[sample]) == 0:
+        if len(self.resolution_method[sample]) == 0 or self.empty_call[sample]:
             return "."
         return '|'.join([str(method) for method in self.resolution_method[sample]])
 
     def GetSampleALS(self, sample):
-        if not self.allele_support[sample]:
+        if not self.allele_support[sample] or self.empty_call[sample]:
             return "."
         return ",".join([str(key) + "|" + str(val) for key,val in self.allele_support[sample].items()])
 
     def GetSampleGT(self, sample):
         return self.sample_to_info[sample]["GT"]
+
+    def GetSampleGB(self, sample):
+        return self.sample_to_info[sample]["GB"]
 
     def GetSampleNCOPY(self, sample):
         return self.sample_to_info[sample]["NCOPY"]
