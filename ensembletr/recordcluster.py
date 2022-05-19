@@ -305,6 +305,7 @@ class Allele:
         self.allele_size = len(self.allele_sequence) - len(self.reference_sequence)
         self.allele_ncopy = allele_lengths[al_idx]
         self.reference_ncopy = ro.hm_record.ref_allele_length
+        self.exp_flag = (len(ro.prepend_seq) > 0) or (len(ro.append_seq) > 0)
 
 
     def GetVCFType(self):
@@ -318,6 +319,7 @@ class PreAllele:
         self.allele_ncopy = allele.allele_ncopy
         self.al_idx = allele.al_idx
         self.support = callers
+        self.exp_flag = allele.exp_flag
     
     def add_support(self, callers):
         for caller in callers:
@@ -375,7 +377,7 @@ class ConnectedComponent:
                 for node in self.subgraph:
                     if node != tmp_node and node.allele_sequence == tmp_node.allele_sequence:
                         pa.add_support([node.GetVCFType()])
-                self.resolved_preallele['any'] = pa
+                resolved_preallele['any'] = pa
 
             # More than one hipstr node: we need to assign 
             # different hipstr nodes for different allele idx
@@ -533,7 +535,7 @@ class RecordResolver:
             for pa in self.resolved_prealleles[sample]:
                 if self.ref is None:
                     self.ref = pa.reference_sequence
-                if pa.allele_sequence != pa.reference_sequence:
+                if pa.allele_sequence != self.ref and pa.allele_sequence != pa.reference_sequence:
                     if pa.allele_sequence not in self.alts:
                         if pa.allele_sequence != "":
                             self.alts.append(pa.allele_sequence)
@@ -547,8 +549,13 @@ class RecordResolver:
             GT_list = []
             GB_list = []
             NCOPY_list = []
+            Expanded = []
             for pa in self.resolved_prealleles[sample]:
-                if pa.al_idx != 0:
+                if pa.exp_flag:
+                    Expanded.append("1")
+                else:
+                    Expanded.append("0")
+                if pa.al_idx != 0 and pa.allele_sequence != self.ref:
                     if pa.allele_sequence == "":
                         self.empty_call[sample] = True
                         break
@@ -563,9 +570,11 @@ class RecordResolver:
                 GT_list = ['.']
                 NCOPY_list = ['.']
                 GB_list = ['.']
+                Expanded = ['.']
             self.sample_to_info[sample]["GT"] = '/'.join(GT_list)
             self.sample_to_info[sample]["GB"] = '/'.join(GB_list)
             self.sample_to_info[sample]["NCOPY"] = ','.join(NCOPY_list)
+            self.sample_to_info[sample]["EXP"] = '/'.join(Expanded)
 
     def GetSampleScore(self, sample):
         if self.resolution_score[sample] == -1 or self.empty_call[sample]:
@@ -590,6 +599,9 @@ class RecordResolver:
 
     def GetSampleNCOPY(self, sample):
         return self.sample_to_info[sample]["NCOPY"]
+
+    def GetExpandedFlag(self, sample):
+        return self.sample_to_info[sample]['EXP']
 
     def GetConnectedCompForSingleCall(self, samp_call, samp_qual_scores):
         r"""
@@ -698,13 +710,14 @@ class RecordResolver:
             if "any" in resolved_prealleles:
                 pre_allele_list.append(resolved_prealleles["any"])
                 continue
-            if trh.VcfTypes.hipstr in connected_comp.uniq_callers and \
+            elif trh.VcfTypes.hipstr in connected_comp.uniq_callers and \
                 trh.VcfTypes.hipstr in samp_call and samp_call[trh.VcfTypes.hipstr][0] != -1:
                 # cc has hipstr nodes, and we have hipstr calls
                 hip_call = samp_call[trh.VcfTypes.hipstr]
                 for al_idx in hip_call[0:2]:
                     if al_idx in resolved_prealleles:
                         pre_allele_list.append(resolved_prealleles[al_idx])
+
             else:
                 # TODO. For now just return a random allele if we don't have hipstr
                 pre_allele_list.append(list(resolved_prealleles.values())[0])
@@ -712,4 +725,15 @@ class RecordResolver:
         pre_allele_list = list(set(pre_allele_list))
         if len(pre_allele_list) == 1:
             pre_allele_list = [pre_allele_list[0], pre_allele_list[0]]
+        if len(pre_allele_list) > 2:
+            n_copies = []
+            for i in range(len(pre_allele_list)):
+                n_copies.append(pre_allele_list[i].allele_ncopy)
+            n_copies.sort()
+            if n_copies[0] == n_copies[1] or n_copies[1] == n_copies[2]:
+                for pa in pre_allele_list:
+                    if pa.allele_ncopy == n_copies[1]:
+                        pre_allele_list.remove(pa)
+                        return pre_allele_list
+
         return pre_allele_list    
