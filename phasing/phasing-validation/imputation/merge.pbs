@@ -1,0 +1,19 @@
+#!/bin/bash
+
+#PBS -N merge_plot
+#PBS -l nodes=1:ppn=1
+#PBS -l walltime=00:40:00
+#PBS -o /projects/ps-gymreklab/helia/ensembl/biallelic/validation/log
+#PBS -e /projects/ps-gymreklab/helia/ensembl/biallelic/validation/log
+#PBS -A gymreklab-group
+#PBS -q hotel
+#PBS -V
+
+source /projects/ps-gymreklab/helia/ensembl/venv_3.9/bin/activate
+
+cd /projects/ps-gymreklab/helia/ensembl/biallelic/validation
+echo $chr
+python3 merge.py "AFR" $chr &&
+python3 merge.py "EUR" $chr
+
+	    

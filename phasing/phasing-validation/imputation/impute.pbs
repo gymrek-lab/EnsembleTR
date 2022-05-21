@@ -1,0 +1,17 @@
+#!/bin/bash
+
+#PBS -N impute
+#PBS -l nodes=1:ppn=4
+#PBS -l walltime=05:00:00
+#PBS -o /projects/ps-gymreklab/helia/ensembl/biallelic/validation/log/2
+#PBS -e /projects/ps-gymreklab/helia/ensembl/biallelic/validation/log/2
+#PBS -A gymreklab-group
+#PBS -q hotel
+#PBS -V
+
+source /projects/ps-gymreklab/helia/ensembl/venv_3.9/bin/activate
+
+cd /projects/ps-gymreklab/helia/ensembl/biallelic/validation
+
+./L1O.sh -s $sample -b ../beagle.19Apr22.7c0.jar  -c $chr -p $pop 
+
