@@ -33,7 +33,7 @@ Both zipped and unzipped VCF files are accepted as input. EnsembleTR can current
 ### FASTA Reference genome (`--ref`)
 You must input a reference genome in FASTA format. This must be the same reference build used for TR calling in input files.
 
-### VCF (output)
+### VCF (`--out`)
 For more information on VCF file format, see the [VCF spec](http://samtools.github.io/hts-specs/VCFv4.2.pdf). EnsembleTR output VCF file contains several fields that are described below.
 
 #### INFO fields
