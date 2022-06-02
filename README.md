@@ -62,6 +62,8 @@ FORMAT fields contain information specific to each genotype call. The following 
 | ALS | Number of times each bp difference was seen across all calls |
 | INPUTS | Raw calls | 
 
+Score is calculated by aggregating quality information from calls that are getting merged at each locus.
+
 
 
 
