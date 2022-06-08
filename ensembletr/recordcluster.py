@@ -98,9 +98,9 @@ class RecordObj:
             call_ncopy_list = []
             for idx in samp_call[0:2]:
                 if idx == 0:
-                    call_ncopy_list.append(str(self.hm_record.ref_allele_length))
+                    call_ncopy_list.append(str(round(self.hm_record.ref_allele_length,2)))
                 else:
-                    call_ncopy_list.append(str(self.hm_record.alt_allele_lengths[idx - 1]))
+                    call_ncopy_list.append(str(round(self.hm_record.alt_allele_lengths[idx - 1],2)))
             sampdata = ",".join(call_ncopy_list)
         callstr = "%s=%s"%(self.vcf_type.name, sampdata)
         return callstr
@@ -303,8 +303,8 @@ class Allele:
         self.reference_sequence = ro.prepend_seq + alleles[0] + ro.append_seq
         self.allele_sequence = ro.prepend_seq + alleles[al_idx] + ro.append_seq
         self.allele_size = len(self.allele_sequence) - len(self.reference_sequence)
-        self.allele_ncopy = allele_lengths[al_idx]
-        self.reference_ncopy = ro.hm_record.ref_allele_length
+        self.allele_ncopy = round(allele_lengths[al_idx],2)
+        self.reference_ncopy = round(ro.hm_record.ref_allele_length,2)
         self.exp_flag = (len(ro.prepend_seq) > 0) or (len(ro.append_seq) > 0)
 
 
