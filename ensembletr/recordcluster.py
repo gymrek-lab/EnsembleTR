@@ -654,7 +654,7 @@ class RecordResolver:
                     first_allele.append((ccids[1], method))
 
         if len(method_cc) == 0:  # no call across all methods
-            return [],[], -1, {}
+            return [],[], -1, -1, {}
 
         ret_cc_ids, scoreGT, scoreAL = self.ResolveScore(samp_qual_scores, method_cc, first_allele, second_allele)
 
