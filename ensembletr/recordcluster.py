@@ -582,7 +582,7 @@ class RecordResolver:
 
     def GetSampleScore(self, sample):
         if self.resolution_scoreGT[sample] == -1 or self.empty_call[sample]:
-            return "."
+            return (".",".")
         return (str(self.resolution_scoreGT[sample]), str(self.resolution_scoreAL[sample]))
 
     def GetSampleGTS(self, sample):
