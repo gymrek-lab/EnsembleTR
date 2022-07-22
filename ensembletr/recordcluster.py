@@ -254,7 +254,9 @@ class RecordCluster:
         for rec in self.record_objs:
             if rec.vcf_type in ret_dict:
                 raise ValueError("Multiple records with same VCF type: " + str(rec.vcf_type))
-            ret_dict[rec.vcf_type] = rec.GetScore(sample)
+            score = rec.GetScore(sample)
+            if ~np.isnan(score):
+                ret_dict[rec.vcf_type] = score
         return ret_dict
 
 class OverlappingRegion:
@@ -498,8 +500,7 @@ class RecordResolver:
 
         # Get set after resolving
         self.resolved_prealleles = {}
-        self.resolution_scoreGT = {}
-        self.resolution_scoreAL = {}
+        self.resolution_score = {}
         self.allele_support = {}
         self.resolution_method = {}
         self.empty_call = {}
@@ -510,23 +511,20 @@ class RecordResolver:
 
     def Resolve(self):
         resolved_prealleles = {}
-        resolution_scoreGT = {}
-        resolution_scoreAL = {}
+        resolution_score = {}
         resolution_methods = {}
         allele_supports = {}
         for sample in self.record_cluster.samples:
             samp_call = self.record_cluster.GetSampleCall(sample)
             samp_qual_scores = self.record_cluster.GetQualScore(sample)
-            resolved_connected_comp_ids, resolved_methods, scoreGT, scoreAL, allele_support = \
+            resolved_connected_comp_ids, resolved_methods, score, allele_support = \
                 self.GetConnectedCompForSingleCall(samp_call, samp_qual_scores)
-            resolution_scoreGT[sample] = scoreGT
-            resolution_scoreAL[sample] = scoreAL
+            resolution_score[sample] = score
             resolution_methods[sample] = resolved_methods
             resolved_prealleles[sample] = self.ResolveSequenceForSingleCall(resolved_connected_comp_ids, samp_call)
             allele_supports[sample] = allele_support
         self.resolved_prealleles = resolved_prealleles
-        self.resolution_scoreGT = resolution_scoreGT
-        self.resolution_scoreAL = resolution_scoreAL
+        self.resolution_score = resolution_score
         self.allele_support = allele_supports
         self.resolution_method = resolution_methods
         self.update()
@@ -582,8 +580,8 @@ class RecordResolver:
 
     def GetSampleScore(self, sample):
         if self.resolution_scoreGT[sample] == -1 or self.empty_call[sample]:
-            return (".",".")
-        return (str(self.resolution_scoreGT[sample]), str(self.resolution_scoreAL[sample]))
+            return "."
+        return str(self.resolution_score[sample])
 
     def GetSampleGTS(self, sample):
         if len(self.resolution_method[sample]) == 0 or self.empty_call[sample]:
@@ -606,6 +604,13 @@ class RecordResolver:
 
     def GetExpandedFlag(self, sample):
         return self.sample_to_info[sample]['EXP']
+
+    def TestScore(self, score):
+        if np.isnan(score):
+            return False
+        if score < 0 or score > 1:
+            return False
+        return True
 
     def GetConnectedCompForSingleCall(self, samp_call, samp_qual_scores):
         r"""
@@ -655,15 +660,17 @@ class RecordResolver:
 
         if len(method_cc) == 0:  # no call across all methods
             return [],[], -1, -1, {}
-
-        ret_cc_ids, scoreGT, scoreAL = self.ResolveScore(samp_qual_scores, method_cc, first_allele, second_allele)
+        ret_cc_ids, score = self.ResolveScore(samp_qual_scores, method_cc, first_allele, second_allele)
+        assert(self.TestScore(score))
 
         ret_sup_methods = [method.value for method in method_cc[ret_cc_ids]]
 
         sup_method = [0, 0, 0, 0]
         for method in ret_sup_methods:
                 sup_method = [sum(x) for x in zip(sup_method, method_dict[method])] 
-        return list(ret_cc_ids), sup_method, round(scoreGT, 2), round(scoreAL, 2), allele_size_support
+        return list(ret_cc_ids), sup_method, round(score, 2), allele_size_support
+
+
 
     def ResolveScore(self, samp_qual_scores, method_cc, first_allele, second_allele):
         r"""
@@ -694,23 +701,8 @@ class RecordResolver:
         if sum_scores != 0:
             for pair in scores:
                 scores[pair] = scores[pair]/sum_scores
-
-        # allele score
-        assert(len(first_allele) > 0)
-        first_allele_score = defaultdict(list)
-        for pair in first_allele:
-            first_allele_score[pair[0]].append(samp_qual_scores[pair[1]])
-        for allele in first_allele_score:
-            first_allele_score[allele] = sum(first_allele_score[allele]) / sum(samp_qual_scores.values())
-
-        if len(second_allele) > 0:
-            second_allele_score = defaultdict(list)
-            for pair in second_allele:
-                second_allele_score[pair[0]].append(samp_qual_scores[pair[1]])
-
-            for allele in second_allele_score:
-                second_allele_score[allele] = sum(second_allele_score[allele]) / sum(samp_qual_scores.values())
-
+        else:
+            scores[pair] = 0
 
 
         max_score = max(scores.values())
@@ -721,22 +713,14 @@ class RecordResolver:
 
         if len(max_pair) == 1:
             pair = max_pair[0]
-            if pair[0] == pair[1]:
-                alScore = (first_allele_score[pair[0]] + second_allele_score[pair[1]])/2
-            else:
-                alScore = (first_allele_score[pair[0]] + first_allele_score[pair[1]])/2
-            return pair, max_score, alScore
+            return pair, max_score
 
         else:  # ties
             for method in ['hipstr', 'gangstr', 'eh', 'advntr']:  # break ties with giving priority to methods
                 for pair in max_pair:
                     for method_ in method_cc[pair]:
                         if method_.value == method:
-                            if pair[0] == pair[1]:
-                                alScore = (first_allele_score[pair[0]] + second_allele_score[pair[1]]) / 2
-                            else:
-                                alScore = (first_allele_score[pair[0]] + first_allele_score[pair[1]]) / 2
-                            return pair, max_score, alScore
+                            return pair, max_score
 
 
 
