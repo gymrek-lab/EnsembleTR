@@ -362,8 +362,7 @@ class Writer:
         self.vcf_writer.write('##FORMAT=<ID=GB,Number=1,Type=String,Description="Base pair difference from ref allele">\n')
         self.vcf_writer.write('##FORMAT=<ID=NCOPY,Number=1,Type=String,Description="Copy Number">\n')
         self.vcf_writer.write('##FORMAT=<ID=EXP,Number=1,Type=String,Description="1 if consensus allele was expanded">\n')
-        self.vcf_writer.write('##FORMAT=<ID=SCOREGT,Number=1,Type=Float,Description="Score of the consensus call based on gentoypes">\n')
-        self.vcf_writer.write('##FORMAT=<ID=SCOREAL,Number=1,Type=Float,Description="Score of the consensus call based on alleles">\n')
+        self.vcf_writer.write('##FORMAT=<ID=SCORE,Number=1,Type=Float,Description="Score of the consensus call based on gentoypes">\n')
         self.vcf_writer.write('##FORMAT=<ID=GTS,Number=1,Type=String,Description="Method(s) that support the consensus call (AdVNTR, EH, HipSTR, GangSTR)">\n')
         self.vcf_writer.write('##FORMAT=<ID=ALS,Number=1,Type=String,Description="Number of times each bp difference was seen across all calls">\n')
         self.vcf_writer.write('##FORMAT=<ID=INPUTS,Number=1,Type=String,Description="Raw calls">\n')
@@ -398,7 +397,7 @@ class Writer:
                      'RU': rcres.record_cluster.canonical_motif,
                      'METHODS': "|".join([str(int(item)) for item in rcres.record_cluster.vcf_types])}
         INFO = ";".join(["%s=%s"%(key, INFO_DICT[key]) for key in INFO_DICT])
-        FORMAT = ['GT','GB', 'NCOPY','EXP','SCOREGT','SCOREAL','GTS','ALS','INPUTS']
+        FORMAT = ['GT','GB', 'NCOPY','EXP','SCORE','GTS','ALS','INPUTS']
 
         SAMPLE_DATA=[]
         raw_calls = rcres.record_cluster.GetRawCalls()
@@ -409,7 +408,6 @@ class Writer:
                  rcres.GetSampleNCOPY(sample),
                  rcres.GetExpandedFlag(sample),
                  rcres.GetSampleScore(sample)[0],
-                 rcres.GetSampleScore(sample)[1],
                  rcres.GetSampleGTS(sample),
                  rcres.GetSampleALS(sample),
                  raw_calls[sample]
