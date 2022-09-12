@@ -35,6 +35,9 @@ class RecordObj:
         self.cyvcf2_record = rec
         self.vcf_type = vcf_type
         self.hm_record = trh.HarmonizeRecord(vcf_type, rec)
+        self.pos = self.hm_record.pos
+        if vcf_type.name == 'advntr':
+            self.pos += 1 # AdVNTR call is 0-based, should change it to 1-based
         self.canonical_motif = GetCanonicalMotif(self.hm_record.motif)
         self.prepend_seq = ''
         self.append_seq = ''
@@ -125,9 +128,9 @@ class RecordObj:
         """
         samp_idx = self.vcf_samples.index(sample)
         if self.vcf_type == trh.VcfTypes.advntr:
-            return self.cyvcf2_record.format('ML')[samp_idx][0]
+            return min(self.cyvcf2_record.format('ML')[samp_idx][0],1)
         elif self.vcf_type in [trh.VcfTypes.hipstr, trh.VcfTypes.gangstr]:
-            return self.cyvcf2_record.format('Q')[samp_idx][0]
+            return min(self.cyvcf2_record.format('Q')[samp_idx][0],1) # Sometimes GangSTR Q is slightly more than 1
         elif self.vcf_type == trh.VcfTypes.eh:
             REPCI = self.cyvcf2_record.format('REPCI')[samp_idx]
             REPCN = self.cyvcf2_record.format('REPCN')[samp_idx]
@@ -186,16 +189,16 @@ class RecordCluster:
         Extends all alleles to the maximum region
         spanned by all records in the cluster.
         """
-        self.first_pos = min([rec.cyvcf2_record.POS for rec in self.record_objs])
+        self.first_pos = min([rec.pos for rec in self.record_objs])
         self.last_end = max([rec.cyvcf2_record.end for rec in self.record_objs])
 
         for rec in self.record_objs:
             self.vcf_types[convert_type_to_idx[rec.vcf_type]] = True
             chrom = rec.cyvcf2_record.CHROM
-            if rec.cyvcf2_record.POS > self.first_pos:
+            if rec.pos > self.first_pos:
                 # Found a record that starts after
                 # Should prepend the record
-                rec.prepend_seq = self.fasta[chrom][self.first_pos : rec.cyvcf2_record.POS].seq.upper()
+                rec.prepend_seq = self.fasta[chrom][self.first_pos : rec.pos].seq.upper()
             
             if rec.cyvcf2_record.end < self.last_end:
                 # Found a record that ends before last end
@@ -659,7 +662,7 @@ class RecordResolver:
                     first_allele.append((ccids[1], method))
 
         if len(method_cc) == 0:  # no call across all methods
-            return [],[], -1, -1, {}
+            return [], [], -1, {}
         ret_cc_ids, score = self.ResolveScore(samp_qual_scores, method_cc, first_allele, second_allele)
         assert(self.TestScore(score))
 
