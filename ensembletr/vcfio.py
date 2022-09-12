@@ -172,25 +172,23 @@ class Readers:
         cnt = 0
         cursor = 0
         homo_check = False
-        homo_str = ["TTTTT", "AAAAA", "GGGGG", "CCCCC"]
-        for str in homo_str:
-            if str in motif:
-                homo_check = True
+        # homo_str = ["TTTTT", "AAAAA", "GGGGG", "CCCCC"]
+        # for str in homo_str:
+        #     if str in motif:
+        #         homo_check = True
+        #         break
+        # if homo_check:
+        while True:
+            if (cursor + len(motif)) >= len(ref):
                 break
-        if homo_check:
-            while True:
-                if (cursor + len(motif)) >= len(ref):
-                    break
-                if motif == ref[cursor:cursor+len(motif)]:
-                    cnt += 1
-                    cursor += len(motif)
-                else:
-                    cursor += 1
-            if cnt >= n:
-                return True
-            return False
-        else:
+            if motif == ref[cursor:cursor+len(motif)]:
+                cnt += 1
+                cursor += len(motif)
+            else:
+                cursor += 1
+        if cnt >= n:
             return True
+        return False
 
     def getCurrentRange(self):
         r"""
@@ -407,7 +405,7 @@ class Writer:
                  rcres.GetSampleGB(sample),
                  rcres.GetSampleNCOPY(sample),
                  rcres.GetExpandedFlag(sample),
-                 rcres.GetSampleScore(sample)[0],
+                 rcres.GetSampleScore(sample),
                  rcres.GetSampleGTS(sample),
                  rcres.GetSampleALS(sample),
                  raw_calls[sample]
