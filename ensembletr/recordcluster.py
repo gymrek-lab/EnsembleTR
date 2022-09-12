@@ -579,7 +579,7 @@ class RecordResolver:
             self.sample_to_info[sample]["EXP"] = '/'.join(Expanded)
 
     def GetSampleScore(self, sample):
-        if self.resolution_scoreGT[sample] == -1 or self.empty_call[sample]:
+        if self.resolution_score[sample] == -1 or self.empty_call[sample]:
             return "."
         return str(self.resolution_score[sample])
 

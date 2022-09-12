@@ -390,7 +390,7 @@ class Writer:
         QUAL = "."
         FILTER = "."
         INFO_DICT = {'START': rcres.record_cluster.first_pos,
-                     'END': rcres.record_cluster.last_end,
+                     'END': rcres.record_cluster.first_pos + len(REF) - 1,
                      'PERIOD': len(rcres.record_cluster.canonical_motif),
                      'RU': rcres.record_cluster.canonical_motif,
                      'METHODS': "|".join([str(int(item)) for item in rcres.record_cluster.vcf_types])}
