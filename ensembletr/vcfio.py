@@ -86,7 +86,6 @@ class Readers:
             vcffile = cyvcf2.VCF(invcf, samples = self.samples)
             hm = trh.TRRecordHarmonizer(vcffile)
             self.vcfwrappers.append(VCFWrapper(vcffile, hm.vcftype))
-  
         # Get chroms and check if valid
         self.chroms = []
         for wrapp in self.vcfwrappers:
@@ -114,8 +113,11 @@ class Readers:
                         self.current_tr_records.append(None)
                         break
             else:
-                new_record = trh.HarmonizeRecord(wrapper.vcftype, next(wrapper.vcfreader))
-                self.current_tr_records.append(new_record)
+                try:
+                    new_record = trh.HarmonizeRecord(wrapper.vcftype, next(wrapper.vcfreader))
+                    self.current_tr_records.append(new_record)
+                except StopIteration:
+                    self.current_tr_records.append(None)
 
         if not self.areChromsValid():
             raise ValueError('Invalid CHROM detected in record.')
