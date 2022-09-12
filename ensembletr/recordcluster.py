@@ -664,7 +664,6 @@ class RecordResolver:
         assert(self.TestScore(score))
 
         ret_sup_methods = [method.value for method in method_cc[ret_cc_ids]]
-
         sup_method = [0, 0, 0, 0]
         for method in ret_sup_methods:
                 sup_method = [sum(x) for x in zip(sup_method, method_dict[method])] 
