@@ -691,10 +691,13 @@ class RecordResolver:
 
         scores = {}
         sum_scores = 0
+        max_seen_score = 0
         for pair in method_cc:
             score = 0
             for method in method_cc[pair]:
                 score += samp_qual_scores[method]
+                if samp_qual_scores[method] > max_seen_score:
+                    max_seen_score = samp_qual_scores[method]
             sum_scores += score
             scores[pair] = score
         if sum_scores != 0:
@@ -702,7 +705,6 @@ class RecordResolver:
                 scores[pair] = scores[pair]/sum_scores
         else:
             scores[pair] = 0
-
 
         max_score = max(scores.values())
         max_pair = []
@@ -712,14 +714,14 @@ class RecordResolver:
 
         if len(max_pair) == 1:
             pair = max_pair[0]
-            return pair, max_score
+            return pair, max_score * max_seen_score
 
         else:  # ties
             for method in ['hipstr', 'gangstr', 'eh', 'advntr']:  # break ties with giving priority to methods
                 for pair in max_pair:
                     for method_ in method_cc[pair]:
                         if method_.value == method:
-                            return pair, max_score
+                            return pair, max_score * max_seen_score
 
 
 
