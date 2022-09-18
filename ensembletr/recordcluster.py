@@ -191,19 +191,24 @@ class RecordCluster:
         """
         self.first_pos = min([rec.pos for rec in self.record_objs])
         self.last_end = max([rec.cyvcf2_record.end for rec in self.record_objs])
-
+        ref_record = ""
+        for rec in self.record_objs:
+            if rec.pos == self.first_pos:
+                ref_record = rec
         for rec in self.record_objs:
             self.vcf_types[convert_type_to_idx[rec.vcf_type]] = True
             chrom = rec.cyvcf2_record.CHROM
             if rec.pos > self.first_pos:
                 # Found a record that starts after
                 # Should prepend the record
-                rec.prepend_seq = self.fasta[chrom][self.first_pos : rec.pos].seq.upper()
-            
+                rec.prepend_seq = self.fasta[chrom][self.first_pos-1 : rec.pos-1].seq.upper()
+                assert(self.fasta[chrom][self.first_pos-1 : rec.pos-1].seq.upper() == ref_record.cyvcf2_record.REF[0:(rec.pos-1 - self.first_pos-1)+2].upper())
+
             if rec.cyvcf2_record.end < self.last_end:
                 # Found a record that ends before last end
                 # Should append the record
-                rec.append_seq = self.fasta[chrom][rec.cyvcf2_record.end : self.last_end].seq.upper()
+                rec.append_seq = self.fasta[chrom][rec.cyvcf2_record.end-1 : self.last_end-1].seq.upper()
+
 
     def GetRawCalls(self):
         r"""
@@ -524,7 +529,7 @@ class RecordResolver:
                 self.GetConnectedCompForSingleCall(samp_call, samp_qual_scores)
             resolution_score[sample] = score
             resolution_methods[sample] = resolved_methods
-            resolved_prealleles[sample] = self.ResolveSequenceForSingleCall(resolved_connected_comp_ids, samp_call)
+            resolved_prealleles[sample] = self.ResolveSequenceForSingleCall(resolved_connected_comp_ids, samp_call, sample)
             allele_supports[sample] = allele_support
         self.resolved_prealleles = resolved_prealleles
         self.resolution_score = resolution_score
@@ -635,8 +640,6 @@ class RecordResolver:
             Key=bp diff of allele and the ref genome, Value=number of times we saw this allele.
         """
         method_cc = defaultdict(list)  # methods supporting each pair of CCID
-        first_allele = []
-        second_allele = []
         method_dict = {"advntr": [1, 0, 0, 0], "eh": [0, 1, 0, 0], "hipstr": [0, 0, 1, 0], "gangstr": [0, 0, 0, 1]}
         allele_size_support = {}
         for method in samp_call:
@@ -654,16 +657,10 @@ class RecordResolver:
                 ccids.sort()
                 ccids = (ccids[0],ccids[1])
                 method_cc[ccids].append(method)
-                if ccids[0] == ccids[1]:
-                    first_allele.append((ccids[0], method))
-                    second_allele.append((ccids[1],method))
-                else:
-                    first_allele.append((ccids[0], method))
-                    first_allele.append((ccids[1], method))
 
         if len(method_cc) == 0:  # no call across all methods
             return [], [], -1, {}
-        ret_cc_ids, score = self.ResolveScore(samp_qual_scores, method_cc, first_allele, second_allele)
+        ret_cc_ids, score = self.ResolveScore(samp_qual_scores, method_cc)
         assert(self.TestScore(score))
 
         ret_sup_methods = [method.value for method in method_cc[ret_cc_ids]]
@@ -674,7 +671,7 @@ class RecordResolver:
 
 
 
-    def ResolveScore(self, samp_qual_scores, method_cc, first_allele, second_allele):
+    def ResolveScore(self, samp_qual_scores, method_cc):
         r"""
 
         Parameters
@@ -726,10 +723,7 @@ class RecordResolver:
                         if method_.value == method:
                             return pair, max_score * max_seen_score
 
-
-
-        
-    def ResolveSequenceForSingleCall(self, ccid_list, samp_call):
+    def ResolveSequenceForSingleCall(self, ccid_list, samp_call, sample):
         if len(ccid_list) == 0: return []
         pre_allele_list = []
         for cc_id in ccid_list:
@@ -738,22 +732,23 @@ class RecordResolver:
             if "any" in resolved_prealleles:
                 pre_allele_list.append(resolved_prealleles["any"])
                 continue
+
             elif trh.VcfTypes.hipstr in connected_comp.uniq_callers and \
                 trh.VcfTypes.hipstr in samp_call and samp_call[trh.VcfTypes.hipstr][0] != -1:
-                # cc has hipstr nodes, and we have hipstr calls
-                hip_call = samp_call[trh.VcfTypes.hipstr]
-                for al_idx in hip_call[0:2]:
-                    if al_idx in resolved_prealleles:
-                        pre_allele_list.append(resolved_prealleles[al_idx])
+                self.ResolveHipSTRcall(connected_comp, resolved_prealleles, pre_allele_list, samp_call)
 
             else:
                 # TODO. For now just return a random allele if we don't have hipstr
                 pre_allele_list.append(list(resolved_prealleles.values())[0])
-
         pre_allele_list = list(set(pre_allele_list))
+
+
         if len(pre_allele_list) == 1:
-            pre_allele_list = [pre_allele_list[0], pre_allele_list[0]]
-        if len(pre_allele_list) > 2:
+            return [pre_allele_list[0], pre_allele_list[0]]
+
+        if len(pre_allele_list) == 3:
+            # Case: GangSTR call is 10bp-12bp and it was selected as the best call
+            # but we have a hipstr call of 10bp-10bp with different sequences as well
             n_copies = []
             for i in range(len(pre_allele_list)):
                 n_copies.append(pre_allele_list[i].allele_ncopy)
@@ -764,4 +759,26 @@ class RecordResolver:
                         pre_allele_list.remove(pa)
                         return pre_allele_list
 
-        return pre_allele_list    
+        if len(pre_allele_list) == 4:
+            raise ValueError("4 alleles were seen across callers for sample: " + sample)
+
+        return pre_allele_list
+
+    def ResolveHipSTRcall(self, connected_comp, resolved_prealleles, pre_allele_list, samp_call):
+        other_callers = list(connected_comp.uniq_callers)
+        other_callers.remove(trh.VcfTypes.hipstr)
+        other_callers.insert(0, trh.VcfTypes.hipstr)
+
+        call = samp_call[trh.VcfTypes.hipstr]
+        added_alleles = 0
+        for al_idx in call[0:2]:
+            if al_idx in resolved_prealleles:  # If call was actually made by HipSTR
+                pre_allele_list.append(resolved_prealleles[al_idx])
+                added_alleles += 1
+        if added_alleles == 0:
+            for caller in other_callers[1:]:
+                call = samp_call[caller]
+                for al_idx in call[0:2]:
+                    if al_idx in resolved_prealleles:  # If call was made by another caller
+                        pre_allele_list.append(resolved_prealleles[al_idx])
+                        return
