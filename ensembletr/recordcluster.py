@@ -167,6 +167,20 @@ class RecordCluster:
         self.last_pos = -1
         self.chrom = recobjs[0].cyvcf2_record.CHROM
         self.update()
+        self.hipstr_allele_frequency = {}
+        for ro in self.record_objs:
+            if ro.vcf_type.name == "hipstr":
+                self.hipstr_allele_frequency = self.GetHipSTR_freqs(ro)
+
+    def GetHipSTR_freqs(self, ro):
+        freqs = defaultdict(int)
+        for call in ro.hm_record.vcfrecord.gt_bases:
+            call = call.split("|")
+            if len(call) < 2:
+                continue
+            freqs[call[0]] += 1
+            freqs[call[1]] += 1
+        return freqs
 
     def AppendRecordObject(self, ro):
         r"""
@@ -180,6 +194,8 @@ class RecordCluster:
         """
         self.record_objs.append(ro)
         self.update()
+        if ro.vcf_type.name == "hipstr":
+            self.hipstr_allele_frequency = self.GetHipSTR_freqs(ro)
 
     def update(self):
         r"""
@@ -191,6 +207,8 @@ class RecordCluster:
         """
         self.first_pos = min([rec.pos for rec in self.record_objs])
         self.last_end = max([rec.cyvcf2_record.end for rec in self.record_objs])
+
+        print(f"Analysing record cluster ranged in {self.record_objs[0].cyvcf2_record.CHROM}:{self.first_pos}-{self.last_end}.")
         ref_record = ""
         for rec in self.record_objs:
             if rec.pos == self.first_pos:
@@ -202,7 +220,8 @@ class RecordCluster:
                 # Found a record that starts after
                 # Should prepend the record
                 rec.prepend_seq = self.fasta[chrom][self.first_pos-1 : rec.pos-1].seq.upper()
-                assert(self.fasta[chrom][self.first_pos-1 : rec.pos-1].seq.upper() == ref_record.cyvcf2_record.REF[0:(rec.pos-1 - self.first_pos-1)+2].upper())
+                #print(self.fasta[chrom][self.first_pos-1 : rec.pos-1].seq.upper(), ref_record.cyvcf2_record.REF[0:(rec.pos-1 - self.first_pos-1)+2].upper())
+                #assert(self.fasta[chrom][self.first_pos-1 : rec.pos-1].seq.upper() == ref_record.cyvcf2_record.REF[0:(rec.pos-1 - self.first_pos-1)+2].upper()) #This is not necessarily true when the ref record is from EXpansionHunter
 
             if rec.cyvcf2_record.end < self.last_end:
                 # Found a record that ends before last end
@@ -401,7 +420,8 @@ class ConnectedComponent:
                             for node2 in self.subgraph:
                                 if node2 != tmp_node and node2.allele_sequence == tmp_node.allele_sequence:
                                     pa.add_support([node2.GetVCFType()])
-                            resolved_prealleles[node1.al_idx] = pa  
+                            resolved_prealleles[node1.al_idx] = pa
+
         return resolved_prealleles
 
 class ClusterGraph:
@@ -458,7 +478,8 @@ class ClusterGraph:
         for ro in self.rclust.record_objs:
             called_alleles = ro.GetCalledAlleles()
             for al_idx in called_alleles:
-                alist.append(Allele(ro, al_idx))
+                allele = Allele(ro, al_idx)
+                alist.append(allele)
         return alist
 
     def GetNodeObject(self, vcf_type, al_idx):
@@ -529,7 +550,8 @@ class RecordResolver:
                 self.GetConnectedCompForSingleCall(samp_call, samp_qual_scores)
             resolution_score[sample] = score
             resolution_methods[sample] = resolved_methods
-            resolved_prealleles[sample] = self.ResolveSequenceForSingleCall(resolved_connected_comp_ids, samp_call, sample)
+            resolved_prealleles[sample] = self.ResolveSequenceForSingleCall(resolved_connected_comp_ids, samp_call,
+                                                                            sample, self.record_cluster.hipstr_allele_frequency)
             allele_supports[sample] = allele_support
         self.resolved_prealleles = resolved_prealleles
         self.resolution_score = resolution_score
@@ -723,7 +745,7 @@ class RecordResolver:
                         if method_.value == method:
                             return pair, max_score * max_seen_score
 
-    def ResolveSequenceForSingleCall(self, ccid_list, samp_call, sample):
+    def ResolveSequenceForSingleCall(self, ccid_list, samp_call, sample, hipstr_allele_frequency):
         if len(ccid_list) == 0: return []
         pre_allele_list = []
         for cc_id in ccid_list:
@@ -735,13 +757,13 @@ class RecordResolver:
 
             elif trh.VcfTypes.hipstr in connected_comp.uniq_callers and \
                 trh.VcfTypes.hipstr in samp_call and samp_call[trh.VcfTypes.hipstr][0] != -1:
-                self.ResolveHipSTRcall(connected_comp, resolved_prealleles, pre_allele_list, samp_call)
+                self.ResolveHipSTRcall(connected_comp, resolved_prealleles, pre_allele_list,
+                                       samp_call, sample, hipstr_allele_frequency)
 
             else:
                 # TODO. For now just return a random allele if we don't have hipstr
                 pre_allele_list.append(list(resolved_prealleles.values())[0])
         pre_allele_list = list(set(pre_allele_list))
-
 
         if len(pre_allele_list) == 1:
             return [pre_allele_list[0], pre_allele_list[0]]
@@ -764,7 +786,8 @@ class RecordResolver:
 
         return pre_allele_list
 
-    def ResolveHipSTRcall(self, connected_comp, resolved_prealleles, pre_allele_list, samp_call):
+    def ResolveHipSTRcall(self, connected_comp, resolved_prealleles, pre_allele_list, samp_call,
+                          sample, hipstr_allele_frequency):
         other_callers = list(connected_comp.uniq_callers)
         other_callers.remove(trh.VcfTypes.hipstr)
         other_callers.insert(0, trh.VcfTypes.hipstr)
@@ -776,9 +799,14 @@ class RecordResolver:
                 pre_allele_list.append(resolved_prealleles[al_idx])
                 added_alleles += 1
         if added_alleles == 0:
-            for caller in other_callers[1:]:
-                call = samp_call[caller]
-                for al_idx in call[0:2]:
-                    if al_idx in resolved_prealleles:  # If call was made by another caller
-                        pre_allele_list.append(resolved_prealleles[al_idx])
-                        return
+            max_freq_hipstr = 0
+            max_freq_pa = ""
+            for key in resolved_prealleles:
+                if resolved_prealleles[key].allele_sequence in hipstr_allele_frequency:
+                    if hipstr_allele_frequency[resolved_prealleles[key].allele_sequence] > max_freq_hipstr:
+                        max_freq_hipstr = hipstr_allele_frequency[resolved_prealleles[key].allele_sequence]
+                        max_freq_pa = resolved_prealleles[key]
+            if max_freq_pa == "": # HipSTR alleles were expanded, add a random allele
+                max_freq_pa = list(resolved_prealleles.values())[0]
+            pre_allele_list.append(max_freq_pa) # Just add a random allele because HipSTR didn't have a call for this sample
+
