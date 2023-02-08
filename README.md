@@ -65,6 +65,13 @@ FORMAT fields contain information specific to each genotype call. The following 
 Score is calculated by aggregating quality information from calls that are getting merged at each locus.
 
 
+## Version I of EnsembleTR calls on 1000 Genomes Project and H3Africa samples
+
+[Chromosome 1 VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr1_filtered.vcf.gz)
+
+[Chromosome 1 tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr1_filtered.vcf.gz.tbi)
+
+
 
 
 
