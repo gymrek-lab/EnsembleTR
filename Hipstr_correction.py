@@ -160,7 +160,7 @@ def get_record_str(record):
                 sample_data.append(format_data[format_field][i])
         sample_data = ":".join([data for data in sample_data])
         ALL_SAMPLE_DATA.append(sample_data)
-    INFO = {'START': str(record.INFO['START']), 'END': str(record.INFO['START'] + len(record.REF) - 1), 'PERIOD':str(record.INFO['PERIOD'])}
+    INFO = {'START': str(record.POS), 'END': str(record.POS + len(record.REF) - 1), 'PERIOD':str(record.INFO['PERIOD'])}
     output = '\t'.join([record.CHROM, str(record.POS), record.ID,
             record.REF, ",".join(record.ALT), ".", ".", ";".join(["%s=%s"%(key, INFO[key]) for key in INFO]),
             ':'.join(record.FORMAT),

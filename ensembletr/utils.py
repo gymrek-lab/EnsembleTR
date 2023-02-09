@@ -24,7 +24,11 @@ def GetEHScore(conf_invs, CNs, ru_len):
     """
     conf_invs = conf_invs.split("/")
     CNs = CNs.split("/")
-    CNs = [(int(CN) * ru_len) for CN in CNs]
+    try:
+        CNs = [(int(CN) * ru_len) for CN in CNs]
+    except:
+        print(f"Invalid copy numbers or intervals: {CNs}, {conf_invs}")
+        return 0
     score1 = CalcEHAlleleScore(conf_invs[0], CNs[0])
     score2 = CalcEHAlleleScore(conf_invs[1], CNs[1])
     return 0.8 * min(score1, score2) + 0.2 * max(score1, score2)
