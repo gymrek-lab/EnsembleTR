@@ -9,6 +9,7 @@ from enum import Enum
 import networkx as nx
 import numpy as np
 import math
+import sys
 
 from . import utils as utils
 
@@ -401,6 +402,9 @@ class ConnectedComponent:
 
             # only one hipstr node
             if len(self.caller_to_nodes[trh.VcfTypes.hipstr]) == 1:
+                for caller in self.uniq_callers:
+                    print(caller, len(self.caller_to_nodes[caller]))
+                sys.exit(0)
                 tmp_node = self.caller_to_nodes[trh.VcfTypes.hipstr][0]
                 pa = PreAllele(tmp_node, [trh.VcfTypes.hipstr])
                 for node in self.subgraph:
@@ -808,5 +812,5 @@ class RecordResolver:
                         max_freq_pa = resolved_prealleles[key]
             if max_freq_pa == "": # HipSTR alleles were expanded, add a random allele
                 max_freq_pa = list(resolved_prealleles.values())[0]
-            pre_allele_list.append(max_freq_pa) # Just add a random allele because HipSTR didn't have a call for this sample
+            pre_allele_list.append(max_freq_pa)
 
