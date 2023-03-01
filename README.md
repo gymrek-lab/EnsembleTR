@@ -64,6 +64,18 @@ FORMAT fields contain information specific to each genotype call. The following 
 
 Score is calculated by aggregating quality information from calls that are getting merged at each locus.
 
+## Using statSTR on EnsembleTR files
+
+You can use [statSTR](https://trtools.readthedocs.io/en/latest/source/statSTR.html) from [TRTools](https://trtools.readthedocs.io/en/latest/index.html) to compute different per-locus statistics for EnsembleTR .VCF files.
+
+For example, to compute per-locus allele frequency use the following command:
+
+```
+statSTR --vcf EnsembleTR_file.vcf.gz
+        --vcftype hipstr
+        --afreq
+        --out EnsembleTR_per_locus_allele_frequency
+```
 
 ## Version I of EnsembleTR calls on samples from 1000 Genomes Project and H3Africa
 
