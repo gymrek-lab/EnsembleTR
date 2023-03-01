@@ -137,49 +137,49 @@ All the coordinates are based on the hg38 human reference genome.
 
 ### Availability
 
-Chromosome 1 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr1_final_SNP_merged.vcf.gz) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr1_final_SNP_merged.vcf.gz.csi)
+Chromosome 1 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr1_final_SNP_merged.vcf.gz) (2.6 GB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr1_final_SNP_merged.vcf.gz.csi)
 
-Chromosome 2 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr2_final_SNP_merged.vcf.gz) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr2_final_SNP_merged.vcf.gz.csi)
+Chromosome 2 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr2_final_SNP_merged.vcf.gz) (2.7 GB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr2_final_SNP_merged.vcf.gz.csi)
 
-Chromosome 3 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr3_final_SNP_merged.vcf.gz) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr3_final_SNP_merged.vcf.gz.csi)
+Chromosome 3 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr3_final_SNP_merged.vcf.gz) (2.3 GB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr3_final_SNP_merged.vcf.gz.csi)
 
-Chromosome 4 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr4_final_SNP_merged.vcf.gz) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr4_final_SNP_merged.vcf.gz.csi)
+Chromosome 4 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr4_final_SNP_merged.vcf.gz) (2.3 GB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr4_final_SNP_merged.vcf.gz.csi)
 
-Chromosome 5 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr5_final_SNP_merged.vcf.gz) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr5_final_SNP_merged.vcf.gz.csi)
+Chromosome 5 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr5_final_SNP_merged.vcf.gz) (2.1 GB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr5_final_SNP_merged.vcf.gz.csi)
 
-Chromosome 6 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr6_final_SNP_merged.vcf.gz) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr6_final_SNP_merged.vcf.gz.csi)
+Chromosome 6 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr6_final_SNP_merged.vcf.gz) (2.1 GB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr6_final_SNP_merged.vcf.gz.csi)
 
-Chromosome 7 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr7_final_SNP_merged.vcf.gz) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr7_final_SNP_merged.vcf.gz.csi)
+Chromosome 7 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr7_final_SNP_merged.vcf.gz) (1.9 GB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr7_final_SNP_merged.vcf.gz.csi)
 
-Chromosome 8 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr8_final_SNP_merged.vcf.gz) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr8_final_SNP_merged.vcf.gz.csi)
+Chromosome 8 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr8_final_SNP_merged.vcf.gz) (1.8 GB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr8_final_SNP_merged.vcf.gz.csi)
 
-Chromosome 9 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr9_final_SNP_merged.vcf.gz) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr9_final_SNP_merged.vcf.gz.csi)
+Chromosome 9 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr9_final_SNP_merged.vcf.gz) (1.4 GB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr9_final_SNP_merged.vcf.gz.csi)
 
-Chromosome 10 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr10_final_SNP_merged.vcf.gz) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr10_final_SNP_merged.vcf.gz.csi)
+Chromosome 10 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr10_final_SNP_merged.vcf.gz) (1.6 GB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr10_final_SNP_merged.vcf.gz.csi)
 
-Chromosome 11 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr11_final_SNP_merged.vcf.gz) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr11_final_SNP_merged.vcf.gz.csi)
+Chromosome 11 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr11_final_SNP_merged.vcf.gz) (1.6 GB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr11_final_SNP_merged.vcf.gz.csi)
 
-Chromosome 12 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr12_final_SNP_merged.vcf.gz) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr12_final_SNP_merged.vcf.gz.csi)
+Chromosome 12 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr12_final_SNP_merged.vcf.gz) (1.6 GB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr12_final_SNP_merged.vcf.gz.csi)
 
-Chromosome 13 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr13_final_SNP_merged.vcf.gz) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr13_final_SNP_merged.vcf.gz.csi)
+Chromosome 13 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr13_final_SNP_merged.vcf.gz) (1.2 GB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr13_final_SNP_merged.vcf.gz.csi)
 
-Chromosome 14 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr14_final_SNP_merged.vcf.gz) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr14_final_SNP_merged.vcf.gz.csi)
+Chromosome 14 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr14_final_SNP_merged.vcf.gz) (1.1 GB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr14_final_SNP_merged.vcf.gz.csi)
 
-Chromosome 15 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr15_final_SNP_merged.vcf.gz) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr15_final_SNP_merged.vcf.gz.csi)
+Chromosome 15 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr15_final_SNP_merged.vcf.gz) (968 MB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr15_final_SNP_merged.vcf.gz.csi)
 
-Chromosome 16 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr16_final_SNP_merged.vcf.gz) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr16_final_SNP_merged.vcf.gz.csi)
+Chromosome 16 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr16_final_SNP_merged.vcf.gz) (1.1 GB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr16_final_SNP_merged.vcf.gz.csi)
 
-Chromosome 17 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr17_final_SNP_merged.vcf.gz) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr17_final_SNP_merged.vcf.gz.csi)
+Chromosome 17 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr17_final_SNP_merged.vcf.gz) (961 MB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr17_final_SNP_merged.vcf.gz.csi)
 
-Chromosome 18 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr18_final_SNP_merged.vcf.gz) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr18_final_SNP_merged.vcf.gz.csi)
+Chromosome 18 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr18_final_SNP_merged.vcf.gz) (910 MB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr18_final_SNP_merged.vcf.gz.csi)
 
-Chromosome 19 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr19_final_SNP_merged.vcf.gz) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr19_final_SNP_merged.vcf.gz.csi)
+Chromosome 19 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr19_final_SNP_merged.vcf.gz) (806 MB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr19_final_SNP_merged.vcf.gz.csi)
 
-Chromosome 20 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr20_final_SNP_merged.vcf.gz) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr20_final_SNP_merged.vcf.gz.csi)
+Chromosome 20 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr20_final_SNP_merged.vcf.gz) (752 MB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr20_final_SNP_merged.vcf.gz.csi)
 
-Chromosome 21 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr21_final_SNP_merged.vcf.gz) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr21_final_SNP_merged.vcf.gz.csi)
+Chromosome 21 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr21_final_SNP_merged.vcf.gz) (461 MB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr21_final_SNP_merged.vcf.gz.csi)
 
-Chromosome 22 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr22_final_SNP_merged.vcf.gz) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr22_final_SNP_merged.vcf.gz.csi)
+Chromosome 22 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr22_final_SNP_merged.vcf.gz) (482 MB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr22_final_SNP_merged.vcf.gz.csi)
 
 ### Usage
 
