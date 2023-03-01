@@ -181,4 +181,14 @@ Chromosome 21 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-s
 
 Chromosome 22 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr22_final_SNP_merged.vcf.gz) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr22_final_SNP_merged.vcf.gz.csi)
 
+### Use Beagle to impute TRs from the reference panel
+
+Use [Beagle](https://sites.google.com/a/case.edu/hpcc/hpc-cluster/pioneer-software/pioneer-alphabetical-list/a-e/beagle) to impute TRs into SNP data:
+
+```
+java -Xmx4g -jar beagle.version.jar \
+            gt=SNPs.vcf.gz \
+            ref=${chrom}_final_SNP_merged.vcf.gz \
+            out=imputed_TR_SNPs
+```
 
