@@ -127,11 +127,11 @@ Chromosome 22 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/en
 
 ### Dataset description
 
-Phased variants of 3,202 samples from the 1000 Genomes Project (1kGP).
+[Phased variants] (http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/20220422_3202_phased_SNV_INDEL_SV/) of 3,202 samples from the 1000 Genomes Project (1kGP).
 
 TRs imputed from 3,202 1kGP samples.
 
-Total 27,185,239 variants + 1,089,670 TR markers
+Total 70,692,015 variants + 1,089,670 TR markers.
 
 All the coordinates are based on the hg38 human reference genome.
 
