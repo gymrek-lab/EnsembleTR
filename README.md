@@ -127,7 +127,7 @@ Chromosome 22 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/en
 
 ### Dataset description
 
-[Phased variants] (http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/20220422_3202_phased_SNV_INDEL_SV/) of 3,202 samples from the 1000 Genomes Project (1kGP).
+[Phased variants](http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/20220422_3202_phased_SNV_INDEL_SV/) of 3,202 samples from the 1000 Genomes Project (1kGP).
 
 TRs imputed from 3,202 1kGP samples.
 
