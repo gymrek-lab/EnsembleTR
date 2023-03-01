@@ -66,7 +66,7 @@ Score is calculated by aggregating quality information from calls that are getti
 
 ## Using statSTR on EnsembleTR files
 
-You can use [statSTR](https://trtools.readthedocs.io/en/latest/source/statSTR.html) from [TRTools](https://trtools.readthedocs.io/en/latest/index.html) to compute different per-locus statistics for EnsembleTR .VCF files.
+You can use [statSTR](https://trtools.readthedocs.io/en/latest/source/statSTR.html) from [TRTools](https://trtools.readthedocs.io/en/latest/index.html) to compute various per-locus statistics for EnsembleTR .VCF files.
 
 For example, to compute per-locus allele frequency use the following command:
 
