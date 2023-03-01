@@ -79,7 +79,7 @@ statSTR --vcf EnsembleTR_file.vcf.gz
 
 ## Version I of EnsembleTR calls on samples from 1000 Genomes Project and H3Africa
 
-Chromosome 1 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr1_filtered.vcf.gz) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr1_filtered.vcf.gz.tbi)
+Chromosome 1 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr1_filtered.vcf.gz) (575 MB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr1_filtered.vcf.gz.tbi)
 
 Chromosome 2 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr2_filtered.vcf.gz) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr2_filtered.vcf.gz.tbi)
 
