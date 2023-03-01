@@ -116,11 +116,14 @@ Chromosome 22 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/en
 ### Dataset description
 
 3,202 samples from the 1000 Genomes Project (1kGP) phased panel.
+
 TRs imputed from 3,202 (1kGP) samples.
+
 Total 27,185,239 SNP + 1,089,670 TR markers
+
 All the coordinates are based on the hg38 human reference genome.
 
-###Availability
+### Availability
 
 Chromosome 1 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr1_final_SNP_merged.vcf.gz) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr1_final_SNP_merged.vcf.gz.csi)
 
