@@ -36,7 +36,7 @@ setup(name=NAME,
       url=DOWNLOAD_URL,
       download_url=DOWNLOAD_URL,
       license=LICENSE,
-      python_requires='>=3.6',
+      python_requires='>=3.8',
       packages=find_packages(),
       include_package_data=True,
       license_file="LICENSE.txt",
@@ -49,7 +49,8 @@ setup(name=NAME,
       install_requires=['cyvcf2',
                         'networkx',
                         'numpy',
-                        'pyfaidx'],
+                        'pyfaidx',
+			'trtools'],
       classifiers=['Development Status :: 4 - Beta',\
                        'Programming Language :: Python :: 3.5',\
                        'License :: OSI Approved :: MIT License',\
