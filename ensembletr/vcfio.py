@@ -99,25 +99,11 @@ class Readers:
         self.samples_list = []
         for wrapper in self.vcfwrappers:
             self.samples_list.append(wrapper.vcfreader.samples)
-            if wrapper.vcftype.value == "advntr":
-                while True:
-                    try:
-                        new_record = trh.HarmonizeRecord(wrapper.vcftype, next(wrapper.vcfreader))
-                        if not self.checkAdVNTRCall(2, new_record.ref_allele,
-                                                    new_record.motif):
-                            print("Skipped adVNTR call at " + str(new_record.pos))
-                        else:
-                            self.current_tr_records.append(new_record)
-                            break
-                    except StopIteration:
-                        self.current_tr_records.append(None)
-                        break
-            else:
-                try:
-                    new_record = trh.HarmonizeRecord(wrapper.vcftype, next(wrapper.vcfreader))
-                    self.current_tr_records.append(new_record)
-                except StopIteration:
-                    self.current_tr_records.append(None)
+            try:
+                new_record = trh.HarmonizeRecord(wrapper.vcftype, next(wrapper.vcfreader))
+                self.current_tr_records.append(new_record)
+            except StopIteration:
+                self.current_tr_records.append(None)
 
         if not self.areChromsValid():
             raise ValueError('Invalid CHROM detected in record.')
@@ -169,28 +155,6 @@ class Readers:
             else:
                ret.append(item.vcfrecord)
         return ret
-
-    def checkAdVNTRCall(self, n, ref, motif):
-        cnt = 0
-        cursor = 0
-        homo_check = False
-        # homo_str = ["TTTTT", "AAAAA", "GGGGG", "CCCCC"]
-        # for str in homo_str:
-        #     if str in motif:
-        #         homo_check = True
-        #         break
-        # if homo_check:
-        while True:
-            if (cursor + len(motif)) >= len(ref):
-                break
-            if motif == ref[cursor:cursor+len(motif)]:
-                cnt += 1
-                cursor += len(motif)
-            else:
-                cursor += 1
-        if cnt >= n:
-            return True
-        return False
 
     def getCurrentRange(self):
         r"""
@@ -283,27 +247,12 @@ class Readers:
         new_records = []
         for idx, rec in enumerate(prev_records):
             if vcf_list[convert_type_to_idx[self.vcfwrappers[idx].vcftype]]:
-                if self.vcfwrappers[idx].vcftype.value == "advntr":
-                    while True:
-                        try:
-                            new_record = trh.HarmonizeRecord(self.vcfwrappers[idx].vcftype,
-                                            next(self.vcfwrappers[idx].vcfreader))
-                            if not self.checkAdVNTRCall(2, new_record.ref_allele,
-                                                    new_record.motif):
-                                print("Skipped adVNTR call at " + str(new_record.pos))
-                            else:
-                                new_records.append(new_record)
-                                break
-                        except StopIteration:
-                            new_records.append(None)
-                            break
-                else:
-                    try:
-                        new_records.append(trh.HarmonizeRecord(self.vcfwrappers[idx].vcftype,
-                                                         next(self.vcfwrappers[idx].vcfreader)))
+                try:
+                    new_records.append(trh.HarmonizeRecord(self.vcfwrappers[idx].vcftype,
+                                                     next(self.vcfwrappers[idx].vcfreader)))
 
-                    except StopIteration:
-                        new_records.append(None)
+                except StopIteration:
+                    new_records.append(None)
             else:
                 if prev_records[idx] is None:
                     new_records.append(None)
