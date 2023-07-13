@@ -192,7 +192,14 @@ java -Xmx4g -jar beagle.version.jar \
             out=imputed_TR_SNPs
 ```
 
-### Version I
+## Additional resources
+
+Per locus summary statistics can be downloaded from [here](https://ensemble-tr.s3.us-east-2.amazonaws.com/tables/repeat_tables.zip). Each table has information on coordinates, repeat unit sequence, and potential overlap with genes listed in GENCODE v22 for repeats in EnsembleTR catalog.
+
+Population-specific per locus statistics on allele frequency, heterozygosity, and the number of called samples can be found [here](https://ensemble-tr.s3.us-east-2.amazonaws.com/tables/afreq_tables.zip). Statistics are computed using statSTR from the TRTools package.
+
+
+## Version I
 
 For version I of EnsembleTR calls, please use 
 https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr"$chr"_filtered.vcf.gz for VCF file and https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr"$chr"_filtered.vcf.gz.tbi for tbi file.
