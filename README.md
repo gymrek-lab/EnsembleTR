@@ -197,5 +197,5 @@ java -Xmx4g -jar beagle.version.jar \
 For version I of EnsembleTR calls, please use 
 https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr"$chr"_filtered.vcf.gz for VCF file and https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr"$chr"_filtered.vcf.gz.tbi for tbi file.
 
-For version I of phased panel, please use 
+For version I of phased panels, please use 
 https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr"$chr"_final_SNP_merged.vcf.gz for VCF file and https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr"$chr"_final_SNP_merged.vcf.gz.csi for tbi file.
