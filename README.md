@@ -131,7 +131,7 @@ Chromosome 22 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/add-vntr
 
 TRs imputed from 3,202 1kGP samples.
 
-Total 70,692,015 variants + 1,089,670 TR markers.
+Total 70,692,015 variants + 1,091,550 TR markers.
 
 All the coordinates are based on the hg38 human reference genome.
 
