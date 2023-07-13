@@ -77,53 +77,54 @@ statSTR --vcf EnsembleTR_file.vcf.gz
         --out EnsembleTR_per_locus_allele_frequency
 ```
 
-## Version I of EnsembleTR calls on samples from 1000 Genomes Project and H3Africa
+## Version II of EnsembleTR calls on samples from 1000 Genomes Project and H3Africa
 
-Chromosome 1 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr1_filtered.vcf.gz) (575 MB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr1_filtered.vcf.gz.tbi)
+Chromosome 1 [VCF file] https://ensemble-tr.s3.us-east-2.amazonaws.com/add-vntrs/ensemble_chr1_filtered.vcf.gz [tbi file] https://ensemble-tr.s3.us-east-2.amazonaws.com/add-vntrs/ensemble_chr1_filtered.vcf.gz.tbi
 
-Chromosome 2 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr2_filtered.vcf.gz) (568 MB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr2_filtered.vcf.gz.tbi)
+Chromosome 2 [VCF file] https://ensemble-tr.s3.us-east-2.amazonaws.com/add-vntrs/ensemble_chr2_filtered.vcf.gz [tbi file] https://ensemble-tr.s3.us-east-2.amazonaws.com/add-vntrs/ensemble_chr2_filtered.vcf.gz.tbi
 
-Chromosome 3 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr3_filtered.vcf.gz) (472 MB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr3_filtered.vcf.gz.tbi)
+Chromosome 3 [VCF file] https://ensemble-tr.s3.us-east-2.amazonaws.com/add-vntrs/ensemble_chr3_filtered.vcf.gz [tbi file] https://ensemble-tr.s3.us-east-2.amazonaws.com/add-vntrs/ensemble_chr3_filtered.vcf.gz.tbi
 
-Chromosome 4 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr4_filtered.vcf.gz) (427 MB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr4_filtered.vcf.gz.tbi)
+Chromosome 4 [VCF file] https://ensemble-tr.s3.us-east-2.amazonaws.com/add-vntrs/ensemble_chr4_filtered.vcf.gz [tbi file] https://ensemble-tr.s3.us-east-2.amazonaws.com/add-vntrs/ensemble_chr4_filtered.vcf.gz.tbi
 
-Chromosome 5 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr5_filtered.vcf.gz) (414 MB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr5_filtered.vcf.gz.tbi)
+Chromosome 5 [VCF file] https://ensemble-tr.s3.us-east-2.amazonaws.com/add-vntrs/ensemble_chr5_filtered.vcf.gz [tbi file] https://ensemble-tr.s3.us-east-2.amazonaws.com/add-vntrs/ensemble_chr5_filtered.vcf.gz.tbi
 
-Chromosome 6 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr6_filtered.vcf.gz) (413 MB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr6_filtered.vcf.gz.tbi)
+Chromosome 6 [VCF file] https://ensemble-tr.s3.us-east-2.amazonaws.com/add-vntrs/ensemble_chr6_filtered.vcf.gz [tbi file] https://ensemble-tr.s3.us-east-2.amazonaws.com/add-vntrs/ensemble_chr6_filtered.vcf.gz.tbi
 
-Chromosome 7 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr7_filtered.vcf.gz) (374 MB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr7_filtered.vcf.gz.tbi)
+Chromosome 7 [VCF file] https://ensemble-tr.s3.us-east-2.amazonaws.com/add-vntrs/ensemble_chr7_filtered.vcf.gz [tbi file] https://ensemble-tr.s3.us-east-2.amazonaws.com/add-vntrs/ensemble_chr7_filtered.vcf.gz.tbi
 
-Chromosome 8 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr8_filtered.vcf.gz) (342 MB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr8_filtered.vcf.gz.tbi)
+Chromosome 8 [VCF file] https://ensemble-tr.s3.us-east-2.amazonaws.com/add-vntrs/ensemble_chr8_filtered.vcf.gz [tbi file] https://ensemble-tr.s3.us-east-2.amazonaws.com/add-vntrs/ensemble_chr8_filtered.vcf.gz.tbi
 
-Chromosome 9 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr9_filtered.vcf.gz) (324 MB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr9_filtered.vcf.gz.tbi)
+Chromosome 9 [VCF file] https://ensemble-tr.s3.us-east-2.amazonaws.com/add-vntrs/ensemble_chr9_filtered.vcf.gz [tbi file] https://ensemble-tr.s3.us-east-2.amazonaws.com/add-vntrs/ensemble_chr9_filtered.vcf.gz.tbi
 
-Chromosome 10 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr10_filtered.vcf.gz) (330 MB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr10_filtered.vcf.gz.tbi)
+Chromosome 10 [VCF file] https://ensemble-tr.s3.us-east-2.amazonaws.com/add-vntrs/ensemble_chr10_filtered.vcf.gz [tbi file] https://ensemble-tr.s3.us-east-2.amazonaws.com/add-vntrs/ensemble_chr10_filtered.vcf.gz.tbi
 
-Chromosome 11 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr11_filtered.vcf.gz) (357 MB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr11_filtered.vcf.gz.tbi)
+Chromosome 11 [VCF file] https://ensemble-tr.s3.us-east-2.amazonaws.com/add-vntrs/ensemble_chr11_filtered.vcf.gz [tbi file] https://ensemble-tr.s3.us-east-2.amazonaws.com/add-vntrs/ensemble_chr11_filtered.vcf.gz.tbi
 
-Chromosome 12 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr12_filtered.vcf.gz) (408 MB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr12_filtered.vcf.gz.tbi)
+Chromosome 12 [VCF file] https://ensemble-tr.s3.us-east-2.amazonaws.com/add-vntrs/ensemble_chr12_filtered.vcf.gz [tbi file] https://ensemble-tr.s3.us-east-2.amazonaws.com/add-vntrs/ensemble_chr12_filtered.vcf.gz.tbi
 
-Chromosome 13 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr13_filtered.vcf.gz) (258 MB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr13_filtered.vcf.gz.tbi)
+Chromosome 13 [VCF file] https://ensemble-tr.s3.us-east-2.amazonaws.com/add-vntrs/ensemble_chr13_filtered.vcf.gz [tbi file] https://ensemble-tr.s3.us-east-2.amazonaws.com/add-vntrs/ensemble_chr13_filtered.vcf.gz.tbi
 
-Chromosome 14 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr14_filtered.vcf.gz) (261 MB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr14_filtered.vcf.gz.tbi)
+Chromosome 14 [VCF file] https://ensemble-tr.s3.us-east-2.amazonaws.com/add-vntrs/ensemble_chr14_filtered.vcf.gz [tbi file] https://ensemble-tr.s3.us-east-2.amazonaws.com/add-vntrs/ensemble_chr14_filtered.vcf.gz.tbi
 
-Chromosome 15 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr15_filtered.vcf.gz) (238 MB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr15_filtered.vcf.gz.tbi)
+Chromosome 15 [VCF file] https://ensemble-tr.s3.us-east-2.amazonaws.com/add-vntrs/ensemble_chr15_filtered.vcf.gz [tbi file] https://ensemble-tr.s3.us-east-2.amazonaws.com/add-vntrs/ensemble_chr15_filtered.vcf.gz.tbi
 
-Chromosome 16 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr16_filtered.vcf.gz) (259 MB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr16_filtered.vcf.gz.tbi)
+Chromosome 16 [VCF file] https://ensemble-tr.s3.us-east-2.amazonaws.com/add-vntrs/ensemble_chr16_filtered.vcf.gz [tbi file] https://ensemble-tr.s3.us-east-2.amazonaws.com/add-vntrs/ensemble_chr16_filtered.vcf.gz.tbi
 
-Chromosome 17 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr17_filtered.vcf.gz) (285 MB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr17_filtered.vcf.gz.tbi)
+Chromosome 17 [VCF file] https://ensemble-tr.s3.us-east-2.amazonaws.com/add-vntrs/ensemble_chr17_filtered.vcf.gz [tbi file] https://ensemble-tr.s3.us-east-2.amazonaws.com/add-vntrs/ensemble_chr17_filtered.vcf.gz.tbi
 
-Chromosome 18 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr18_filtered.vcf.gz) (206 MB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr18_filtered.vcf.gz.tbi)
+Chromosome 18 [VCF file] https://ensemble-tr.s3.us-east-2.amazonaws.com/add-vntrs/ensemble_chr18_filtered.vcf.gz [tbi file] https://ensemble-tr.s3.us-east-2.amazonaws.com/add-vntrs/ensemble_chr18_filtered.vcf.gz.tbi
 
-Chromosome 19 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr19_filtered.vcf.gz) (256 MB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr19_filtered.vcf.gz.tbi)
+Chromosome 19 [VCF file] https://ensemble-tr.s3.us-east-2.amazonaws.com/add-vntrs/ensemble_chr19_filtered.vcf.gz [tbi file] https://ensemble-tr.s3.us-east-2.amazonaws.com/add-vntrs/ensemble_chr19_filtered.vcf.gz.tbi
 
-Chromosome 20 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr20_filtered.vcf.gz) (187 MB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr20_filtered.vcf.gz.tbi)
+Chromosome 20 [VCF file] https://ensemble-tr.s3.us-east-2.amazonaws.com/add-vntrs/ensemble_chr20_filtered.vcf.gz [tbi file] https://ensemble-tr.s3.us-east-2.amazonaws.com/add-vntrs/ensemble_chr20_filtered.vcf.gz.tbi
 
-Chromosome 21 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr21_filtered.vcf.gz) (96 MB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr21_filtered.vcf.gz.tbi)
+Chromosome 21 [VCF file] https://ensemble-tr.s3.us-east-2.amazonaws.com/add-vntrs/ensemble_chr21_filtered.vcf.gz [tbi file] https://ensemble-tr.s3.us-east-2.amazonaws.com/add-vntrs/ensemble_chr21_filtered.vcf.gz.tbi
 
-Chromosome 22 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr22_filtered.vcf.gz) (119 MB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr22_filtered.vcf.gz.tbi)
+Chromosome 22 [VCF file] https://ensemble-tr.s3.us-east-2.amazonaws.com/add-vntrs/ensemble_chr22_filtered.vcf.gz [tbi file] https://ensemble-tr.s3.us-east-2.amazonaws.com/add-vntrs/ensemble_chr22_filtered.vcf.gz.tbi
 
-## Version I of reference SNP+TR haplotype panel for imputation of TR variants
+
+## Version II of reference SNP+TR haplotype panel for imputation of TR variants
 
 ### Dataset description
 
@@ -137,49 +138,7 @@ All the coordinates are based on the hg38 human reference genome.
 
 ### Availability
 
-Chromosome 1 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr1_final_SNP_merged.vcf.gz) (2.6 GB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr1_final_SNP_merged.vcf.gz.csi)
-
-Chromosome 2 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr2_final_SNP_merged.vcf.gz) (2.7 GB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr2_final_SNP_merged.vcf.gz.csi)
-
-Chromosome 3 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr3_final_SNP_merged.vcf.gz) (2.3 GB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr3_final_SNP_merged.vcf.gz.csi)
-
-Chromosome 4 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr4_final_SNP_merged.vcf.gz) (2.3 GB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr4_final_SNP_merged.vcf.gz.csi)
-
-Chromosome 5 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr5_final_SNP_merged.vcf.gz) (2.1 GB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr5_final_SNP_merged.vcf.gz.csi)
-
-Chromosome 6 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr6_final_SNP_merged.vcf.gz) (2.1 GB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr6_final_SNP_merged.vcf.gz.csi)
-
-Chromosome 7 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr7_final_SNP_merged.vcf.gz) (1.9 GB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr7_final_SNP_merged.vcf.gz.csi)
-
-Chromosome 8 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr8_final_SNP_merged.vcf.gz) (1.8 GB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr8_final_SNP_merged.vcf.gz.csi)
-
-Chromosome 9 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr9_final_SNP_merged.vcf.gz) (1.4 GB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr9_final_SNP_merged.vcf.gz.csi)
-
-Chromosome 10 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr10_final_SNP_merged.vcf.gz) (1.6 GB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr10_final_SNP_merged.vcf.gz.csi)
-
-Chromosome 11 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr11_final_SNP_merged.vcf.gz) (1.6 GB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr11_final_SNP_merged.vcf.gz.csi)
-
-Chromosome 12 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr12_final_SNP_merged.vcf.gz) (1.6 GB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr12_final_SNP_merged.vcf.gz.csi)
-
-Chromosome 13 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr13_final_SNP_merged.vcf.gz) (1.2 GB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr13_final_SNP_merged.vcf.gz.csi)
-
-Chromosome 14 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr14_final_SNP_merged.vcf.gz) (1.1 GB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr14_final_SNP_merged.vcf.gz.csi)
-
-Chromosome 15 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr15_final_SNP_merged.vcf.gz) (968 MB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr15_final_SNP_merged.vcf.gz.csi)
-
-Chromosome 16 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr16_final_SNP_merged.vcf.gz) (1.1 GB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr16_final_SNP_merged.vcf.gz.csi)
-
-Chromosome 17 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr17_final_SNP_merged.vcf.gz) (961 MB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr17_final_SNP_merged.vcf.gz.csi)
-
-Chromosome 18 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr18_final_SNP_merged.vcf.gz) (910 MB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr18_final_SNP_merged.vcf.gz.csi)
-
-Chromosome 19 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr19_final_SNP_merged.vcf.gz) (806 MB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr19_final_SNP_merged.vcf.gz.csi)
-
-Chromosome 20 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr20_final_SNP_merged.vcf.gz) (752 MB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr20_final_SNP_merged.vcf.gz.csi)
-
-Chromosome 21 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr21_final_SNP_merged.vcf.gz) (461 MB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr21_final_SNP_merged.vcf.gz.csi)
-
-Chromosome 22 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr22_final_SNP_merged.vcf.gz) (482 MB) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr22_final_SNP_merged.vcf.gz.csi)
+[
 
 ### Usage
 
