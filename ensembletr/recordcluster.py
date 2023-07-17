@@ -129,9 +129,9 @@ class RecordObj:
         """
         samp_idx = self.vcf_samples.index(sample)
         if self.vcf_type == trh.VcfTypes.advntr:
-            return min(self.cyvcf2_record.format('ML')[samp_idx][0],1)
+            return min(self.cyvcf2_record.format('ML')[samp_idx][0], 1)
         elif self.vcf_type in [trh.VcfTypes.hipstr, trh.VcfTypes.gangstr]:
-            return min(self.cyvcf2_record.format('Q')[samp_idx][0],1) # Sometimes GangSTR Q is slightly more than 1
+            return min(self.cyvcf2_record.format('Q')[samp_idx][0], 1)  # Sometimes GangSTR Q is slightly more than 1
         elif self.vcf_type == trh.VcfTypes.eh:
             REPCI = self.cyvcf2_record.format('REPCI')[samp_idx]
             REPCN = self.cyvcf2_record.format('REPCN')[samp_idx]
