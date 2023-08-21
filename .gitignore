@@ -2,10 +2,6 @@ EnsembleTR.egg-info/
 build/
 dist/
 *.vcf
-<<<<<<< HEAD
-=======
-*.vcf.gz
->>>>>>> 657f616723b80e01974824f056da8bff130a5976
 *.vcf.gz.tbi
 *.ipynb_checkpoints*
 .mergevenv/
@@ -23,8 +19,4 @@ tmp
 .vscode/
 notebooks/.ipynb_checkpoints/
 .DS_Store
-<<<<<<< HEAD
 merge-analysis/
-=======
-merge-analysis/
->>>>>>> 657f616723b80e01974824f056da8bff130a5976
