@@ -2,7 +2,6 @@ EnsembleTR.egg-info/
 build/
 dist/
 *.vcf
-*.vcf.gz
 *.vcf.gz.tbi
 *.ipynb_checkpoints*
 .mergevenv/
