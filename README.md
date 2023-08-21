@@ -34,7 +34,7 @@ Both zipped and unzipped VCF files are accepted as input. EnsembleTR can current
 You must input a reference genome in FASTA format. This must be the same reference build used for TR calling in input files.
 
 ### VCF (`--out`)
-For more information on VCF file format, see the [VCF spec](http://samtools.github.io/hts-specs/VCFv4.2.pdf). EnsembleTR output VCF file contains several fields that are described below.
+For more information on VCF file format, see the [VCF spec](http://samtools.github.io/hts-specs/VCFv4.2.pdf). The output VCF is not necessarily sorted, please use vcf-sort or other VCF sorting tools to sort the output before downstream analysis. EnsembleTR output VCF file contains several fields described below. 
 
 #### INFO fields
 
@@ -206,3 +206,14 @@ https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr"$chr"_filtered
 
 For version I of phased panels, please use 
 https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr"$chr"_final_SNP_merged.vcf.gz for VCF file and https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr"$chr"_final_SNP_merged.vcf.gz.csi for tbi file.
+
+## Notes on HipSTR input
+
+HipSTR might expand the coordinates of the repeat if there is a nearby SNP. If you have multiple HipSTR outputs from different individuals and want to use mergeSTR to merge them, please use a [modified](https://github.com/gymreklab/TRTools/tree/conf_ref) version of mergeSTR that allows multiple records with the same POS and different REF sequences. Then use our python script, *Hipstr_correction.py*, to correct the merged HipSTR VCF file so multiple records from the same repeat end up in one single record.
+
+```
+python3 HipSTR_correction_faster.py hipstr_merged_by_mergeSTR.vcf.gz hipstr_merged_corrected.vcf
+bgzip hipstr_merged_corrected.vcf
+tabix -p vcf hipstr_merged_corrected.vcf.gz
+
+```
