@@ -195,7 +195,11 @@ class RecordCluster:
         """
         self.record_objs.append(ro)
         self.update()
+<<<<<<< HEAD
         if ro.vcf_type.name == "hipstr" or ro.vcf_type.name == "eh":
+=======
+        if ro.vcf_type.name == "hipstr":
+>>>>>>> 657f616723b80e01974824f056da8bff130a5976
             self.hipstr_allele_frequency = self.GetHipSTR_freqs(ro)
 
     def update(self):
@@ -221,6 +225,10 @@ class RecordCluster:
                 # Found a record that starts after
                 # Should prepend the record
                 rec.prepend_seq = self.fasta[chrom][self.first_pos-1 : rec.pos-1].seq.upper()
+<<<<<<< HEAD
+=======
+                #print(self.fasta[chrom][self.first_pos-1 : rec.pos-1].seq.upper(), ref_record.cyvcf2_record.REF[0:(rec.pos-1 - self.first_pos-1)+2].upper())
+>>>>>>> 657f616723b80e01974824f056da8bff130a5976
                 #assert(self.fasta[chrom][self.first_pos-1 : rec.pos-1].seq.upper() == ref_record.cyvcf2_record.REF[0:(rec.pos-1 - self.first_pos-1)+2].upper()) #This is not necessarily true when the ref record is from EXpansionHunter
 
             if rec.cyvcf2_record.end < self.last_end:
@@ -403,7 +411,11 @@ class ConnectedComponent:
             if len(self.caller_to_nodes[trh.VcfTypes.hipstr]) == 1:
                 for caller in self.uniq_callers:
                     print(caller, len(self.caller_to_nodes[caller]))
+<<<<<<< HEAD
                 sys.exit("This should not happen")
+=======
+                sys.exit(0)
+>>>>>>> 657f616723b80e01974824f056da8bff130a5976
                 tmp_node = self.caller_to_nodes[trh.VcfTypes.hipstr][0]
                 pa = PreAllele(tmp_node, [trh.VcfTypes.hipstr])
                 for node in self.subgraph:
