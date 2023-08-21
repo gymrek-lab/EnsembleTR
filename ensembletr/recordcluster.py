@@ -37,7 +37,7 @@ class RecordObj:
         self.vcf_type = vcf_type
         self.hm_record = trh.HarmonizeRecord(vcf_type, rec)
         self.pos = self.hm_record.pos
-        if vcf_type.name == 'advntr':
+        if vcf_type.name == 'advntr' or vcf_type.name == 'eh':
             self.pos += 1 # AdVNTR call is 0-based, should change it to 1-based
         self.canonical_motif = GetCanonicalMotif(self.hm_record.motif)
         self.prepend_seq = ''
@@ -195,41 +195,6 @@ class RecordCluster:
         """
         self.record_objs.append(ro)
         self.update()
-<<<<<<< HEAD
-        if ro.vcf_type.name == "hipstr" or ro.vcf_type.name == "eh":
-=======
-        if ro.vcf_type.name == "hipstr":
->>>>>>> 657f616723b80e01974824f056da8bff130a5976
-            self.hipstr_allele_frequency = self.GetHipSTR_freqs(ro)
-
-    def update(self):
-        r"""
-        Update prepend/append sequences
-        of individual record objects so they
-        start and end at the same location.
-        Extends all alleles to the maximum region
-        spanned by all records in the cluster.
-        """
-        self.first_pos = min([rec.pos for rec in self.record_objs])
-        self.last_end = max([rec.cyvcf2_record.end for rec in self.record_objs])
-
-        print(f"Analysing record cluster ranged in {self.record_objs[0].cyvcf2_record.CHROM}:{self.first_pos}-{self.last_end}.")
-        ref_record = ""
-        for rec in self.record_objs:
-            if rec.pos == self.first_pos:
-                ref_record = rec
-        for rec in self.record_objs:
-            self.vcf_types[convert_type_to_idx[rec.vcf_type]] = True
-            chrom = rec.cyvcf2_record.CHROM
-            if rec.pos > self.first_pos:
-                # Found a record that starts after
-                # Should prepend the record
-                rec.prepend_seq = self.fasta[chrom][self.first_pos-1 : rec.pos-1].seq.upper()
-<<<<<<< HEAD
-=======
-                #print(self.fasta[chrom][self.first_pos-1 : rec.pos-1].seq.upper(), ref_record.cyvcf2_record.REF[0:(rec.pos-1 - self.first_pos-1)+2].upper())
->>>>>>> 657f616723b80e01974824f056da8bff130a5976
-                #assert(self.fasta[chrom][self.first_pos-1 : rec.pos-1].seq.upper() == ref_record.cyvcf2_record.REF[0:(rec.pos-1 - self.first_pos-1)+2].upper()) #This is not necessarily true when the ref record is from EXpansionHunter
 
             if rec.cyvcf2_record.end < self.last_end:
                 # Found a record that ends before last end
@@ -411,11 +376,8 @@ class ConnectedComponent:
             if len(self.caller_to_nodes[trh.VcfTypes.hipstr]) == 1:
                 for caller in self.uniq_callers:
                     print(caller, len(self.caller_to_nodes[caller]))
-<<<<<<< HEAD
                 sys.exit("This should not happen")
-=======
                 sys.exit(0)
->>>>>>> 657f616723b80e01974824f056da8bff130a5976
                 tmp_node = self.caller_to_nodes[trh.VcfTypes.hipstr][0]
                 pa = PreAllele(tmp_node, [trh.VcfTypes.hipstr])
                 for node in self.subgraph:
