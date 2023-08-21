@@ -196,6 +196,30 @@ class RecordCluster:
         self.record_objs.append(ro)
         self.update()
 
+    def update(self):
+        r"""
+        Update prepend/append sequences
+        of individual record objects so they
+        start and end at the same location.
+        Extends all alleles to the maximum region
+        spanned by all records in the cluster.
+        """
+        self.first_pos = min([rec.pos for rec in self.record_objs])
+        self.last_end = max([rec.cyvcf2_record.end for rec in self.record_objs])
+
+        print(
+            f"Analysing record cluster ranged in {self.record_objs[0].cyvcf2_record.CHROM}:{self.first_pos}-{self.last_end}.")
+        ref_record = ""
+        for rec in self.record_objs:
+            if rec.pos == self.first_pos:
+                ref_record = rec
+        for rec in self.record_objs:
+            self.vcf_types[convert_type_to_idx[rec.vcf_type]] = True
+            chrom = rec.cyvcf2_record.CHROM
+            if rec.pos > self.first_pos:
+                # Found a record that starts after
+                # Should prepend the record
+                rec.prepend_seq = self.fasta[chrom][self.first_pos - 1: rec.pos - 1].seq.upper()
             if rec.cyvcf2_record.end < self.last_end:
                 # Found a record that ends before last end
                 # Should append the record
