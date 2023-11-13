@@ -45,10 +45,10 @@ INFO fields contain aggregated statistics about each TR. The following custom fi
 | START | Start position of the TR |
 | END | End position of the TR |
 | PERIOD | Length of the repeat unit |
-| RU | Repeat motif, note that this is the canonical representation of the repeat unit, which is the first alphabetically
-       out of all possible rotations on + and - strands of the sequence. e.g. "TG" canonical sequence is "AC". | 
+| RU | Repeat motif | 
 | METHODS| Methods that attempted to genotype this locus (AdVNTR, EH, HipSTR, GangSTR)| 
 
+Note that the RU shows the canonical sequence of the repeat unit, which is the first alphabetically out of all possible rotations on + and - strands of the sequence. e.g. "TG" canonical sequence is "AC". 
 #### FORMAT fields
 FORMAT fields contain information specific to each genotype call. The following custom fields are added:
 
