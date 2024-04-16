@@ -210,7 +210,7 @@ https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr"$chr"_final_SNP_
 
 ## Notes on HipSTR input
 
-HipSTR might expand the coordinates of the repeat if there is a nearby SNP. If you have multiple HipSTR outputs from different individuals and want to use mergeSTR to merge them, please use a [modified](https://github.com/gymreklab/TRTools/tree/conf_ref) version of mergeSTR that allows for multiple records with the same POS but different REF sequences. Then use our python script, *Hipstr_correction.py*, to correct the merged HipSTR VCF file ensuring that multiple records from the same repeat culminate in a single unified record.
+HipSTR might expand the coordinates of the repeat if there is a nearby SNP. If you have multiple HipSTR outputs from different individuals and want to use mergeSTR to merge them, please use our python script, *Hipstr_correction.py*, to correct the merged HipSTR VCF file ensuring that multiple records from the same repeat culminate in a single unified record.
 
 ```
 python3 HipSTR_correction_faster.py hipstr_merged_by_mergeSTR.vcf.gz hipstr_merged_corrected.vcf
