@@ -40,7 +40,6 @@ setup(name=NAME,
       packages=find_packages(),
       include_package_data=True,
       license_file="LICENSE.txt",
-      scripts=["ensembletr/testsupport/test_ensembletr.sh"],
       entry_points={
           'console_scripts': [
               'EnsembleTR=ensembletr.main:run'
