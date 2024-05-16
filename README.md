@@ -6,7 +6,8 @@ EnsembleTR is a tool for ensemble Tandem Repeat (TR) calling. It takes one or mo
 ## Installation
 
 ```
-python3 setup.py install --user
+pip install --upgrade pip
+pip install ensembletr
 ```
 
 Type `EnsembleTR`. You should see the help message appear.
@@ -16,7 +17,7 @@ Type `EnsembleTR`. You should see the help message appear.
 To run EnsembleTR, use the following command
 
 ```
-EnsembleTR --out output.vcf
+ensembletr --out output.vcf
            --ref ref.fa
            --vcfs vcf1.vcf,vcf2.vcf,...
 ```
