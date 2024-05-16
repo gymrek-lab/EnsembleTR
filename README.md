@@ -10,7 +10,7 @@ pip install --upgrade pip
 pip install ensembletr
 ```
 
-Type `EnsembleTR`. You should see the help message appear.
+Type `ensembletr --help`. You should see the help message appear.
 
 ## Usage
 
