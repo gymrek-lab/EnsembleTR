@@ -135,7 +135,7 @@ TRs imputed from 3,202 1kGP samples.
 
 Total 70,692,015 variants + 1,091,550 TR markers.
 
-All the coordinates are based on the hg38 human reference genome.
+All the coordinates are based on **hg38** human reference genome.
 
 ### Availability
 
@@ -193,6 +193,8 @@ java -Xmx4g -jar beagle.version.jar \
             ref=${chrom}_final_SNP_merged.vcf.gz \
             out=imputed_TR_SNPs
 ```
+
+Please use the [beagle version 5.4](https://github.com/gymreklab/1000Genomes-TR-Analysis/raw/main/phasing/validation/beagle.19Apr22.7c0.jar) for this analysis as we had issued with the newer versions of Beagle and we are right now communicating it with Beagle developers.
 
 ## Additional resources
 
