@@ -194,7 +194,7 @@ java -Xmx4g -jar beagle.version.jar \
             out=imputed_TR_SNPs
 ```
 
-Please use the [beagle version 5.4](https://github.com/gymreklab/1000Genomes-TR-Analysis/raw/main/phasing/validation/beagle.19Apr22.7c0.jar) for this analysis as we had issued with the newer versions of Beagle and we are right now communicating it with Beagle developers.
+Please use the [version 5.4](https://github.com/gymreklab/1000Genomes-TR-Analysis/raw/main/phasing/validation/beagle.19Apr22.7c0.jar) for this analysis as we had issues with the newer versions of Beagle and we are right now communicating it with Beagle developers.
 
 ## Additional resources
 
