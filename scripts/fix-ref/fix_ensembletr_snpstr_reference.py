@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 """
 Script to clean up SNP/TR reference haplotype panels
@@ -8,6 +8,9 @@ import argparse
 import cyvcf2
 import pyfaidx
 import sys
+import subprocess
+import os
+
 
 def IsTRRecord(record_id):
 	return record_id is None or record_id.strip() == "."
@@ -54,26 +57,35 @@ def main(args):
     # if STR: filter records with incorrect reference,
     #   and modify ID
     num_records_processed = 0
+    #fail_positions = {201312,225414,18455865}
     for record in reader:
-    	num_records_processed += 1
-    	if args.max_records > 0 and num_records_processed > args.max_records:
-    		break # for debug
-    	if not IsTRRecord(record.ID):
-    		writer.write_record(record)
-    	else:
+        num_records_processed += 1
+        if args.max_records > 0 and num_records_processed > args.max_records:
+            break # for debug
+        if not IsTRRecord(record.ID):
+            writer.write_record(record)
+        else:
     		# Check reference
-    		if not CheckReference(record, refgenome):
-    			sys.stderr.write("Skipping record %s:%s:%s, bad ref sequence\n"%(record.ID,record.CHROM,record.POS))
-    			sys.stderr.write("  REF=%s\n"%record.REF)
-    			sys.stderr.write("  Refseq=%s\n"%refgenome[record.CHROM][record.POS-1:record.POS-1+len(record.REF)])
-    			continue # skip this record
+            if not CheckReference(record, refgenome):
+                #if record.POS in fail_positions:
+                    #print('bcftools merge fail detected %s'%record.POS)
+                #sys.stderr.write("Skipping record %s:%s:%s, bad ref sequence\n"%(record.ID,record.CHROM,record.POS))
+                #sys.stderr.write("  REF=%s\n"%record.REF)
+                #sys.stderr.write("  Refseq=%s\n"%refgenome[record.CHROM][record.POS-1:record.POS-1+len(record.REF)])
+                continue # skip this record
     		# Modify ID
-    		record.ID = GetTRRecordID(record)
+            record.ID = GetTRRecordID(record)
     		# Write to file
-    		writer.write_record(record)
+            writer.write_record(record)
 
     reader.close()
     writer.close()
+
+
+    # Run bash script to convert to bref3
+    cmd = "bash convert_to_bref3.sh {filename}".format(filename=args.out)
+    output = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout.read()
+    print(output.decode("utf-8"))
 
 if __name__ == "__main__":
     run()

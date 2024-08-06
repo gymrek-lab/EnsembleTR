@@ -17,13 +17,7 @@ chrom=11
 	--out ensembletr_refpanel_v3_chr${chrom}
 ```
 
-## Step 2: Add beagle info
-
-```
-TODO
-```
-
-## Step 3: Convert to bref
+## Step 2: Convert to bref
 
 ```
 TODO
