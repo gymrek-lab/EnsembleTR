@@ -21,8 +21,7 @@ fi
 
 #convert vcf to bref3
 echo "converting vcf to bref3 format"
-#zcat ${ref}.vcf.gz | java -jar $bref > ${ref}.bref3
-zcat ${ref}.vcf.gz 
+zcat ${ref}.vcf.gz | java -jar $bref > ${ref}.bref3
 echo "Done converting"
 
  
