@@ -49,7 +49,8 @@ def main(args):
     refgenome = pyfaidx.Fasta(args.ref)
 
     # Set up writer, adding the missing header
-    reader.add_to_header("##command=hipstr;note this is a dummy header line")
+    reader.add_to_header('##command=hipstr;note this is a dummy header line')
+    reader.add_to_header('##INFO=<ID=VT,Number=1,Type=String,Description="Type of variant">')
     writer = cyvcf2.Writer(args.out + ".vcf", reader)
 
     # Go through each record
@@ -63,6 +64,7 @@ def main(args):
         if args.max_records > 0 and num_records_processed > args.max_records:
             break # for debug
         if not IsTRRecord(record.ID):
+            record.INFO["VT"] = "OTHER"
             writer.write_record(record)
         else:
     		# Check reference
@@ -75,6 +77,7 @@ def main(args):
                 continue # skip this record
     		# Modify ID
             record.ID = GetTRRecordID(record)
+            record.INFO["VT"] =  "TR"
     		# Write to file
             writer.write_record(record)
 
