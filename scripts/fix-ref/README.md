@@ -1,15 +1,14 @@
 # Clean up the EnsembleTR SNP-TR reference panel
 
-TODO:
-* Remove duplicate records and those with incorrect reference allele
-* Add required header line
-* Add informative variant IDs to STRs
-* Run script to add beagle info
-* Release bref versions alongside the VCFs
-
 ## Step 1: Fix reference VCF files
 
+This step:
+* Removes records with incorrect reference allele
+* Adds required header line for TRTools
+* Adds informative variant IDs to STRs
+
 ```
+# Test on chr11
 chrom=11
 ./fix_ensembletr_snpstr_reference.py \
 	--vcf chr${chrom}_final_SNP_merged_additional_TRs.vcf.gz \
@@ -17,13 +16,7 @@ chrom=11
 	--out ensembletr_refpanel_v3_chr${chrom}
 ```
 
-## Step 2: Add beagle info
-
-```
-TODO
-```
-
-## Step 3: Convert to bref
+## Step 2: Convert to bref
 
 ```
 TODO
