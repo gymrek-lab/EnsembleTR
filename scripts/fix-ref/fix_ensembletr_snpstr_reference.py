@@ -46,6 +46,8 @@ def getargs(): # pragma: no cover
     parser.add_argument("--vcf", help="Input SNP/TR VCF file", type=str, required=True)
     parser.add_argument("--ref", help="Reference fasta file", type=str, required=True)
     parser.add_argument("--out", help="Prefix for output VCF file", type=str, required=True)
+    parser.add_argument("--max-alleles", help="Ignore loci with more than this many alleles", type=int, default=-1)
+    parser.add_argument("--min-alleles", help="Ignore loci with fewer than this many alleles", type=int, default=-1)
     parser.add_argument("--max-records", help="Quit after processing this many records (for debug)", \
         default=-1, type=int)
     args = parser.parse_args()
@@ -80,6 +82,16 @@ def main(args):
     		# Check reference
             if not CheckReference(record, refgenome):
                 continue # skip this record
+            # Check if too many alleles
+            if args.max_alleles != -1 and (1+len(record.ALT)) > args.max_alleles:
+                sys.stderr.write("Skipping {}:{} with {} ALT alleles\n".format(record.CHROM, record.POS, len(record.ALT)))
+                continue 
+            # Check if too few alleles
+            # Include cases where there is an ALT listed but the AF is 0
+            if (args.min_alleles != -1 and (1+len(record.ALT)) < args.min_alleles) or \
+                (record.INFO["AF"]==0):
+                sys.stderr.write("Skipping {}:{} with {} ALT alleles, AF={}\n".format(record.CHROM, record.POS, len(record.ALT), str(record.INFO["AF"])))
+                continue
     		# Modify ID
             record.ID = GetTRRecordID(record, allids)
             allids.add(record.ID)

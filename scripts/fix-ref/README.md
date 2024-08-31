@@ -13,7 +13,8 @@ chrom=11
 ./fix_ensembletr_snpstr_reference.py \
 	--vcf chr${chrom}_final_SNP_merged_additional_TRs.vcf.gz \
 	--ref Homo_sapiens_assembly38.fasta \
-	--out ensembletr_refpanel_v3_chr${chrom}
+	--out ensembletr_refpanel_v3_chr${chrom} \
+	--max-alleles 50 --min-alleles 2
 ```
 
 ## Step 2: Convert to bref
