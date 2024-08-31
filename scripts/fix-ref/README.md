@@ -6,6 +6,8 @@ This step:
 * Removes records with incorrect reference allele
 * Adds required header line for TRTools
 * Adds informative variant IDs to STRs
+* Remove loci with too many or too few alleles
+* Remove loci with AF=0
 
 ```
 # Test on chr11
