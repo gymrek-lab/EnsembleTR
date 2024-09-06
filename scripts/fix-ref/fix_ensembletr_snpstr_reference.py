@@ -2,6 +2,8 @@
 
 """
 Script to clean up SNP/TR reference haplotype panels
+
+TODO: remove alleles with AC=0
 """
 
 import argparse
@@ -18,15 +20,15 @@ def IsTRRecord(record_id):
     return record_id is None or record_id.strip() == "."
 
 def GetTRRecordID(record, allids):
-    locid = "EnsTR:%s:%s"%(record.CHROM, record.POS)
+    locid = "EnsTR:{chrom}:{pos}"%.format(chrom=record.CHROM, pos=record.POS)
     if locid not in allids:
         return locid
     for i in range(1, MAX_ALLOWED_DUPS):
-        newlocid = "%s-%s"%(locid, i)
+        newlocid = "{locid}:{i}"
         if newlocid not in allids:
-            sys.stderr.write("Adding duplicate locus %s\n"%newlocid)
+            sys.stderr.write("Adding duplicate locus {newlocid}\n")
             return newlocid
-    raise ValueError("Error: too many duplicates of %s"%locid)
+    raise ValueError("Error: too many duplicates of {locid}")
 
 def CheckReference(record, refgenome):
     # REF in VCF should match what is in the reference genome
@@ -82,15 +84,20 @@ def main(args):
     		# Check reference
             if not CheckReference(record, refgenome):
                 continue # skip this record
+            # TODO - remove alleles with AF=0
             # Check if too many alleles
             if args.max_alleles != -1 and (1+len(record.ALT)) > args.max_alleles:
-                sys.stderr.write("Skipping {}:{} with {} ALT alleles\n".format(record.CHROM, record.POS, len(record.ALT)))
+                sys.stderr.write("Skipping {chrom}:{pos} with {numalt} ALT alleles\n".format(
+                    chrom=record.CHROM, pos=record.POS, numalt=len(record.ALT))
+                )
                 continue 
             # Check if too few alleles
             # Include cases where there is an ALT listed but the AF is 0
             if (args.min_alleles != -1 and (1+len(record.ALT)) < args.min_alleles) or \
                 (record.INFO["AF"]==0):
-                sys.stderr.write("Skipping {}:{} with {} ALT alleles, AF={}\n".format(record.CHROM, record.POS, len(record.ALT), str(record.INFO["AF"])))
+                sys.stderr.write("Skipping {chrom}:{pos} with {numalt} ALT alleles, AF={alleles}\n".format(
+                    chrom=record.CHROM, pos=record.POS, numalt=len(record.ALT), alleles=str(record.INFO["AF"]))
+                )
                 continue
     		# Modify ID
             record.ID = GetTRRecordID(record, allids)
@@ -101,11 +108,7 @@ def main(args):
 
     reader.close()
     writer.close()
-
-    # Run bash script to convert to bref3
-    cmd = "bash convert_to_bref3.sh {filename}".format(filename=args.out)
-    output = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout.read()
-    print(output.decode("utf-8"))
+    sys.exit(0)
 
 if __name__ == "__main__":
     run()
