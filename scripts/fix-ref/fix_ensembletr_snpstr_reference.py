@@ -19,7 +19,9 @@ def GetWriter(fname, reader):
     Get regular file writer, not cyvcf2.Writer
     Since we are going to update INFO/FORMAT downstream
     """
-    outf = open(fname, "w")
+    if fname == "stdout.vcf":
+        outf = sys.stdout
+    else: outf = open(fname, "w")
     # Get header from reader, but remove DS/GP
     header = reader.raw_header
     for line in header.split("\n"):
@@ -116,7 +118,7 @@ def getargs(): # pragma: no cover
     parser = argparse.ArgumentParser(__doc__)
     parser.add_argument("--vcf", help="Input SNP/TR VCF file", type=str, required=True)
     parser.add_argument("--ref", help="Reference fasta file", type=str, required=True)
-    parser.add_argument("--out", help="Prefix for output VCF file", type=str, required=True)
+    parser.add_argument("--out", help="Prefix for output VCF file. or 'stdout' for standard output", type=str, default="stdout")
     parser.add_argument("--max-alleles", help="Ignore loci with more than this many alleles", type=int, default=-1)
     parser.add_argument("--min-alleles", help="Ignore loci with fewer than this many alleles", type=int, default=-1)
     parser.add_argument("--max-records", help="Quit after processing this many records (for debug)", \
