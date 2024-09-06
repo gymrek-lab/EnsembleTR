@@ -2,8 +2,6 @@
 
 """
 Script to clean up SNP/TR reference haplotype panels
-
-TODO: remove alleles with AC=0
 """
 
 import argparse
@@ -12,26 +10,97 @@ import pyfaidx
 import sys
 import subprocess
 import os
-
+import tempfile
 
 MAX_ALLOWED_DUPS = 1000
 
+def GetWriter(fname, reader):
+    """
+    Get regular file writer, not cyvcf2.Writer
+    Since we are going to update INFO/FORMAT downstream
+    """
+    outf = open(fname, "w")
+    # Get header from reader, but remove DS/GP
+    header = reader.raw_header
+    for line in header.split("\n"):
+        if line.startswith("##FORMAT=<ID=DS,") or \
+            line.startswith("##FORMAT=<ID=GP,") or \
+            line.strip() == "":
+            continue
+        outf.write(line.strip() + "\n")
+    return outf
+
+def GetAlleleCounts(record):
+    """
+    Returns:
+    - allele_counts: dictionary of allele_string:allele_count
+    - allele_order: list of alleles, in same order as original 
+      but with those with AC=0 removed
+    """
+    alleles = [record.REF] + record.ALT
+    all_allele_calls = []
+    for genotype in record.genotypes:
+        all_allele_calls.append(alleles[genotype[0]])
+        all_allele_calls.append(alleles[genotype[1]])
+    allele_counts = {}
+    for a in alleles:
+        acount = all_allele_calls.count(a)
+        if acount > 0: allele_counts[a] = acount
+    # Keep order same as original
+    allele_order = [item for item in alleles if item in allele_counts.keys()]
+    return allele_counts, allele_order
+
+def WriteRecord(writer, record):
+    """simple function to write the record as is """
+    writer.write(str(record).strip()+"\n")
+
+def UpdateINFO(INFO, allele_counts, allele_order):
+    """
+    Keep INFO as is, except update AC/AF
+    """
+    info_items = []
+    for infokey in dict(INFO).keys():
+        if infokey in ["AC", "AF"]:
+            continue
+        else:
+            # Note all other INFO fields are single values
+            infoval = INFO.get(infokey)
+            info_items.append(f"{infokey}={infoval}")
+    # Add AC/AF
+    num_chroms = sum(allele_counts.values())
+    ac_vals = [allele_counts[a] for a in allele_order[1:]]
+    af_vals = [allele_counts[a]/num_chroms for a in allele_order[1:]]
+    info_items.append("AC=" + ",".join([str(item) for item in ac_vals]))
+    info_items.append("AF=" + ",".join(["%.4f"%item for item in af_vals]))
+    return ";".join(info_items)
+
+def GetGT(sample, orig_alleles, allele_order):
+    """Update the GT based on new allele order"""
+    if sample[2] == True:
+        sep = "|"
+    else: sep = "/"
+    a1 = allele_order.index(orig_alleles[sample[0]])
+    a2 = allele_order.index(orig_alleles[sample[1]])
+    return f"{a1}{sep}{a2}"
+
 def IsTRRecord(record_id):
+    """Check if the record is a TR"""
     return record_id is None or record_id.strip() == "."
 
 def GetTRRecordID(record, allids):
-    locid = "EnsTR:{chrom}:{pos}"%.format(chrom=record.CHROM, pos=record.POS)
+    """Get new uniquified record ID"""
+    locid = "EnsTR:{chrom}:{pos}".format(chrom=record.CHROM, pos=record.POS)
     if locid not in allids:
         return locid
     for i in range(1, MAX_ALLOWED_DUPS):
-        newlocid = "{locid}:{i}"
+        newlocid = f"{locid}:{i}"
         if newlocid not in allids:
-            sys.stderr.write("Adding duplicate locus {newlocid}\n")
+            sys.stderr.write(f"Adding duplicate locus {newlocid}\n")
             return newlocid
-    raise ValueError("Error: too many duplicates of {locid}")
+    raise ValueError(f"Error: too many duplicates of {locid}")
 
 def CheckReference(record, refgenome):
-    # REF in VCF should match what is in the reference genome
+    """ REF in VCF should match what is in the reference genome"""
     refseq = refgenome[record.CHROM][record.POS-1:record.POS-1+len(record.REF)]
     return (refseq == record.REF)
 
@@ -65,12 +134,14 @@ def main(args):
     # Set up writer, adding the missing header
     reader.add_to_header('##command=hipstr;note this is a dummy header line')
     reader.add_to_header('##INFO=<ID=VT,Number=1,Type=String,Description="Type of variant">')
-    writer = cyvcf2.Writer(args.out + ".vcf", reader)
+    writer = GetWriter(args.out + ".vcf", reader)
 
     # Go through each record
     # If SNP: just print it
-    # if STR: filter records with incorrect reference,
-    #   and modify ID
+    # if STR: (1) Filter records with incorrect reference
+    #         (2) Filter too many/too few alleles
+    #         (3) Modify record ID
+    #         (4) Write record, without DP/GS, with updated AF/AC and without AC=0
     allids = set()
     num_records_processed = 0
     for record in reader:
@@ -79,32 +150,42 @@ def main(args):
             break # for debug
         if not IsTRRecord(record.ID):
             record.INFO["VT"] = "OTHER"
-            writer.write_record(record)
+            WriteRecord(writer, record)
         else:
-    		# Check reference
+    		# (1) Filter records with incorrect reference
             if not CheckReference(record, refgenome):
                 continue # skip this record
-            # TODO - remove alleles with AF=0
-            # Check if too many alleles
-            if args.max_alleles != -1 and (1+len(record.ALT)) > args.max_alleles:
-                sys.stderr.write("Skipping {chrom}:{pos} with {numalt} ALT alleles\n".format(
-                    chrom=record.CHROM, pos=record.POS, numalt=len(record.ALT))
+
+            # (2) Filter too many/too few alleles
+            allele_order = [record.REF] + record.ALT
+            # Note: GetAlleleCounts() doesn't include things with AC=0
+            allele_counts, allele_order = GetAlleleCounts(record)
+            num_alleles = len(allele_counts.keys())
+            if args.max_alleles != -1 and num_alleles > args.max_alleles:
+                sys.stderr.write("Skipping {chrom}:{pos} with {num} alleles\n".format(
+                    chrom=record.CHROM, pos=record.POS, num=num_alleles)
                 )
-                continue 
-            # Check if too few alleles
-            # Include cases where there is an ALT listed but the AF is 0
-            if (args.min_alleles != -1 and (1+len(record.ALT)) < args.min_alleles) or \
-                (record.INFO["AF"]==0):
-                sys.stderr.write("Skipping {chrom}:{pos} with {numalt} ALT alleles, AF={alleles}\n".format(
-                    chrom=record.CHROM, pos=record.POS, numalt=len(record.ALT), alleles=str(record.INFO["AF"]))
+                continue # skip this record
+            if args.min_alleles != -1 and num_alleles < args.min_alleles:
+                sys.stderr.write("Skipping {chrom}:{pos} with {num} alleles\n".format(
+                    chrom=record.CHROM, pos=record.POS, num=num_alleles)
                 )
-                continue
-    		# Modify ID
+                continue # skip this record
+
+            # (3) Modify record ID
             record.ID = GetTRRecordID(record, allids)
             allids.add(record.ID)
             record.INFO["VT"] =  "TR"
-    		# Write to file
-            writer.write_record(record)
+
+            # (4) Write record to file, update AC/AF, only include GT, exclude AC=0
+            orig_alleles = [record.REF] + record.ALT
+            updated_info = UpdateINFO(record.INFO, allele_counts, allele_order)
+            out_items = [record.CHROM, record.POS, record.ID, \
+                allele_order[0], ",".join(allele_order[1:]), \
+                ".", "PASS", updated_info, "GT"]
+            for sample in record.genotypes:
+                out_items.append(GetGT(sample, orig_alleles, allele_order))
+            writer.write("\t".join([str(item) for item in out_items])+"\n")
 
     reader.close()
     writer.close()
