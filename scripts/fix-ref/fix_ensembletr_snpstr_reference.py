@@ -146,6 +146,12 @@ def main(args):
     #         (4) Write record, without DP/GS, with updated AF/AC and without AC=0
     allids = set()
     num_records_processed = 0
+    num_snps_keeped = 0
+    num_strs_keeped = 0
+    num_str_failed_ref = 0
+    num_str_failed_max_allele = 0
+    num_str_failed_min_allele = 0
+
     for record in reader:
         num_records_processed += 1
         if args.max_records > 0 and num_records_processed > args.max_records:
@@ -153,32 +159,31 @@ def main(args):
         if not IsTRRecord(record.ID):
             record.INFO["VT"] = "OTHER"
             WriteRecord(writer, record)
+            num_snps_keeped += 1
         else:
     		# (1) Filter records with incorrect reference
             if not CheckReference(record, refgenome):
+                num_str_failed_ref += 1
                 continue # skip this record
 
             # (2) Filter too many/too few alleles
-            allele_order = [record.REF] + record.ALT
             # Note: GetAlleleCounts() doesn't include things with AC=0
             allele_counts, allele_order = GetAlleleCounts(record)
             num_alleles = len(allele_counts.keys())
             if args.max_alleles != -1 and num_alleles > args.max_alleles:
-                sys.stderr.write("Skipping {chrom}:{pos} with {num} alleles\n".format(
-                    chrom=record.CHROM, pos=record.POS, num=num_alleles)
-                )
+                num_str_failed_max_allele += 1
+                sys.stderr.write(f"Skipping {record.CHROM}:{record.POS} with {num_alleles} alleles\n")
                 continue # skip this record
             if args.min_alleles != -1 and num_alleles < args.min_alleles:
-                sys.stderr.write("Skipping {chrom}:{pos} with {num} alleles\n".format(
-                    chrom=record.CHROM, pos=record.POS, num=num_alleles)
-                )
+                num_str_failed_min_allele += 1
+                sys.stderr.write(f"Skipping {record.CHROM}:{record.POS} with {num_alleles} alleles\n")
                 continue # skip this record
 
             # (3) Modify record ID
             record.ID = GetTRRecordID(record, allids)
             allids.add(record.ID)
-            record.INFO["VT"] =  "TR"
-
+            record.INFO["VT"] = "TR"
+            num_strs_keeped += 1
             # (4) Write record to file, update AC/AF, only include GT, exclude AC=0
             orig_alleles = [record.REF] + record.ALT
             updated_info = UpdateINFO(record.INFO, allele_counts, allele_order)
@@ -188,7 +193,7 @@ def main(args):
             for sample in record.genotypes:
                 out_items.append(GetGT(sample, orig_alleles, allele_order))
             writer.write("\t".join([str(item) for item in out_items])+"\n")
-
+    sys.stdout.write(f"All {num_records_processed:,} records processed: keep {num_snps_keeped:,} snps, {num_strs_keeped:,} STRs; remove {num_str_failed_ref:,} STRs mismatch with reference, {num_str_failed_max_allele:,} STRs with more than {args.max_alleles:,} alleles, {num_str_failed_min_allele:,} STRs less than {args.min_alleles} alleles.\n")
     reader.close()
     writer.close()
     sys.exit(0)

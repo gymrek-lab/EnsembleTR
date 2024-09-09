@@ -211,6 +211,16 @@ https://ensemble-tr.s3.us-east-2.amazonaws.com/split/ensemble_chr"$chr"_filtered
 For version I of phased panels, please use 
 https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr"$chr"_final_SNP_merged.vcf.gz for VCF file and https://ensemble-tr.s3.us-east-2.amazonaws.com/phased-split/chr"$chr"_final_SNP_merged.vcf.gz.csi for tbi file.
 
+## Version III
+
+All files description and download links can be downloaded [here](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_3_readme.txt). The version III of EnsembleTR calls set fix the following issues:
+1. Remove TRs are not match the reference record.
+2. Remove TRs have more than 100 alleles.
+3. Remove TRs have less than 2 alleles.
+4. For each loci, remove alelles with 0 count. DS/GP field also been removed. 
+5. For TRs with the same POS, add the duplicate number of the TR following format: EnsTR:CHROM:POS:Duplicate_num. Add VT field. 
+6. Add the .bref format files.
+
 ## Notes on HipSTR input
 
 HipSTR might expand the coordinates of the repeat if there is a nearby SNP. If you have multiple HipSTR outputs from different individuals and want to use mergeSTR to merge them, please use our python script, *Hipstr_correction.py*, to correct the merged HipSTR VCF file ensuring that multiple records from the same repeat culminate in a single unified record.
