@@ -196,6 +196,12 @@ Chromosome 21 [VCF](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-re
 
 Chromosome 22 [VCF](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr22.vcf.gz) [tbi](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr22.vcf.gz.tbi) [bref](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr22.bref) SNPs/indels=1,066,557 TRs=15,643
 
+## Additional resources
+
+Per locus summary statistics can be downloaded from [here](https://ensemble-tr.s3.us-east-2.amazonaws.com/tables/repeat_tables.zip). Each table has information on coordinates, repeat unit sequence, and potential overlap with genes listed in GENCODE v22 for repeats in EnsembleTR catalog.
+
+Population-specific per locus statistics on allele frequency, heterozygosity, and the number of called samples can be found [here](https://ensemble-tr.s3.us-east-2.amazonaws.com/tables/afreq_tables.zip). Statistics are computed using statSTR from the TRTools package.
+
 
 ## Notes on HipSTR input
 
