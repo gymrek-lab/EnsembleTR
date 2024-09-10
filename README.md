@@ -196,6 +196,19 @@ Chromosome 21 [VCF](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-re
 
 Chromosome 22 [VCF](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr22.vcf.gz) [tbi](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr22.vcf.gz.tbi) [bref](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr22.bref) SNPs/indels=1,066,557 TRs=15,643
 
+### Usage
+
+Use [Beagle](https://faculty.washington.edu/browning/beagle/beagle.html) to impute TRs into SNP data:
+
+```
+java -Xmx4g -jar beagle.version.jar \
+            gt=SNPs_chr${chrom}.vcf.gz \
+            ref=ensembletr_refpanel_v3_chr${chrom}.bref \
+            out=imputed_TR_SNPs_chr${chrom}
+```
+
+We have tested this with Beagle jar file [beagle.27May24.118.jar](https://faculty.washington.edu/browning/beagle/beagle.27May24.118.jar). Earlier releases of Beagle 5.4 had problems imputing from this panel due to a file decompression issue.
+
 ## Additional resources
 
 Per locus summary statistics can be downloaded from [here](https://ensemble-tr.s3.us-east-2.amazonaws.com/tables/repeat_tables.zip). Each table has information on coordinates, repeat unit sequence, and potential overlap with genes listed in GENCODE v22 for repeats in EnsembleTR catalog.
