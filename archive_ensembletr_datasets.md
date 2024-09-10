@@ -60,18 +60,6 @@ Chromosome 21 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/addition
 
 Chromosome 22 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/additional-phased-trs/chr22_final_SNP_merged_additional_TRs.vcf.gz) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/additional-phased-trs/chr22_final_SNP_merged_additional_TRs.vcf.gz.tbi)
 
-### Usage
-
-Use [Beagle](https://faculty.washington.edu/browning/beagle/beagle.html) to impute TRs into SNP data:
-
-```
-java -Xmx4g -jar beagle.version.jar \
-            gt=SNPs.vcf.gz \
-            ref=${chrom}_final_SNP_merged.vcf.gz \
-            out=imputed_TR_SNPs
-```
-
-Please use the [version 5.4](https://github.com/gymreklab/1000Genomes-TR-Analysis/raw/main/phasing/validation/beagle.19Apr22.7c0.jar) for this analysis as we had issues with the newer versions of Beagle and we are right now communicating it with Beagle developers.
 
 ## Version I
 
