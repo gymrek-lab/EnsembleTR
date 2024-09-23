@@ -27,5 +27,5 @@ tabix -p vcf ensembletr_refpanel_v3_chr${chrom}.vcf.gz
 wget https://faculty.washington.edu/browning/beagle/bref3.27May24.118.jar
 chrom=11
 zcat ensembletr_refpanel_v3_chr${chrom}.vcf.gz | \
-    java -jar bref3.27May24.118.jar > ensembletr_refpanel_v3_chr${chrom}.bref
+    java -jar bref3.27May24.118.jar > ensembletr_refpanel_v3_chr${chrom}.bref3
 ```
