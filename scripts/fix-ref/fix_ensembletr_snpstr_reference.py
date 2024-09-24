@@ -141,10 +141,12 @@ def main(args):
     # Go through each record
     # If SNP: just print it
     # if STR: (1) Filter records with incorrect reference
-    #         (2) Filter too many/too few alleles
+    #         (2) Filter too many/too few alleles, plus remove if duplicate after that
+    #               (based on chr:pos:alleles)
     #         (3) Modify record ID
     #         (4) Write record, without DP/GS, with updated AF/AC and without AC=0
     allids = set()
+    allloci = set() # chrom:pos:ref:alt to keep track of duplicates
     num_records_processed = 0
     num_snps_keeped = 0
     num_strs_keeped = 0
@@ -178,12 +180,20 @@ def main(args):
                 num_str_failed_min_allele += 1
                 sys.stderr.write(f"Skipping {record.CHROM}:{record.POS} with {num_alleles} alleles\n")
                 continue # skip this record
+            # Check if duplicate
+            locinfo = f"{record.CHROM}:{record.POS}:"+",".join(allele_order)
+            if locinfo in allloci:
+                sys.stderr.write(f"Skipping duplicate {locinfo}\n")
+                continue
+            else:
+                allloci.add(locinfo)
 
             # (3) Modify record ID
             record.ID = GetTRRecordID(record, allids)
             allids.add(record.ID)
             record.INFO["VT"] = "TR"
             num_strs_keeped += 1
+
             # (4) Write record to file, update AC/AF, only include GT, exclude AC=0
             orig_alleles = [record.REF] + record.ALT
             updated_info = UpdateINFO(record.INFO, allele_counts, allele_order)
@@ -193,7 +203,7 @@ def main(args):
             for sample in record.genotypes:
                 out_items.append(GetGT(sample, orig_alleles, allele_order))
             writer.write("\t".join([str(item) for item in out_items])+"\n")
-    sys.stdout.write(f"All {num_records_processed:,} records processed: keep {num_snps_keeped:,} snps, {num_strs_keeped:,} STRs; remove {num_str_failed_ref:,} STRs mismatch with reference, {num_str_failed_max_allele:,} STRs with more than {args.max_alleles:,} alleles, {num_str_failed_min_allele:,} STRs less than {args.min_alleles} alleles.\n")
+    sys.stderr.write(f"All {num_records_processed:,} records processed: keep {num_snps_keeped:,} snps, {num_strs_keeped:,} STRs; remove {num_str_failed_ref:,} STRs mismatch with reference, {num_str_failed_max_allele:,} STRs with more than {args.max_alleles:,} alleles, {num_str_failed_min_allele:,} STRs less than {args.min_alleles} alleles.\n")
     reader.close()
     writer.close()
     sys.exit(0)
