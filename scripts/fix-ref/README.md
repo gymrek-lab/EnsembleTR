@@ -9,6 +9,7 @@ This step:
 * Adds VT field
 * Remove loci with too many or too few alleles
 * Remove alleles with AF=0
+* Remove loci that have the same chr:pos:ref:alt after the above steps
 * Strip DS/GP fields
 
 ```
