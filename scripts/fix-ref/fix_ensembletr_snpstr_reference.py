@@ -153,7 +153,7 @@ def main(args):
     num_str_failed_ref = 0
     num_str_failed_max_allele = 0
     num_str_failed_min_allele = 0
-
+    num_str_duplicated = 0
     for record in reader:
         num_records_processed += 1
         if args.max_records > 0 and num_records_processed > args.max_records:
@@ -184,6 +184,7 @@ def main(args):
             locinfo = f"{record.CHROM}:{record.POS}:"+",".join(allele_order)
             if locinfo in allloci:
                 sys.stderr.write(f"Skipping duplicate {locinfo}\n")
+                num_str_duplicated += 1
                 continue
             else:
                 allloci.add(locinfo)
@@ -203,7 +204,7 @@ def main(args):
             for sample in record.genotypes:
                 out_items.append(GetGT(sample, orig_alleles, allele_order))
             writer.write("\t".join([str(item) for item in out_items])+"\n")
-    sys.stderr.write(f"All {num_records_processed:,} records processed: keep {num_snps_keeped:,} snps, {num_strs_keeped:,} STRs; remove {num_str_failed_ref:,} STRs mismatch with reference, {num_str_failed_max_allele:,} STRs with more than {args.max_alleles:,} alleles, {num_str_failed_min_allele:,} STRs less than {args.min_alleles} alleles.\n")
+    sys.stderr.write(f"All {num_records_processed:,} records processed: keep {num_snps_keeped:,} snps, {num_strs_keeped:,} STRs; remove {num_str_failed_ref:,} STRs mismatch with reference, {num_str_failed_max_allele:,} STRs with more than {args.max_alleles:,} alleles, {num_str_failed_min_allele:,} STRs less than {args.min_alleles} alleles, {num_str_duplicated:,} duplicated STRs.\n")
     reader.close()
     writer.close()
     sys.exit(0)
