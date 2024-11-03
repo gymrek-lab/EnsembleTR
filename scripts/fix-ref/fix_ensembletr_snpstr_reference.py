@@ -47,7 +47,9 @@ def GetAlleleCounts(record):
     allele_counts = {}
     for a in alleles:
         acount = all_allele_calls.count(a)
-        if acount > 0: allele_counts[a] = acount
+        # Note: force REF to be in dict even if acount=0
+        if acount > 0 or a == record.REF:
+            allele_counts[a] = acount
     # Keep order same as original
     allele_order = [item for item in alleles if item in allele_counts.keys()]
     return allele_counts, allele_order
