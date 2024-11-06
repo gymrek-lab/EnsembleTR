@@ -81,7 +81,7 @@ statSTR --vcf EnsembleTR_file.vcf.gz
 
 # EnsembleTR data releases
 
-Archived datasets, including the Version II calls and Version II haplotype panel files can be found [here](archive_ensembletr_datasets.md).
+Archived datasets, including the Version II calls and other versions of haplotype panel files can be found [here](archive_ensembletr_datasets.md).
 
 ## Version II of EnsembleTR calls on samples from 1000 Genomes Project and H3Africa
 
@@ -129,20 +129,21 @@ Chromosome 21 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/add-vntr
 
 Chromosome 22 [VCF file](https://ensemble-tr.s3.us-east-2.amazonaws.com/add-vntrs/ensemble_chr22_filtered.vcf.gz) and [tbi file](https://ensemble-tr.s3.us-east-2.amazonaws.com/add-vntrs/ensemble_chr22_filtered.vcf.gz.tbi)
 
-## Version III of reference SNP+TR haplotype panel for imputation of TR variants
+## Version IV of reference SNP+TR haplotype panel for imputation of TR variants
 
 These files contain:
 * [Phased SNP and indel variants](http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000G_2504_high_coverage/working/20220422_3202_phased_SNV_INDEL_SV/) of 3,202 samples from the 1000 Genomes Project (1kGP).
 * TRs phased/imputed from 3,202 1kGP samples based on EnsembleTR calls.
 
-There are in total 1,070,698 TRs and 70,692,015 SNPs/indels.
+There are in total 1,070,762 TRs and 70,692,015 SNPs/indels.
 
 All the coordinates are based on **hg38** human reference genome.
 
 These files contain the same data as [Version II](archive_ensembletr_datasets.md), with the following updates to facilitate use in downstream imputation pipelines:
 
 1. Remove TRs for which the REF allele does not match the expected sequence based on CHR:POS
-2. For each TR, remove alelles with 0 count. 
+2. For each TR, remove alelles with 0 count.
+    * If reference allele have 0 count, keep the reference alleles.
 3. Remove TRs which have more than 100 alleles.
 4. Remove TRs which have less than 2 alleles.
 5. Remove the DS/GP fields which are large and not used by downstream steps.
@@ -150,51 +151,51 @@ These files contain the same data as [Version II](archive_ensembletr_datasets.md
 7. Add VT field, set to VT=TR for TRs and VT=OTHER for other variant types
 8. Add the bref format files which have the same information as the VCFs but can improve Beagle imputation performance.
 
-All file description and download links can be found [here](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_3_readme.txt). Data and links for each chromosome for the Verson III panel are also provided below. 
+All file description and download links can be found [here](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_4_readme.txt). Data and links for each chromosome for the Verson IV panel are also provided below. 
 
-Chromosome 1 [[VCF](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr1.vcf.gz)] [[tbi](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr1.vcf.gz.tbi)] [[bref](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr1.bref3)] SNPs/indels=5,759,060 TRs=92,372
+Chromosome 1 [[VCF](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr1.vcf.gz)] [[tbi](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr1.vcf.gz.tbi)] [[bref](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr1.bref3)] SNPs/indels=5,759,060 TRs=92,378
 
-Chromosome 2 [[VCF](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr2.vcf.gz)] [[tbi](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr2.vcf.gz.tbi)] [[bref](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr2.bref3)] SNPs/indels=6,088,598 TRs=91,132
+Chromosome 2 [[VCF](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr2.vcf.gz)] [[tbi](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr2.vcf.gz.tbi)] [[bref](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr2.bref3)] SNPs/indels=6,088,598 TRs=91,137
 
-Chromosome 3 [[VCF](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr3.vcf.gz)] [[tbi](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr3.vcf.gz.tbi)] [[bref](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr3.bref3)] SNPs/indels=4,983,185 TRs=75,233
+Chromosome 3 [[VCF](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr3.vcf.gz)] [[tbi](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr3.vcf.gz.tbi)] [[bref](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr3.bref3)] SNPs/indels=4,983,185 TRs=75,243
 
-Chromosome 4 [[VCF](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr4.vcf.gz)] [[tbi](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr4.vcf.gz.tbi)] [[bref](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr4.bref3)] SNPs/indels=4,875,465 TRs=69,325
+Chromosome 4 [[VCF](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr4.vcf.gz)] [[tbi](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr4.vcf.gz.tbi)] [[bref](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr4.bref3)] SNPs/indels=4,875,465 TRs=69,327
 
-Chromosome 5 [[VCF](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr5.vcf.gz)] [[tbi](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr5.vcf.gz.tbi)] [[bref](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr5.bref3)] SNPs/indels=4,536,819 TRs=66,492
+Chromosome 5 [[VCF](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr5.vcf.gz)] [[tbi](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr5.vcf.gz.tbi)] [[bref](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr5.bref3)] SNPs/indels=4,536,819 TRs=66,492
 
-Chromosome 6 [[VCF](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr6.vcf.gz)] [[tbi](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr6.vcf.gz.tbi)] [[bref](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr6.bref3)] SNPs/indels=4,315,217 TRs=65,937
+Chromosome 6 [[VCF](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr6.vcf.gz)] [[tbi](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr6.vcf.gz.tbi)] [[bref](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr6.bref3)] SNPs/indels=4,315,217 TRs=65,940
 
-Chromosome 7 [[VCF](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr7.vcf.gz)] [[tbi](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr7.vcf.gz.tbi)] [[bref](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr7.bref3)] SNPs/indels=4,137,254 TRs=59,409
+Chromosome 7 [[VCF](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr7.vcf.gz)] [[tbi](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr7.vcf.gz.tbi)] [[bref](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr7.bref3)] SNPs/indels=4,137,254 TRs=59,422
 
-Chromosome 8 [[VCF](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr8.vcf.gz)] [[tbi](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr8.vcf.gz.tbi)] [[bref](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr8.bref3)] SNPs/indels=3,886,222 TRs=55,141
+Chromosome 8 [[VCF](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr8.vcf.gz)] [[tbi](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr8.vcf.gz.tbi)] [[bref](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr8.bref3)] SNPs/indels=3,886,222 TRs=55,144
 
-Chromosome 9 [[VCF](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr9.vcf.gz)] [[tbi](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr9.vcf.gz.tbi)] [[bref](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr9.bref3)] SNPs/indels=3,165,513 TRs=44,188
+Chromosome 9 [[VCF](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr9.vcf.gz)] [[tbi](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr9.vcf.gz.tbi)] [[bref](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr9.bref3)] SNPs/indels=3,165,513 TRs=44,189
 
-Chromosome 10 [[VCF](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr10.vcf.gz)] [[tbi](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr10.vcf.gz.tbi)] [[bref](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr10.bref3)] SNPs/indels=3,495,473 TRs=51,637
+Chromosome 10 [[VCF](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr10.vcf.gz)] [[tbi](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr10.vcf.gz.tbi)] [[bref](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr10.bref3)] SNPs/indels=3,495,473 TRs=51,640
 
-Chromosome 11 [[VCF](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr11.vcf.gz)] [[tbi](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr11.vcf.gz.tbi)] [[bref](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr11.bref3)] SNPs/indels=3,423,341 TRs=49,598
+Chromosome 11 [[VCF](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr11.vcf.gz)] [[tbi](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr11.vcf.gz.tbi)] [[bref](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr11.bref3)] SNPs/indels=3,423,341 TRs=49,603
 
-Chromosome 12 [[VCF](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr12.vcf.gz)] [[tbi](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr12.vcf.gz.tbi)] [[bref](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr12.bref3)] SNPs/indels=3,332,788 TRs=55,883
+Chromosome 12 [[VCF](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr12.vcf.gz)] [[tbi](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr12.vcf.gz.tbi)] [[bref](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr12.bref3)] SNPs/indels=3,332,788 TRs=55,887
 
-Chromosome 13 [[VCF](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr13.vcf.gz)] [[tbi](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr13.vcf.gz.tbi)] [[bref](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr13.bref3)] SNPs/indels=2,509,179 TRs=35,720
+Chromosome 13 [[VCF](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr13.vcf.gz)] [[tbi](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr13.vcf.gz.tbi)] [[bref](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr13.bref3)] SNPs/indels=2,509,179 TRs=35,720
 
-Chromosome 14 [[VCF](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr14.vcf.gz)] [[tbi](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr14.vcf.gz.tbi)] [[bref](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr14.bref3)] SNPs/indels=2,290,400 TRs=36,199
+Chromosome 14 [[VCF](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr14.vcf.gz)] [[tbi](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr14.vcf.gz.tbi)] [[bref](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr14.bref3)] SNPs/indels=2,290,400 TRs=36,203
 
-Chromosome 15 [[VCF](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr15.vcf.gz)] [[tbi](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr15.vcf.gz.tbi)] [[bref](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr15.bref3)] SNPs/indels=2,109,285 TRs=32,336
+Chromosome 15 [[VCF](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr15.vcf.gz)] [[tbi](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr15.vcf.gz.tbi)] [[bref](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr15.bref3)] SNPs/indels=2,109,285 TRs=32,338
 
-Chromosome 16 [[VCF](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr16.vcf.gz)] [[tbi](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr16.vcf.gz.tbi)] [[bref](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr16.bref3)] SNPs/indels=2,362,361 TRs=35,450
+Chromosome 16 [[VCF](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr16.vcf.gz)] [[tbi](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr16.vcf.gz.tbi)] [[bref](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr16.bref3)] SNPs/indels=2,362,361 TRs=35,452
 
-Chromosome 17 [[VCF](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr17.vcf.gz)] [[tbi](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr17.vcf.gz.tbi)] [[bref](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr17.bref3)] SNPs/indels=2,073,624 TRs=38,377
+Chromosome 17 [[VCF](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr17.vcf.gz)] [[tbi](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr17.vcf.gz.tbi)] [[bref](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr17.bref3)] SNPs/indels=2,073,624 TRs=38,382
 
-Chromosome 18 [[VCF](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr18.vcf.gz)] [[tbi](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr18.vcf.gz.tbi)] [[bref](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr18.bref3)] SNPs/indels=1,963,845 TRs=28,443
+Chromosome 18 [[VCF](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr18.vcf.gz)] [[tbi](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr18.vcf.gz.tbi)] [[bref](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr18.bref3)] SNPs/indels=1,963,845 TRs=28,446
 
-Chromosome 19 [[VCF](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr19.vcf.gz)] [[tbi](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr19.vcf.gz.tbi)] [[bref](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr19.bref3)] SNPs/indels=1,670,692 TRs=33,535
+Chromosome 19 [[VCF](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr19.vcf.gz)] [[tbi](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr19.vcf.gz.tbi)] [[bref](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr19.bref3)] SNPs/indels=1,670,692 TRs=33,536
 
-Chromosome 20 [[VCF](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr20.vcf.gz)] [[tbi](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr20.vcf.gz.tbi)] [[bref](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr20.bref3)] SNPs/indels=1,644,384 TRs=25,742
+Chromosome 20 [[VCF](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr20.vcf.gz)] [[tbi](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr20.vcf.gz.tbi)] [[bref](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr20.bref3)] SNPs/indels=1,644,384 TRs=25,745
 
-Chromosome 21 [[VCF](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr21.vcf.gz)] [[tbi](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr21.vcf.gz.tbi)] [[bref](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr21.bref3)] SNPs/indels=1,002,753 TRs=12,893
+Chromosome 21 [[VCF](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr21.vcf.gz)] [[tbi](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr21.vcf.gz.tbi)] [[bref](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr21.bref3)] SNPs/indels=1,002,753 TRs=12,894
 
-Chromosome 22 [[VCF](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr22.vcf.gz)] [[tbi](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr22.vcf.gz.tbi)] [[bref](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v3/ensembletr_refpanel_v3_chr22.bref3)] SNPs/indels=1,066,557 TRs=15,643
+Chromosome 22 [[VCF](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr22.vcf.gz)] [[tbi](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr22.vcf.gz.tbi)] [[bref](https://ensemble-tr.s3.us-east-2.amazonaws.com/ensembletr-refpanel-v4/ensembletr_refpanel_v4_chr22.bref3)] SNPs/indels=1,066,557 TRs=15,644
 
 ### Usage
 
@@ -203,7 +204,7 @@ Use [Beagle](https://faculty.washington.edu/browning/beagle/beagle.html) to impu
 ```
 java -Xmx4g -jar beagle.version.jar \
             gt=SNPs_chr${chrom}.vcf.gz \
-            ref=ensembletr_refpanel_v3_chr${chrom}.bref3 \
+            ref=ensembletr_refpanel_v4_chr${chrom}.bref3 \
             out=imputed_TR_SNPs_chr${chrom}
 ```
 
