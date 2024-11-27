@@ -3,6 +3,12 @@ Various utilities used by EnsembleTR
 """
 
 import math
+import trtools.utils.utils as utils
+
+IUPAC_map_dict = {'R': ['A', 'G'], 'Y': ['C', 'T'], 'S': ['G', 'C'],
+                  'W': ['A', 'T'], 'K': ['G', 'T'], 'M': ['A', 'C'], 'B': ['G', 'C', 'T'],
+                  'D': ['A', 'G', 'T'], 'H': ['A', 'C', 'T'], 'V': ['A', 'C', 'G'],
+                  'N': ['A', 'C', 'G', 'T']}
 
 def GetEHScore(conf_invs, CNs, ru_len):
     r"""
@@ -57,3 +63,33 @@ def CalcEHAlleleScore(conf_inv, allele):
     if allele == 0:
          return 1/math.exp(4 * (dist))
     return 1/math.exp(4 * (dist) / int(allele))
+
+
+def MotifEquality(motif_1, motif_2):
+    if len(motif_1) != len(motif_2):
+        return False
+    potential_sequences_1 = [utils.GetCanonicalMotif(motif) for motif in GetAllPossibleSequences(motif_1)]
+    potential_sequences_2 = [utils.GetCanonicalMotif(motif) for motif in GetAllPossibleSequences(motif_2)]
+    for seq1 in potential_sequences_1:
+        if seq1 in potential_sequences_2:
+            return True
+    return False
+
+
+def GetAllPossibleSequences(motif):
+    possible_seqs = []
+    if len(motif) < 1:
+        return []
+    elif len(motif) == 1:
+        if motif[0] in IUPAC_map_dict:
+            return IUPAC_map_dict[motif[0]]
+        else:
+            return motif[0]
+    else:
+        first_part = GetAllPossibleSequences(motif[0:int(len(motif)/2)])
+        second_part = GetAllPossibleSequences(motif[int(len(motif)/2):])
+        for seq1 in first_part:
+            for seq2 in second_part:
+                possible_seqs.append(seq1 + seq2)
+    return possible_seqs
+

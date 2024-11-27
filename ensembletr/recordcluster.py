@@ -3,7 +3,6 @@ Classes to keep track of mergeable records
 """
 
 import trtools.utils.tr_harmonizer as trh
-from trtools.utils.utils import GetCanonicalMotif
 from collections import defaultdict
 from enum import Enum
 import networkx as nx
@@ -39,7 +38,7 @@ class RecordObj:
         self.pos = self.hm_record.pos
         if vcf_type.name == 'advntr' or vcf_type.name == 'eh':
             self.pos += 1 # AdVNTR call is 0-based, should change it to 1-based
-        self.canonical_motif = GetCanonicalMotif(self.hm_record.motif)
+        self.motif = self.hm_record.motif
         self.prepend_seq = ''
         self.append_seq = ''
         self.vcf_samples = vcf_samples
@@ -152,14 +151,14 @@ class RecordCluster:
        list of record objects to be merged
     ref_genome : pyfaidx.Fasta
        reference genome
-    canon_motif : str
-       canonical repeat motif
+    motif : str
+       repeat motif
     samples : list of str
        List of samples to analyze
 
     """
-    def __init__(self, recobjs, ref_genome, canon_motif, samples):
-        self.canonical_motif = canon_motif
+    def __init__(self, recobjs, ref_genome, motif, samples):
+        self.motif = motif
         self.vcf_types = [False] * len(convert_type_to_idx.keys())
         self.samples = samples
         self.fasta = ref_genome        
@@ -291,10 +290,10 @@ class OverlappingRegion:
     def __init__(self, rcs):
         self.RecordClusters = rcs
 
-    def GetCanonicalMotifs(self):
+    def GetMotifs(self):
         ret = []
         for rc in self.RecordClusters:
-            ret.append(rc.canonical_motif)
+            ret.append(rc.motif)
         return ret
 
 class Allele:
