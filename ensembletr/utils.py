@@ -66,17 +66,48 @@ def CalcEHAlleleScore(conf_inv, allele):
 
 
 def MotifEquality(motif_1, motif_2):
+    r"""
+    Compute if two motifs are equal to each other, considering IUPAC characters
+    This code computes the list of all possible sequences that each motif can be
+    then returns True if there is any overlap between the set of sequences for motif_1
+    and motif_2.
+
+    Parameters
+    ----------
+    motif_1 : str
+       first motif
+    motif_2 : str
+       second motif
+
+    Returns
+    -------
+    Equality : bool, mutual motif
+    """
     if len(motif_1) != len(motif_2):
         return False
     potential_sequences_1 = [utils.GetCanonicalMotif(motif) for motif in GetAllPossibleSequences(motif_1)]
     potential_sequences_2 = [utils.GetCanonicalMotif(motif) for motif in GetAllPossibleSequences(motif_2)]
     for seq1 in potential_sequences_1:
         if seq1 in potential_sequences_2:
-            return True
-    return False
+            return True, seq1
+    return False, None
 
 
 def GetAllPossibleSequences(motif):
+    r"""
+    Computing all the possible sequences that a motif can be considering IUPAC characters.
+    For example, a motif with sequence RGG can be both AGG and GGG. Divide and conquer method is
+    used to form all possible sequences.
+
+    Parameters
+    ----------
+    motif : str
+       motif
+
+    Returns
+    -------
+    All possible sequences : list of str
+    """
     possible_seqs = []
     if len(motif) < 1:
         return []
