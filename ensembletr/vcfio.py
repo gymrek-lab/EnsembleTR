@@ -231,8 +231,9 @@ class Readers:
                 motif = curr_ro.hm_record.motif
                 added = False
                 for rc in record_cluster_list:
-                    if ensembleutils.MotifEquality(motif, rc.motif):
-                        rc.AppendRecordObject(curr_ro)
+                    equal, mutual_motif = ensembleutils.MotifEquality(motif, rc.motif)
+                    if equal:
+                        rc.AppendRecordObject(curr_ro, mutual_motif)
                         added = True
                 if not added:
                     record_cluster_list.append(recordcluster.RecordCluster([curr_ro], self.ref_genome,

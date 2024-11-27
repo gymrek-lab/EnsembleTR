@@ -84,7 +84,7 @@ def MotifEquality(motif_1, motif_2):
     Equality : bool, mutual motif
     """
     if len(motif_1) != len(motif_2):
-        return False
+        return False,None
     potential_sequences_1 = [utils.GetCanonicalMotif(motif) for motif in GetAllPossibleSequences(motif_1)]
     potential_sequences_2 = [utils.GetCanonicalMotif(motif) for motif in GetAllPossibleSequences(motif_2)]
     for seq1 in potential_sequences_1:
