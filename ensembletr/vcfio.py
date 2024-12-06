@@ -5,6 +5,7 @@ VCF files.
 
 import trtools.utils.common as common
 import trtools.utils.utils as utils
+from . import utils as ensembleutils
 import trtools.utils.mergeutils as mergeutils
 import trtools.utils.tr_harmonizer as trh
 import cyvcf2
@@ -215,7 +216,7 @@ class Readers:
     def getMergableCalls(self):
         r"""
         Determine which calls are mergeable
-        Make one list of record clusters for each canonical motif
+        Make one list of record clusters for each motif
 
         Returns
         -------
@@ -227,15 +228,16 @@ class Readers:
             if self.is_overlap_min[i] and self.current_tr_records[i] is not None:
                 curr_ro = recordcluster.RecordObj(self.current_tr_records[i].vcfrecord, self.vcfwrappers[i].vcftype,
                                                   self.samples_list[i])
-                canon_motif = utils.GetCanonicalMotif(curr_ro.hm_record.motif)
+                motif = curr_ro.hm_record.motif
                 added = False
                 for rc in record_cluster_list:
-                    if rc.canonical_motif == canon_motif:
-                        rc.AppendRecordObject(curr_ro)
+                    equal, mutual_motif = ensembleutils.MotifEquality(motif, rc.motif)
+                    if equal:
+                        rc.AppendRecordObject(curr_ro, mutual_motif)
                         added = True
                 if not added:
                     record_cluster_list.append(recordcluster.RecordCluster([curr_ro], self.ref_genome,
-                                                                           canon_motif, self.samples))
+                                                                           motif, self.samples))
         ov_region = recordcluster.OverlappingRegion(record_cluster_list)
         return ov_region
 
@@ -342,8 +344,8 @@ class Writer:
         FILTER = "."
         INFO_DICT = {'START': rcres.record_cluster.first_pos,
                      'END': rcres.record_cluster.first_pos + len(REF) - 1,
-                     'PERIOD': len(rcres.record_cluster.canonical_motif),
-                     'RU': rcres.record_cluster.canonical_motif,
+                     'PERIOD': len(rcres.record_cluster.motif),
+                     'RU': rcres.record_cluster.motif,
                      'METHODS': "|".join([str(int(item)) for item in rcres.record_cluster.vcf_types])}
         INFO = ";".join(["%s=%s"%(key, INFO_DICT[key]) for key in INFO_DICT])
         FORMAT = ['GT','GB', 'NCOPY','EXP','SCORE','GTS','ALS','INPUTS']

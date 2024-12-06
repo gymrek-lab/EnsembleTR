@@ -3,6 +3,12 @@ Various utilities used by EnsembleTR
 """
 
 import math
+import trtools.utils.utils as utils
+
+IUPAC_map_dict = {'R': ['A', 'G'], 'Y': ['C', 'T'], 'S': ['G', 'C'],
+                  'W': ['A', 'T'], 'K': ['G', 'T'], 'M': ['A', 'C'], 'B': ['G', 'C', 'T'],
+                  'D': ['A', 'G', 'T'], 'H': ['A', 'C', 'T'], 'V': ['A', 'C', 'G'],
+                  'N': ['A', 'C', 'G', 'T']}
 
 def GetEHScore(conf_invs, CNs, ru_len):
     r"""
@@ -57,3 +63,64 @@ def CalcEHAlleleScore(conf_inv, allele):
     if allele == 0:
          return 1/math.exp(4 * (dist))
     return 1/math.exp(4 * (dist) / int(allele))
+
+
+def MotifEquality(motif_1, motif_2):
+    r"""
+    Compute if two motifs are equal to each other, considering IUPAC characters
+    This code computes the list of all possible sequences that each motif can be
+    then returns True if there is any overlap between the set of sequences for motif_1
+    and motif_2.
+
+    Parameters
+    ----------
+    motif_1 : str
+       first motif
+    motif_2 : str
+       second motif
+
+    Returns
+    -------
+    Equality : bool, mutual motif
+    """
+    if len(motif_1) != len(motif_2):
+        return False,None
+    potential_sequences_1 = [utils.GetCanonicalMotif(motif) for motif in GetAllPossibleSequences(motif_1)]
+    potential_sequences_2 = [utils.GetCanonicalMotif(motif) for motif in GetAllPossibleSequences(motif_2)]
+    for seq1 in potential_sequences_1:
+        if seq1 in potential_sequences_2:
+            return True, seq1
+    return False, None
+
+
+def GetAllPossibleSequences(motif):
+    r"""
+    Computing all the possible sequences that a motif can be considering IUPAC characters.
+    For example, a motif with sequence RGG can be both AGG and GGG. Divide and conquer method is
+    used to form all possible sequences.
+
+    Parameters
+    ----------
+    motif : str
+       motif
+
+    Returns
+    -------
+    All possible sequences : list of str
+    """
+    possible_seqs = []
+    if len(motif) < 1:
+        return []
+    elif len(motif) == 1:
+        if motif[0] in IUPAC_map_dict:
+            return IUPAC_map_dict[motif[0]]
+        else:
+            return motif[0]
+    else:
+        first_part = GetAllPossibleSequences(motif[0:int(len(motif)/2)])
+        second_part = GetAllPossibleSequences(motif[int(len(motif)/2):])
+        for seq1 in first_part:
+            for seq2 in second_part:
+                possible_seqs.append(seq1 + seq2)
+    return possible_seqs
+

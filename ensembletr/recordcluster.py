@@ -3,7 +3,6 @@ Classes to keep track of mergeable records
 """
 
 import trtools.utils.tr_harmonizer as trh
-from trtools.utils.utils import GetCanonicalMotif
 from collections import defaultdict
 from enum import Enum
 import networkx as nx
@@ -39,7 +38,7 @@ class RecordObj:
         self.pos = self.hm_record.pos
         if vcf_type.name == 'advntr' or vcf_type.name == 'eh':
             self.pos += 1 # AdVNTR call is 0-based, should change it to 1-based
-        self.canonical_motif = GetCanonicalMotif(self.hm_record.motif)
+        self.motif = self.hm_record.motif
         self.prepend_seq = ''
         self.append_seq = ''
         self.vcf_samples = vcf_samples
@@ -152,14 +151,14 @@ class RecordCluster:
        list of record objects to be merged
     ref_genome : pyfaidx.Fasta
        reference genome
-    canon_motif : str
-       canonical repeat motif
+    motif : str
+       repeat motif
     samples : list of str
        List of samples to analyze
 
     """
-    def __init__(self, recobjs, ref_genome, canon_motif, samples):
-        self.canonical_motif = canon_motif
+    def __init__(self, recobjs, ref_genome, motif, samples):
+        self.motif = motif
         self.vcf_types = [False] * len(convert_type_to_idx.keys())
         self.samples = samples
         self.fasta = ref_genome        
@@ -167,7 +166,7 @@ class RecordCluster:
         self.first_pos = -1
         self.last_pos = -1
         self.chrom = recobjs[0].cyvcf2_record.CHROM
-        self.update()
+        self.update(motif)
         self.hipstr_allele_frequency = {}
         for ro in self.record_objs:
             if ro.vcf_type.name == "hipstr":
@@ -183,7 +182,7 @@ class RecordCluster:
             freqs[call[1]] += 1
         return freqs
 
-    def AppendRecordObject(self, ro):
+    def AppendRecordObject(self, ro, mutual_motif):
         r"""
         Add a record object to the RecordCluster
         and update associated metadata
@@ -194,9 +193,9 @@ class RecordCluster:
            the Record Object to be added
         """
         self.record_objs.append(ro)
-        self.update()
+        self.update(mutual_motif)
 
-    def update(self):
+    def update(self, mutual_motif):
         r"""
         Update prepend/append sequences
         of individual record objects so they
@@ -206,6 +205,7 @@ class RecordCluster:
         """
         self.first_pos = min([rec.pos for rec in self.record_objs])
         self.last_end = max([rec.cyvcf2_record.end for rec in self.record_objs])
+        self.motif = mutual_motif.upper()
 
         print(
             f"Analysing record cluster ranged in {self.record_objs[0].cyvcf2_record.CHROM}:{self.first_pos}-{self.last_end}.")
@@ -291,10 +291,10 @@ class OverlappingRegion:
     def __init__(self, rcs):
         self.RecordClusters = rcs
 
-    def GetCanonicalMotifs(self):
+    def GetMotifs(self):
         ret = []
         for rc in self.RecordClusters:
-            ret.append(rc.canonical_motif)
+            ret.append(rc.motif)
         return ret
 
 class Allele:

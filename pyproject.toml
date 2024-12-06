@@ -1,0 +1,30 @@
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "EnsembleTR"
+version = "1.0.1"
+description = "Ensemble genotyping of tandem repeats"
+authors = ["Helyaneh Ziaei Jam", "Nima Mousavi"]
+license = "MIT"
+repository = "https://github.com/gymrek-lab/EnsembleTR/tree/main"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.8,<4.0"
+numpy = ">=1.22.0"
+cyvcf2 = ">=0.30.14"
+trtools = ">=4.2.1"
+networkx = ">2.6.3"
+pyfaidx = ">0.6.4"
+
+[tool.poetry.group.tests.dependencies]
+pytest = ">=7.4.3"
+black = ">=23.3.0"
+ipython = ">=7.34.0"
+coverage = {extras = ["toml"], version = ">=7.2.7"}
+filprofiler = ">=2023.3.1"
+
+[tool.poetry.scripts]
+EnsembleTR= "ensembletr.main:run"
