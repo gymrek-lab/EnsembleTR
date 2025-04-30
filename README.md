@@ -215,15 +215,3 @@ We have tested this with Beagle jar file [beagle.27May24.118.jar](https://facult
 Per locus summary statistics can be downloaded from [here](https://ensemble-tr.s3.us-east-2.amazonaws.com/tables/repeat_tables.zip). Each table has information on coordinates, repeat unit sequence, and potential overlap with genes listed in GENCODE v22 for repeats in EnsembleTR catalog.
 
 Population-specific per locus statistics on allele frequency, heterozygosity, and the number of called samples can be found [here](https://ensemble-tr.s3.us-east-2.amazonaws.com/tables/afreq_tables.zip). Statistics are computed using statSTR from the TRTools package.
-
-
-## Notes on HipSTR input
-
-HipSTR might expand the coordinates of the repeat if there is a nearby SNP. If you have multiple HipSTR outputs from different individuals and want to use mergeSTR to merge them, please use our python script, *Hipstr_correction.py*, to correct the merged HipSTR VCF file ensuring that multiple records from the same repeat culminate in a single unified record.
-
-```
-python3 HipSTR_correction_faster.py hipstr_merged_by_mergeSTR.vcf.gz hipstr_merged_corrected.vcf
-bgzip hipstr_merged_corrected.vcf
-tabix -p vcf hipstr_merged_corrected.vcf.gz
-
-```
